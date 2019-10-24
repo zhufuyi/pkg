@@ -6,13 +6,13 @@
 
 ### 安装
 
-> go get -u github.com/zhufuyi/mongo
+> go get -u github.com/zhufuyi/pkg/mongo
 
 <br>
 
 ### 使用
 
-使用方式请看[示例](./mongo/demo)。
+使用方式请看[示例](./demo)。
 
 如果想新建对象，只需对模板批量修改名称，操作命令：
 
