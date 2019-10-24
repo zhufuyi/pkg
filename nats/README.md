@@ -1,8 +1,6 @@
-
-
 ### 安装
 
-> go get -u github.com/zhufuyi/go-pkg
+> go get -u github.com/zhufuyi/pkg/nats
 
 <br>
 
