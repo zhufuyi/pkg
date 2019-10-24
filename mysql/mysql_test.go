@@ -3,11 +3,11 @@ package mysql
 import (
 	"testing"
 
-	"time"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
-	"github.com/zhufuyi/logger"
+	"github.com/zhufuyi/pkg/logger"
 )
 
 var addr = "root:123456@(192.168.101.88:3306)/account?charset=utf8mb4&parseTime=True&loc=Local"
@@ -19,7 +19,6 @@ type User struct {
 	Age    int    `gorm:"not null" json:"age"`
 	Gender string `gorm:"type:varchar(10);not null" json:"gender"`
 }
-
 
 func init() {
 	AddTables(&User{}) // 把所有表对应的对象添加过来

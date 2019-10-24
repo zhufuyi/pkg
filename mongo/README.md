@@ -17,7 +17,7 @@
 如果想新建对象，只需对模板批量修改名称，操作命令：
 
 ```bash
-git clone https://github.com/zhufuyi/mongo.git
+git clone https://github.com/zhufuyi/pkg/mongo.git
 cd demo
 
 # 修改名称(文件名和内容同时修改)

@@ -1,4 +1,4 @@
-package jaeger
+package render
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/zhufuyi/logger"
+	"github.com/zhufuyi/pkg/logger"
 	"go.uber.org/zap"
 
 	jaegerConfig "github.com/uber/jaeger-client-go/config"

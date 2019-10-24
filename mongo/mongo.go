@@ -8,7 +8,7 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/zhufuyi/logger"
+	"github.com/zhufuyi/pkg/logger"
 )
 
 var session *mgo.Session

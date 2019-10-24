@@ -2,7 +2,7 @@ package module
 
 import (
 	"github.com/globalsign/mgo/bson"
-	"github.com/zhufuyi/mongo"
+	"github.com/zhufuyi/pkg/mongo"
 )
 
 // DemoCollectionName 在mongo表名，约定首字母小写
@@ -10,7 +10,7 @@ const DemoCollectionName = "demo"
 
 // Demo 用户消息
 type Demo struct {
-	mongo.PublicFields`bson:",inline"`
+	mongo.PublicFields `bson:",inline"`
 
 	UserID     string      `bson:"userID" json:"userID"`         // 用户id
 	FileID     string      `bson:"fileID" json:"fileID"`         // 文件id
