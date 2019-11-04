@@ -18,9 +18,9 @@ var (
 	kinds    = [][]byte{RefSlice[0:10], RefSlice[10:36], RefSlice[0:36], RefSlice[36:62], RefSlice[36:], RefSlice[10:62], RefSlice[0:62]}
 )
 
-// KRand 生成多种类型的任意长度的随机字符串，如果参数size为空，默认长度为6
-// example：KRand(R_ALL), KRand(R_ALL, 16), KRand(R_NUM|R_LOWER, 16)
-func KRand(kind int, size ...int) []byte {
+// String 生成多种类型的任意长度的随机字符串，如果参数size为空，默认长度为6
+// example：String(R_ALL), String(R_ALL, 16), String(R_NUM|R_LOWER, 16)
+func String(kind int, size ...int) []byte {
 	if kind > 7 || kind < 1 {
 		kind = R_All
 	}
@@ -43,8 +43,8 @@ func KRand(kind int, size ...int) []byte {
 	return result
 }
 
-// RandInt 生成指定范围大小随机数，兼容RandInt()，RandInt(max)，RandInt(min, max)，RandInt(max, min)4种方式，注：随机数包括min和max
-func RandInt(rangeSize ...int) int {
+// Int 生成指定范围大小随机数，兼容Int()，Int(max)，Int(min, max)，Int(max, min)4种方式，注：随机数包括min和max
+func Int(rangeSize ...int) int {
 	switch len(rangeSize) {
 	case 0:
 		return r.Intn(101) // 默认0~100
@@ -55,5 +55,29 @@ func RandInt(rangeSize ...int) int {
 			rangeSize[0], rangeSize[1] = rangeSize[1], rangeSize[0]
 		}
 		return r.Intn(rangeSize[1]-rangeSize[0]+1) + rangeSize[0]
+	}
+}
+
+// Float64 生成指定范围大小随机浮点数，兼容Float64(dpLength)，Float64(dpLength,max)，Float64(dpLength, min, max)，Float64(dpLength, max, min)4种方式，注：随机数包括min和max
+func Float64(dpLength int, rangeSize ...int) float64 {
+	dp := 0.0
+	if dpLength > 0 {
+		dpmax := 1
+		for i := 0; i < dpLength; i++ {
+			dpmax *= 10
+		}
+		dp = float64(r.Intn(dpmax)) / float64(dpmax)
+	}
+
+	switch len(rangeSize) {
+	case 0:
+		return float64(r.Intn(101)) + dp // 默认0~100
+	case 1:
+		return float64(r.Intn(rangeSize[0]+1)) + dp
+	default:
+		if rangeSize[0] > rangeSize[1] {
+			rangeSize[0], rangeSize[1] = rangeSize[1], rangeSize[0]
+		}
+		return float64(r.Intn(rangeSize[1]-rangeSize[0]+1)+rangeSize[0]) + dp
 	}
 }
