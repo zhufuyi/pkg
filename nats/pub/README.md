@@ -1,6 +1,6 @@
 ### 安装
 
-> go get -u github.com/zhufuyi/pkg/nats
+> go get -u github.com/zhufuyi/pkg/nats/pub
 
 <br>
 
