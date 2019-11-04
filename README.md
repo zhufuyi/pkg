@@ -7,6 +7,7 @@
 - [nats客户端](./nats)
 - [gin相关render](./render)
 - [http客户端](./gohttp)
+- [krand生成随机数和字符串](./krand)
 
 <br>
 
