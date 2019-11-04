@@ -1,6 +1,6 @@
 ### 安装
 
-> go get -u github.com/zhufuyi/pkg/nats/sub
+> go get -u github.com/zhufuyi/pkg/nats/nsub
 
 <br>
 
