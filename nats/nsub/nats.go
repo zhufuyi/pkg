@@ -52,7 +52,6 @@ func (c *Client) SubscribeSync(ctx context.Context, topic string, pushData chan 
 		// 等待消息
 		msg, err := sub.NextMsgWithContext(ctx)
 		if err != nil {
-			fmt.Printf("[nats] NextMsgWithContext() error, topic=%s, err=%s\n", topic, err.Error())
 			return
 		}
 
@@ -60,7 +59,6 @@ func (c *Client) SubscribeSync(ctx context.Context, topic string, pushData chan 
 		case pushData <- msg.Data:
 			continue
 		case <-ctx.Done():
-			fmt.Printf("[nats] exit subscribe, topic=%s, %s\n", topic, ctx.Err())
 			return
 		default: // forbid block
 		}
