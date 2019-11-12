@@ -13,7 +13,8 @@ import (
 type JSONResponse struct {
 	Code int         `json:"code"`
 	Msg  string      `json:"msg"`
-	Data interface{} `json:"data,omitempty"`
+	Data interface{} `json:"data"`
+	//Data interface{} `json:"data,omitempty"`
 }
 
 var jsonContentType = []string{"application/json; charset=utf-8"}
