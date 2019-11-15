@@ -368,3 +368,60 @@ func (resp *Response) BindJSON(v interface{}) error {
 	}
 	return json.Unmarshal(body, v)
 }
+
+// -------------------------------------------------------------------------------------------------
+
+// JSONResponse 输出格式
+type JSONResponse struct {
+	Code int         `json:"code"`
+	Msg  string      `json:"msg"`
+	Data interface{} `json:"data,omitempty"`
+}
+
+// HTTPGetJson get请求，返回是固定json格式
+func HTTPGetJson(url string, params map[string]interface{}) (*JSONResponse, error) {
+	req := &Request{}
+	req.SetURL(url)
+	req.SetParams(params)
+
+	resp, err := req.GET()
+	if err != nil {
+		return nil, fmt.Errorf("get请求失败, error=%s, req=%+v", err.Error(), *req)
+	}
+	defer resp.Body.Close()
+
+	return parseRespone(resp)
+}
+
+// HTTPPostJson post请求，返回是固定json格式
+func HTTPPostJson(url string, body interface{}, params ...map[string]interface{}) (*JSONResponse, error) {
+	req := &Request{}
+	req.SetURL(url) // url地址固定
+	req.SetContentType("application/json")
+	if len(params) > 0 {
+		req.SetParams(params[0])
+	}
+	req.SetJSONBody(body)
+
+	resp, err := req.POST()
+	if err != nil {
+		return nil, fmt.Errorf("post请求失败, error=%s, req=%+v", err.Error(), *req)
+	}
+	defer resp.Body.Close()
+
+	return parseRespone(resp)
+}
+
+func parseRespone(resp *Response) (*JSONResponse, error) {
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("返回状态非200, StatusCode=%d", resp.StatusCode)
+	}
+
+	result := &JSONResponse{}
+	err := resp.BindJSON(result)
+	if err != nil {
+		return nil, fmt.Errorf("解析参数错误, error=%s, req=%+v", err.Error(), *resp)
+	}
+
+	return result, nil
+}
