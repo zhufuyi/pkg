@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"net/http"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -173,7 +175,7 @@ func (a *AwsS3) DeleteFile(awsFile string) error {
 }
 
 // GetPreSignedURL 获取访问s3资源的签名url，给第三方下载资源使用
-func (a *AwsS3) GetPreSignedURL(method string, awsFile string, expirySeconds int) (string, error) {
+func (a *AwsS3) GetPreSignedURL(awsFile string, expirySeconds int) (string, error) {
 	// 判断object是否存在s3
 	err := a.CheckFileIsExist(awsFile)
 	if err != nil {
@@ -183,7 +185,7 @@ func (a *AwsS3) GetPreSignedURL(method string, awsFile string, expirySeconds int
 	input := &preSignedInput{
 		Bucket:        a.Bucket,
 		ObjectKey:     a.BasePath + awsFile,
-		Method:        method,
+		Method:        http.MethodGet,
 		ExpirySeconds: expirySeconds,
 	}
 	url := generatePreSignedURL(a.Region, a.accessKeyID, a.secretAccessKey, input)

@@ -2,7 +2,6 @@ package awss3
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"testing"
 )
@@ -124,7 +123,7 @@ func TestPreSignedURL(t *testing.T) {
 	errMsg := ""
 	awsFiles := []string{"uploadTest1.txt", "uploadTest2.jpg", "uploadTest3.csv", "uploadTest4.zip"}
 	for _, awsFile := range awsFiles {
-		url, err := testS3.GetPreSignedURL(http.MethodGet, awsFile, 300)
+		url, err := testS3.GetPreSignedURL(awsFile, 300)
 		if err != nil {
 			errMsg += err.Error() + "\n"
 			continue
