@@ -9,13 +9,13 @@ func TestHTTPGetJson(t *testing.T) {
 	url := "http://localhost:20080/user"
 	params := map[string]interface{}{"name": "张三"}
 
-	resp, err := HTTPGetJson(url, params)
+	result, err := HTTPGetJson(url, params)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	fmt.Println(*resp)
+	fmt.Println(*result)
 }
 
 func TestHTTPPostJson(t *testing.T) {
