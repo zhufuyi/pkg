@@ -57,6 +57,8 @@ func NewAwsS3(bucket string, basePath string, region string, credentialsFile str
 	switch "" {
 	case region:
 		return nil, errors.New("region value is empty")
+	case bucket:
+		return nil, errors.New("bucket value is empty")
 	case accessKeyID:
 		return nil, errors.New("accessKeyID value is empty")
 	case secretAccessKey:
@@ -191,6 +193,27 @@ func (a *AwsS3) GetPreSignedURL(awsFile string, expirySeconds int) (string, erro
 	url := generatePreSignedURL(a.Region, a.accessKeyID, a.secretAccessKey, input)
 
 	return url, nil
+}
+
+// WithBucketAndBasePath 切换新的S3存储桶和基础路径，复制新的s3对象，但不会影响原s3
+// 如果不填写bucket则使用默认值
+func (a *AwsS3) WithBucketAndBasePath(currentBasePath string, currentBucket ...string) *AwsS3 {
+	if currentBasePath != "" {
+		if currentBasePath[0] == '/' {
+			currentBasePath = strings.TrimLeft(currentBasePath, "/")
+		}
+		if currentBasePath != "" && currentBasePath[len(currentBasePath)-1] != '/' {
+			currentBasePath += "/"
+		}
+	}
+
+	currentS3 := *a
+	if len(currentBucket) == 1 && currentBucket[0] != "" {
+		currentS3.Bucket = currentBucket[0]
+	}
+	currentS3.BasePath = currentBasePath
+
+	return &currentS3
 }
 
 // -------------------------------------------------------------------------------------------------

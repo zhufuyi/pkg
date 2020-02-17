@@ -58,7 +58,7 @@ func TestUseS3(t *testing.T) {
 	}
 }
 
-func TestUploadFromFile(t *testing.T) {
+func TestAwsS3_UploadFromFile(t *testing.T) {
 	//localFile := "./uploadTest1.txt"
 	//localFile := "uploadTest2.jpg"
 	localFile := "uploadTest3.csv"
@@ -70,7 +70,7 @@ func TestUploadFromFile(t *testing.T) {
 	fmt.Println("upload success, url =", url)
 }
 
-func TestUploadFromReader(t *testing.T) {
+func TestAwsS3_UploadFromReader(t *testing.T) {
 	localFile := "./uploadTest4.zip"
 	f, err := os.Open(localFile)
 	if err != nil {
@@ -87,7 +87,7 @@ func TestUploadFromReader(t *testing.T) {
 	fmt.Println("upload success, url =", url)
 }
 
-func TestDownloadToFile(t *testing.T) {
+func TestAwsS3_DownloadToFile(t *testing.T) {
 	awsFile := "uploadTest1.txt"
 	localFile := "./download/" + awsFile
 	n, err := testS3.DownloadToFile(awsFile, localFile)
@@ -99,7 +99,7 @@ func TestDownloadToFile(t *testing.T) {
 	fmt.Println("download file success, size =", n)
 }
 
-func TestCheckFileIsExist(t *testing.T) {
+func TestAwsS3_CheckFileIsExist(t *testing.T) {
 	awsFile := "uploadTest1.zip"
 	err := testS3.CheckFileIsExist(awsFile)
 	if err != nil {
@@ -109,7 +109,7 @@ func TestCheckFileIsExist(t *testing.T) {
 	fmt.Println(awsFile, "is exist")
 }
 
-func TestDeleteFile(t *testing.T) {
+func TestAwsS3_DeleteFile(t *testing.T) {
 	awsFile := "uploadTest1.txt"
 	err := testS3.DeleteFile(awsFile)
 	if err != nil {
@@ -119,7 +119,7 @@ func TestDeleteFile(t *testing.T) {
 	fmt.Printf("delete file %s success.\n", awsFile)
 }
 
-func TestPreSignedURL(t *testing.T) {
+func TestAwsS3_GetPreSignedURL(t *testing.T) {
 	errMsg := ""
 	awsFiles := []string{"uploadTest1.txt", "uploadTest2.jpg", "uploadTest3.csv", "uploadTest4.zip"}
 	for _, awsFile := range awsFiles {
@@ -133,5 +133,29 @@ func TestPreSignedURL(t *testing.T) {
 
 	if errMsg != "" {
 		t.Error(errMsg)
+	}
+}
+
+func TestAwsS3_WithBucketPath(t *testing.T) {
+	currentS3 := testS3.WithBucketAndBasePath("/myPath/")
+	fmt.Println(testS3.Bucket, testS3.BasePath)
+	fmt.Println(currentS3.Bucket, currentS3.BasePath)
+	fmt.Println(testS3.S3, testS3.Session)
+	fmt.Println(currentS3.S3, currentS3.Session)
+
+	awsFile := "uploadTest1.txt"
+	err := testS3.CheckFileIsExist(awsFile)
+	if err != nil {
+		t.Error(err)
+	} else {
+		fmt.Println(awsFile, "is exist")
+	}
+
+	awsFile = "cluster-log-1.gz"
+	err = currentS3.WithBucketAndBasePath("/2019/04/05/", "dev-k8s-log").CheckFileIsExist(awsFile)
+	if err != nil {
+		t.Error(err)
+	} else {
+		fmt.Println(awsFile, "is exist")
 	}
 }
