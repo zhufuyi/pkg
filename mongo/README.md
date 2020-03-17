@@ -4,15 +4,17 @@
 
 <br>
 
-### 安装
+## 安装
 
 > go get -u github.com/zhufuyi/pkg/mongo
 
 <br>
 
-### 使用
+## 使用
 
 使用方式请看[示例](./demo)。
+
+<br>
 
 如果想新建对象，只需对模板批量修改名称，操作命令：
 
@@ -26,5 +28,3 @@ cd demo
 # 例如：./rename.sh ./ user demo
 # 注：(1)不要使用其它名称替代demo；(2)package名默认为module，如果不是放在module目录下，需要手动更改。
 ```
-
-<br>

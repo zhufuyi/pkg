@@ -6,7 +6,8 @@ import (
 )
 
 func TestHTTPGetJson(t *testing.T) {
-	url := "http://localhost:20080/user"
+	//url := "http://localhost:20080/user"
+	url := "https://www.baidu.com"
 	params := map[string]interface{}{"name": "张三"}
 
 	result, err := HTTPGetJson(url, params)

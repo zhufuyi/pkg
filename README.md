@@ -1,14 +1,15 @@
 ## golang 常用包
 
-- [logger日志](./logger)
-- [reds客户端](./redis)
-- [mysql客户端](./mysql)
-- [mongo客户端](./mongo)
-- [nats客户端](./nats)
-- [gin相关render](./render)
-- [http客户端](./gohttp)
-- [krand生成随机数和字符串](./krand)
 - [awss3 aws s3操作api](./awss3)
+- [cmd 在go程序执行命令或可执行文件](./cmd)
+- [gohttp http客户端](./gohttp)
+- [krand生成随机数和字符串](./krand)
+- [logger日志](./logger)
+- [mongo客户端](./mongo)
+- [mysql客户端](./mysql)
+- [nats客户端](./nats)
+- [reds客户端](./redis)
+- [render gin返回数据封装](./render)
 
 <br>
 

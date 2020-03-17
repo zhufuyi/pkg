@@ -20,7 +20,6 @@ func TestClient_PushString(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	time.Sleep(time.Millisecond * 100)
 }
 
 func TestClient_PushJSON(t *testing.T) {
@@ -34,5 +33,4 @@ func TestClient_PushJSON(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	time.Sleep(time.Millisecond * 100)
 }
