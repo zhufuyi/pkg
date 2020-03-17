@@ -42,8 +42,8 @@ func SetGbkToUtf8() {
 	codeType = "gbk"
 }
 
-// 把gbk编码转为utf8编码
-func gbkToUtf8(s []byte) []byte {
+// GbkToUtf8 把编码gbk转为utf8
+func GbkToUtf8(s []byte) []byte {
 	bs := []byte{}
 	err := error(nil)
 
@@ -70,8 +70,9 @@ func syncLog(logger *log.Logger, reader io.ReadCloser) {
 		}
 		if strNum > 0 {
 			outputByte := buf[:strNum]
+			// 如果命令执行返回的是gbk编码，需要转换为utf8后，才不会出现乱码
 			if codeType == "gbk" {
-				outputByte = gbkToUtf8(outputByte)
+				outputByte = GbkToUtf8(outputByte)
 			}
 			// 这里的切分是为了将整行的log提取出来，然后将不满整行和下次一同打印
 			outputSlice := strings.Split(string(outputByte), "\n")

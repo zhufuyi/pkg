@@ -11,10 +11,12 @@ import (
 	"sync/atomic"
 
 	"log"
+
+	"github.com/k0kubun/pp"
 )
 
 func init() {
-	err := NewRedisPool("192.168.8.200:6379", "123456")
+	err := NewRedisPool("192.168.101.88:6379", "123456")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,6 +104,27 @@ func TestSend_Flush_Receive(t *testing.T) {
 			t.Errorf("got %v, expected %v", string(actual), string(expect))
 		}
 	}
+}
+
+func TestTransaction(t *testing.T) {
+	rconn, err := GetConn()
+	if err != nil {
+		println(err)
+		return
+	}
+	defer rconn.Close()
+
+	// 使用send和do方法实现事务
+	rconn.Send("MULTI")
+	rconn.Send("INCR", "test-foo")
+	rconn.Send("INCR", "test-bar")
+	rconn.Send("HSET", "test-hset", "name", "李四", "age", 11, "gender", "male")
+	resp, err := rconn.Do("EXEC")
+	if err != nil {
+		t.Error(err)
+	}
+
+	pp.Print(resp)
 }
 
 // 并发写压测，调整maxActiveCount值大小，统计出redis能够承受并发写的最大值(也就是maxActiveCount的大小)
