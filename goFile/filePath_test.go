@@ -54,7 +54,7 @@ func TestListDirsAndFiles(t *testing.T) {
 }
 
 func TestDeleteDir(t *testing.T) {
-	vals, err := DeleteDir("C:\\Users\\zhuya\\AppData\\Local\\Temp\\testFiles")
+	vals, err := DeleteDir("C:\\Users\\zhuya\\AppData\\Local\\Temp\\strategies\\dirs")
 	if err != nil {
 		t.Error(err)
 	}

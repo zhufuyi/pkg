@@ -109,6 +109,11 @@ func DeleteDir(dirPath string) ([]string, error) {
 	var errStr string
 	var deleteFiles []string
 
+	// 禁止删除3级以下的文件夹和文件
+	if getLevel(dirPath) < 4 {
+		return deleteFiles, errors.New("you can not delete folders below level 4")
+	}
+
 	df, err := ListDirsAndFiles(dirPath)
 	if err != nil {
 		return deleteFiles, err
@@ -116,11 +121,9 @@ func DeleteDir(dirPath string) ([]string, error) {
 
 	files := df["files"]
 	dirs := df["dirs"]
+
+	// 删除文件
 	for _, file := range files {
-		// 禁止删除3级以下的文件
-		if getLevel(file) < 4 {
-			continue
-		}
 		err := os.RemoveAll(file)
 		if err != nil {
 			errStr += err.Error() + "/n"
@@ -129,18 +132,21 @@ func DeleteDir(dirPath string) ([]string, error) {
 		deleteFiles = append(deleteFiles, file)
 	}
 
+	// 删除目录
 	size := len(dirs)
 	for i := size - 1; i >= 0; i-- {
-		// 禁止删除3级以下的文件
-		if getLevel(dirs[i]) < 4 {
-			continue
-		}
 		err := os.RemoveAll(dirs[i])
 		if err != nil {
 			errStr += err.Error() + "/n"
 			continue
 		}
 		deleteFiles = append(deleteFiles, dirs[i])
+	}
+
+	// 删除指定目录
+	err = os.RemoveAll(dirPath)
+	if err != nil {
+		errStr += err.Error() + "/n"
 	}
 
 	if errStr != "" {
