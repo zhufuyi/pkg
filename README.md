@@ -2,6 +2,7 @@
 
 - [awss3 aws s3操作api](./awss3)
 - [cmd 在go程序执行命令或可执行文件](./cmd)
+- [gofile 文件处理](./gofile)
 - [gohttp http客户端](./gohttp)
 - [krand生成随机数和字符串](./krand)
 - [logger日志](./logger)
