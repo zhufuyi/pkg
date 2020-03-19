@@ -77,7 +77,12 @@ func Err(c *gin.Context, code int, msg ...string) {
 
 // Err400 无效参数
 func Err400(c *gin.Context) {
-	JSON(c, http.StatusBadRequest, "无效参数")
+	JSON(c, http.StatusBadRequest, "参数无效")
+}
+
+// Err400s 无效参数
+func Err400Msg(c *gin.Context, msg interface{}) {
+	JSON(c, http.StatusBadRequest, "参数无效, "+fmt.Sprint(msg))
 }
 
 // Err401 鉴权失败
