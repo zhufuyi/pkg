@@ -390,7 +390,31 @@ func HTTPGetJson(url string, params map[string]interface{}) (*JSONResponse, erro
 	}
 	defer resp.Body.Close()
 
-	return parseRespone(resp)
+	return parseResponse(resp)
+}
+
+// GetJSON get请求，返回自定义json格式
+func GetJSON(result interface{}, url string, params map[string]interface{}) error {
+	req := &Request{}
+	req.SetURL(url)
+	req.SetParams(params)
+
+	resp, err := req.GET()
+	if err != nil {
+		return fmt.Errorf("get request error, error=%s, req=%+v", err.Error(), *req)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("status code is not 200, StatusCode=%d", resp.StatusCode)
+	}
+
+	err = resp.BindJSON(result)
+	if err != nil {
+		return fmt.Errorf("json parsing error, error=%s, resp=%+v", err.Error(), *resp)
+	}
+
+	return nil
 }
 
 // HTTPPostJson post请求，返回是固定json格式
@@ -409,10 +433,38 @@ func HTTPPostJson(url string, body interface{}, params ...map[string]interface{}
 	}
 	defer resp.Body.Close()
 
-	return parseRespone(resp)
+	return parseResponse(resp)
 }
 
-func parseRespone(resp *Response) (*JSONResponse, error) {
+// PostJSON post请求，返回自定义json格式
+func PostJSON(result interface{}, url string, body interface{}, params ...map[string]interface{}) error {
+	req := &Request{}
+	req.SetURL(url) // url地址固定
+	req.SetContentType("application/json")
+	if len(params) > 0 {
+		req.SetParams(params[0])
+	}
+	req.SetJSONBody(body)
+
+	resp, err := req.POST()
+	if err != nil {
+		return fmt.Errorf("post请求失败, error=%s, req=%+v", err.Error(), *req)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("status code is not 200, StatusCode=%d", resp.StatusCode)
+	}
+
+	err = resp.BindJSON(result)
+	if err != nil {
+		return fmt.Errorf("json parsing error, error=%s, resp=%+v", err.Error(), *resp)
+	}
+
+	return nil
+}
+
+func parseResponse(resp *Response) (*JSONResponse, error) {
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("返回状态非200, StatusCode=%d", resp.StatusCode)
 	}

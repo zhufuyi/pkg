@@ -3,6 +3,8 @@ package gohttp
 import (
 	"fmt"
 	"testing"
+
+	"github.com/k0kubun/pp"
 )
 
 func TestHTTPGetJson(t *testing.T) {
@@ -17,6 +19,25 @@ func TestHTTPGetJson(t *testing.T) {
 	}
 
 	fmt.Println(*result)
+}
+
+func TestHTTPGet(t *testing.T) {
+	type Result struct {
+		Code int                 `json:"code"`
+		Msg  string              `json:"msg"`
+		Data map[string][]string `json:"data,omitempty"`
+	}
+
+	result := &Result{}
+	url := "http://xxx.com/router"
+
+	err := GetJSON(result, url, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	pp.Println(result)
 }
 
 func TestHTTPPostJson(t *testing.T) {
