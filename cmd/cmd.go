@@ -117,9 +117,10 @@ func Exec(command string, outType ...int) error {
 	logger := log.New(writer, "", log.LstdFlags)
 	oldFlags := logger.Flags()
 	if len(command) > 100 {
-		command = command[:100] + " ...... "
+		logger.Printf("run command: (%s)\n", command[:100] + " ...... ")
+	} else {
+		logger.Printf("run command: (%s)\n", command)
 	}
-	logger.Printf("run command: (%s)\n", command)
 	logger.SetFlags(0) // 关闭logger自身的格式，保证shell的输出和标准的log格式不冲突
 
 	// 兼容不同OS
