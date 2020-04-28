@@ -5,14 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -26,6 +27,11 @@ const (
 	AccessKeyIDFieldName = "aws_access_key_id"
 	// SecretAccessKeyFieldName aws配置文件credentials的访问密钥字段名称
 	SecretAccessKeyFieldName = "aws_secret_access_key"
+
+	// UploadMethod 预签名上传
+	UploadMethod = "put"
+	// DownloadMethod 预签名下载
+	DownloadMethod = "get"
 )
 
 // AwsS3 封装aws s3对象
@@ -176,27 +182,60 @@ func (a *AwsS3) DeleteFile(awsFile string) error {
 	return err
 }
 
-// GetPreSignedURL 获取访问s3资源的签名url，给第三方下载资源使用
-func (a *AwsS3) GetPreSignedURL(awsFile string, expirySeconds int) (string, error) {
-	// 判断object是否存在s3
-	err := a.CheckFileIsExist(awsFile)
+// 生成可以上传或下载的s3预签名url
+func (a *AwsS3) genPreSignedURL(method string, uri string, expiry time.Duration) (*string, time.Time, error) {
+	bucket, key, err := parseS3URI(uri)
+	if err != nil {
+		return nil, time.Now().UTC(), err
+	}
+
+	var req *request.Request
+	if method == "put" {
+		req, _ = a.S3.PutObjectRequest(&s3.PutObjectInput{
+			Bucket: bucket,
+			Key:    key,
+		})
+	} else if method == "get" {
+		req, _ = a.S3.GetObjectRequest(&s3.GetObjectInput{
+			Bucket: bucket,
+			Key:    key,
+		})
+	}
+
+	if req == nil {
+		return nil, time.Now().UTC(), errors.New("Unable to create a request")
+	}
+
+	s3url, err := req.Presign(expiry)
+	if err != nil {
+		return nil, time.Now().UTC(), err
+	}
+
+	return &s3url, time.Now().UTC().Add(expiry), nil
+}
+
+// GetPreSignedURL 获取访问s3资源的签名url，给第三方上传和下载资源使用
+func (a *AwsS3) GetPreSignedURL(method string, awsFile string, expirySeconds int) (string, error) {
+	if method != DownloadMethod && method != UploadMethod {
+		return "", errors.New("method does not exist, must use 'get' or 'put'")
+	}
+	urlStr := "s3://" + a.Bucket + "/" + a.BasePath + awsFile
+	// 默认1800秒
+	if expirySeconds <= 10 {
+		expirySeconds = 1800
+	}
+	expiry := time.Second * time.Duration(expirySeconds)
+
+	//s3Url, _, err := NewStorage(a.Session).genPreSignedURL(method, urlStr, expiry)
+	s3Url, _, err := a.genPreSignedURL(method, urlStr, expiry)
 	if err != nil {
 		return "", err
 	}
 
-	input := &preSignedInput{
-		Bucket:        a.Bucket,
-		ObjectKey:     a.BasePath + awsFile,
-		Method:        http.MethodGet,
-		ExpirySeconds: expirySeconds,
-	}
-	url := generatePreSignedURL(a.Region, a.accessKeyID, a.secretAccessKey, input)
-
-	return url, nil
+	return *s3Url, nil
 }
 
-// WithBucketAndBasePath 切换新的S3存储桶和基础路径，复制新的s3对象，但不会影响原s3
-// 如果不填写bucket则使用默认值
+// WithBucketAndBasePath 切换新的S3存储桶和基础路径，复制新的s3对象，但不会影响原s3，如果不填写bucket则使用默认值
 func (a *AwsS3) WithBucketAndBasePath(currentBasePath string, currentBucket ...string) *AwsS3 {
 	if currentBasePath != "" {
 		if currentBasePath[0] == '/' {
@@ -264,6 +303,17 @@ func getCredentialsValues(credentialsFile string) (string, string, error) {
 	}
 
 	return accessKeyID, secretAccessKey, nil
+}
+
+func parseS3URI(uri string) (*string, *string, error) {
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		return nil, nil, errors.New("Unable to parse S3 URL: " + uri)
+	}
+
+	bucket := parsed.Host
+	key := parsed.Path[1:]
+	return &bucket, &key, nil
 }
 
 // -------------------------------------------------------------------------------------------------

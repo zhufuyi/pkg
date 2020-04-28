@@ -10,7 +10,7 @@ var (
 	testS3 *AwsS3
 	err    error
 
-	bucket   = "myBucket"
+	bucket   = "mybucket"
 	basePath = "/test/"
 
 	region          = "ap-northeast-1"
@@ -42,20 +42,6 @@ func TestNewAwsS3(t *testing.T) {
 	//	return
 	//}
 	//pp.Println(as3)
-}
-
-func TestUseS3(t *testing.T) {
-	err := InitS3(bucket, basePath, region, credentialsFile)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	err = GetS3().CheckFileIsExist("uploadTest1.txt")
-	if err != nil {
-		t.Error(err)
-		return
-	}
 }
 
 func TestAwsS3_UploadFromFile(t *testing.T) {
@@ -100,7 +86,7 @@ func TestAwsS3_DownloadToFile(t *testing.T) {
 }
 
 func TestAwsS3_CheckFileIsExist(t *testing.T) {
-	awsFile := "uploadTest1.zip"
+	awsFile := "uploadTest1.txt"
 	err := testS3.CheckFileIsExist(awsFile)
 	if err != nil {
 		t.Error(err)
@@ -123,7 +109,7 @@ func TestAwsS3_GetPreSignedURL(t *testing.T) {
 	errMsg := ""
 	awsFiles := []string{"uploadTest1.txt", "uploadTest2.jpg", "uploadTest3.csv", "uploadTest4.zip"}
 	for _, awsFile := range awsFiles {
-		url, err := testS3.GetPreSignedURL(awsFile, 300)
+		url, err := testS3.GetPreSignedURL(DownloadMethod, awsFile, 1000)
 		if err != nil {
 			errMsg += err.Error() + "\n"
 			continue
