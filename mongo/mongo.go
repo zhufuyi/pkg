@@ -11,11 +11,42 @@ import (
 	"github.com/zhufuyi/pkg/logger"
 )
 
-var session *mgo.Session
-var dbName string
+var (
+	session *mgo.Session
+	dbName  string
 
-// ErrNotFound 错误
-var ErrNotFound = mgo.ErrNotFound
+	// ErrNotFound 错误
+	ErrNotFound = mgo.ErrNotFound
+)
+
+// -------------------------------------------------------------------------------------------------
+
+// InitMongo 初始化mongodb，如果不指定数据库，默认数据库名为test
+func InitMongo(url string) (*mgo.Session, error) {
+	var err error
+	ses, err := mgo.Dial(url)
+	if err != nil {
+		return ses, err
+	}
+
+	dbName = getDatabaseName(url)
+
+	ses.SetMode(mgo.Monotonic, true)
+	ses.SetPoolLimit(1024)
+
+	return ses, ses.Ping()
+}
+
+// Clone 获取新的session，使用前先调用函数InitializeMongodb初始化session，否则抛出异常
+func Clone(ses *mgo.Session) Sessioner {
+	if ses == nil {
+		panic("session is nil, go to connect mongodb first, eg: mongo.InitMongo(url)")
+	}
+
+	return &DefaultSession{newSession: ses.Clone()}
+}
+
+// -------------------------------------------------------------------------------------------------
 
 // GetSession 获取新的session，使用前先调用函数InitializeMongodb初始化session，否则抛出异常
 func GetSession() Sessioner {
@@ -46,21 +77,7 @@ func InitializeMongodb(url string) error {
 	return session.Ping()
 }
 
-// InitMongo 初始化mongodb，如果不指定数据库，默认数据库名为test
-func InitMongo(url string) (*mgo.Session, error) {
-	var err error
-	ses, err := mgo.Dial(url)
-	if err != nil {
-		return ses, err
-	}
-
-	dbName = getDatabaseName(url)
-
-	ses.SetMode(mgo.Monotonic, true)
-	ses.SetPoolLimit(1024)
-
-	return ses, ses.Ping()
-}
+// -------------------------------------------------------------------------------------------------
 
 func getDatabaseName(url string) string {
 	url = strings.Trim(url, "/")

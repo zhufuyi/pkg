@@ -31,6 +31,25 @@ func init() {
 	}
 }
 
+func TestClone(t *testing.T) {
+	ses, err := InitMongo(server)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	mconn := Clone(ses)
+	defer mconn.Close()
+
+	n, err := mconn.Count(testDataCollection, bson.M{"age": 12})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	fmt.Println(n)
+}
+
 // 测试插入和查找
 func TestInsertAndFind(t *testing.T) {
 	mconn := GetSession()
