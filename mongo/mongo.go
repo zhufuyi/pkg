@@ -46,6 +46,22 @@ func InitializeMongodb(url string) error {
 	return session.Ping()
 }
 
+// InitMongo 初始化mongodb，如果不指定数据库，默认数据库名为test
+func InitMongo(url string) (*mgo.Session, error) {
+	var err error
+	ses, err := mgo.Dial(url)
+	if err != nil {
+		return ses, err
+	}
+
+	dbName = getDatabaseName(url)
+
+	ses.SetMode(mgo.Monotonic, true)
+	ses.SetPoolLimit(1024)
+
+	return ses, ses.Ping()
+}
+
 func getDatabaseName(url string) string {
 	url = strings.Trim(url, "/")
 

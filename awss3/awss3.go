@@ -226,7 +226,6 @@ func (a *AwsS3) GetPreSignedURL(method string, awsFile string, expirySeconds int
 	}
 	expiry := time.Second * time.Duration(expirySeconds)
 
-	//s3Url, _, err := NewStorage(a.Session).genPreSignedURL(method, urlStr, expiry)
 	s3Url, _, err := a.genPreSignedURL(method, urlStr, expiry)
 	if err != nil {
 		return "", err
