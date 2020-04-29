@@ -12,7 +12,19 @@ import (
 	"github.com/globalsign/mgo/bson"
 )
 
-var server = "mongodb://vison:123456@192.168.8.200:27017/crawler"
+var (
+	server = "mongodb://vison:123456@192.168.8.200:27017/test1"
+	srcURL = "mongodb://vison:123456@192.168.8.200:27017/test2"
+	dstURL = "mongodb://vison:123456@192.168.8.200:27017/test3"
+
+	srcDbName string
+	dstDbName string
+
+	srcSes *mgo.Session
+	dstSes *mgo.Session
+
+	err error
+)
 
 const testDataCollection = "testData"
 
@@ -31,14 +43,58 @@ func init() {
 	}
 }
 
-func TestClone(t *testing.T) {
-	ses, err := InitMongo(server)
+func TestSingleInit(t *testing.T) {
+	mconn := GetSession()
+	defer mconn.Close()
+
+	count, err := mconn.Count(testDataCollection, bson.M{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println("count", count)
+}
+
+func TestMultiInit(t *testing.T) {
+	srcDbName, srcSes, err = InitMongo(srcURL)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	mconn := Clone(ses)
+	dstDbName, dstSes, err = InitMongo(dstURL)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	mconn := Clone(srcDbName, srcSes)
+	defer mconn.Close()
+	nSrc, err := mconn.Count(testDataCollection, bson.M{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println("src", nSrc)
+
+	mconn = Clone(dstDbName, dstSes)
+	defer mconn.Close()
+	nDst, err := mconn.Count(testDataCollection, bson.M{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println("dst", nDst)
+}
+
+func TestClone(t *testing.T) {
+	name, ses, err := InitMongo(server)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	mconn := Clone(name, ses)
 	defer mconn.Close()
 
 	n, err := mconn.Count(testDataCollection, bson.M{"age": 12})
@@ -86,7 +142,7 @@ func TestInsertAndFind(t *testing.T) {
 		return
 	}
 	if len(tds) > 0 && tds[0].Age != expected.Age {
-		t.Errorf("got %s, expected %s\n", tds[0].Age, expected.Age)
+		t.Errorf("got %d, expected %d\n", tds[0].Age, expected.Age)
 	}
 }
 
