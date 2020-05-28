@@ -80,7 +80,7 @@ func Err400(c *gin.Context) {
 	JSON(c, http.StatusBadRequest, "参数无效")
 }
 
-// Err400s 无效参数
+// Err400Msg 无效参数
 func Err400Msg(c *gin.Context, msg interface{}) {
 	JSON(c, http.StatusBadRequest, "参数无效, "+fmt.Sprint(msg))
 }
@@ -139,7 +139,7 @@ func Err400WithTrace(c *gin.Context, errMsg interface{}) {
 	Err400(c)
 }
 
-// Err401 鉴权失败
+// Err401WithTrace 鉴权失败
 func Err401WithTrace(c *gin.Context, errMsg interface{}) {
 	c.Set("code", http.StatusUnauthorized)
 	c.Set("error", errMsg)
@@ -160,7 +160,7 @@ func Err404WithTrace(c *gin.Context, errMsg interface{}) {
 	Err404(c)
 }
 
-// Err408 请求超时
+// Err408WithTrace 请求超时
 func Err408WithTrace(c *gin.Context, errMsg interface{}) {
 	c.Set("code", http.StatusRequestTimeout)
 	c.Set("error", fmt.Sprintf("time out, %+v", errMsg))
@@ -188,7 +188,8 @@ func Err500WithTrace(c *gin.Context, errMsg interface{}, msg interface{}) {
 	Err500(c, msg)
 }
 
-func RespondJson(c *gin.Context, code int, msg ...interface{}) {
+// RespondJSON 根据code返回对应结果
+func RespondJSON(c *gin.Context, code int, msg ...interface{}) {
 	switch code {
 	case http.StatusOK:
 		OK(c)
@@ -211,7 +212,8 @@ func RespondJson(c *gin.Context, code int, msg ...interface{}) {
 	}
 }
 
-func RespondJsonWithTrace(c *gin.Context, code int, msgs ...interface{}) {
+// RespondJSONWithTrace http返回根据json信息
+func RespondJSONWithTrace(c *gin.Context, code int, msgs ...interface{}) {
 	var errMsg, msg interface{}
 	if len(msgs) == 1 {
 		errMsg = msgs[0]

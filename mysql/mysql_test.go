@@ -10,7 +10,7 @@ import (
 	"github.com/zhufuyi/pkg/logger"
 )
 
-var addr = "root:123456@(192.168.101.88:3306)/account?charset=utf8mb4&parseTime=True&loc=Local"
+var addr = "root:123456@(192.168.101.88:3306)/rt_market?charset=utf8mb4&parseTime=True&loc=Local"
 
 type User struct {
 	Model
@@ -23,8 +23,13 @@ type User struct {
 func init() {
 	AddTables(&User{}) // 把所有表对应的对象添加过来
 
-	//RegisterTLS("./ca.pem") // 只使用ca.pem认证，配置文件设置了require_secure_transport = ON情况下使用
-	//RegisterTLS("./ca.pem", "./client-key.pem", "./client-cert.pem") // mysql设置用户强制要求x509认证时使用
+	// 只使用ca.pem认证，配置文件的[mysqld]设置了require_secure_transport = ON情况下使用
+	//RegisterTLS("./ca.pem")
+
+	// mysql设置用户强制要求x509认证时使用，例如：create user 'vison'@'%' identified by '123456' require X509;
+	//RegisterTLS("./ca.pem", "./client-key.pem", "./client-cert.pem")
+
+	// 默认的ca.pem, client-key.pem, client-cert.pem 三个文件都是在mysql存放数据目录下
 
 	err := Init(addr, true)
 	if err != nil {

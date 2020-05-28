@@ -47,7 +47,8 @@ func initTrace(serviceName string, jaegerHostPort string) {
 	logger.Info("init jaeger trace success.")
 }
 
-func HttpTrace(IsEnable bool, appName string, addr string) gin.HandlerFunc {
+// HTTPTrace http 跟踪
+func HTTPTrace(IsEnable bool, appName string, addr string) gin.HandlerFunc {
 	var parentSpan opentracing.Span
 
 	return func(c *gin.Context) {

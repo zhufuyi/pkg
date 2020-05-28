@@ -6,16 +6,20 @@ import (
 )
 
 const (
-	R_NUM   = 1 // 纯数字
-	R_UPPER = 2 // 大写字母
-	R_LOWER = 4 // 小写字母
-	R_All   = 7 // 数字、大小写字母
+	// R_NUM 纯数字
+	R_NUM = 1
+	//R_UPPER 大写字母
+	R_UPPER = 2
+	//R_LOWER 小写字母
+	R_LOWER = 4
+	//R_All 数字、大小写字母
+	R_All = 7
 )
 
 var (
-	r        = rand.New(rand.NewSource(time.Now().UnixNano()))
-	RefSlice = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
-	kinds    = [][]byte{RefSlice[0:10], RefSlice[10:36], RefSlice[0:36], RefSlice[36:62], RefSlice[36:], RefSlice[10:62], RefSlice[0:62]}
+	r         = rand.New(rand.NewSource(time.Now().UnixNano()))
+	refSlices = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+	kinds     = [][]byte{refSlices[0:10], refSlices[10:36], refSlices[0:36], refSlices[36:62], refSlices[36:], refSlices[10:62], refSlices[0:62]}
 )
 
 // String 生成多种类型的任意长度的随机字符串，如果参数size为空，默认长度为6

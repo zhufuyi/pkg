@@ -12,7 +12,7 @@ func TestHTTPGetJson(t *testing.T) {
 	url := "https://www.baidu.com"
 	params := map[string]interface{}{"name": "张三"}
 
-	result, err := HTTPGetJson(url, params)
+	result, err := HTTPGetJSON(url, params)
 	if err != nil {
 		t.Error(err)
 		return
@@ -47,7 +47,7 @@ func TestHTTPPostJson(t *testing.T) {
 		Password string `json:"password"`
 	}{"张三", "123456"}
 
-	resp, err := HTTPPostJson(url, &body)
+	resp, err := HTTPPostJSON(url, &body)
 	if err != nil {
 		t.Error(err)
 		return

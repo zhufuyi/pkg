@@ -129,7 +129,7 @@ func (req *Request) SetJaegerTrace(traceID string, ginKeys map[string]interface{
 
 	req.jaegerTrace = func() error {
 		if vTracer == nil {
-			return errors.New("tracer is nil, maybe it hasn't been initialized yet.")
+			return errors.New("tracer is nil, maybe it hasn't been initialized yet")
 		}
 		tracer := vTracer.(opentracing.Tracer)
 
@@ -378,8 +378,8 @@ type JSONResponse struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
-// HTTPGetJson get请求，返回是固定json格式
-func HTTPGetJson(url string, params map[string]interface{}) (*JSONResponse, error) {
+// HTTPGetJSON get请求，返回是固定json格式
+func HTTPGetJSON(url string, params map[string]interface{}) (*JSONResponse, error) {
 	req := &Request{}
 	req.SetURL(url)
 	req.SetParams(params)
@@ -417,8 +417,8 @@ func GetJSON(result interface{}, url string, params map[string]interface{}) erro
 	return nil
 }
 
-// HTTPPostJson post请求，返回是固定json格式
-func HTTPPostJson(url string, body interface{}, params ...map[string]interface{}) (*JSONResponse, error) {
+// HTTPPostJSON post请求，返回是固定json格式
+func HTTPPostJSON(url string, body interface{}, params ...map[string]interface{}) (*JSONResponse, error) {
 	req := &Request{}
 	req.SetURL(url) // url地址固定
 	req.SetContentType("application/json")

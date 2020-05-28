@@ -31,9 +31,9 @@ func Init(natsAddr []string) error {
 }
 
 // Close 关闭
-func (n *Client) Close() {
-	if n.Conn != nil {
-		n.Conn.Close()
+func (c *Client) Close() {
+	if c.Conn != nil {
+		c.Conn.Close()
 	}
 }
 

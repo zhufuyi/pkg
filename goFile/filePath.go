@@ -82,7 +82,7 @@ func walkDir2(dirPath string, allDirs *[]string, allFiles *[]string) error {
 	return nil
 }
 
-// ListFiles 遍历指定目录下所有子目录文件，返回文件的绝对路径
+// ListDirsAndFiles 遍历指定目录下所有子目录文件，返回文件的绝对路径
 func ListDirsAndFiles(dirPath string) (map[string][]string, error) {
 	df := make(map[string][]string, 2)
 
