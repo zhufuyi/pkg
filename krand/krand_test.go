@@ -54,31 +54,29 @@ func TestFloat64(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	//fmt.Printf("%p, %s\n", kinds, kinds)
-
 	// 随机纯数字
 	fmt.Printf("%s\n", String(R_NUM))
-	fmt.Printf("%s\n", String(R_NUM, 100))
+	fmt.Printf("%s\n", Bytes(R_NUM, 32))
 
 	// 随机大写字母
 	fmt.Printf("%s\n", String(R_UPPER))
-	fmt.Printf("%s\n", String(R_UPPER, 100))
+	fmt.Printf("%s\n", Bytes(R_UPPER, 32))
 
 	// 随机小写字母
 	fmt.Printf("%s\n", String(R_LOWER))
-	fmt.Printf("%s\n", String(R_LOWER, 100))
+	fmt.Printf("%s\n", Bytes(R_LOWER, 32))
 
 	// 随机数字、大写字母
 	fmt.Printf("%s\n", String(R_NUM|R_UPPER))
-	fmt.Printf("%s\n", String(R_NUM|R_UPPER, 100))
+	fmt.Printf("%s\n", Bytes(R_NUM|R_UPPER, 32))
 
 	// 随机数字、小写字母
 	fmt.Printf("%s\n", String(R_NUM|R_LOWER))
-	fmt.Printf("%s\n", String(R_NUM|R_LOWER, 100))
+	fmt.Printf("%s\n", Bytes(R_NUM|R_LOWER, 32))
 
 	// 随机数字、大写字母、小写字母
 	fmt.Printf("%s\n", String(R_All))
-	fmt.Printf("%s\n", String(R_All, 100))
+	fmt.Printf("%s\n", Bytes(R_All, 32))
 }
 
 func BenchmarkString_NUM_6(b *testing.B) {

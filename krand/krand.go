@@ -24,7 +24,13 @@ var (
 
 // String 生成多种类型的任意长度的随机字符串，如果参数size为空，默认长度为6
 // example：String(R_ALL), String(R_ALL, 16), String(R_NUM|R_LOWER, 16)
-func String(kind int, size ...int) []byte {
+func String(kind int, size ...int) string {
+	return string(Bytes(kind, size...))
+}
+
+// Bytes 生成多种类型的任意长度的随机字符串，如果参数size为空，默认长度为6
+// example：Bytes(R_ALL), Bytes(R_ALL, 16), Bytes(R_NUM|R_LOWER, 16)
+func Bytes(kind int, size ...int) []byte {
 	if kind > 7 || kind < 1 {
 		kind = R_All
 	}
@@ -62,7 +68,8 @@ func Int(rangeSize ...int) int {
 	}
 }
 
-// Float64 生成指定范围大小随机浮点数，兼容Float64(dpLength)，Float64(dpLength,max)，Float64(dpLength, min, max)，Float64(dpLength, max, min)4种方式，注：随机数包括min和max
+// Float64 生成指定范围大小随机浮点数，
+// 支持4种传参方式：Float64(dpLength)，Float64(dpLength,max)，Float64(dpLength, min, max)，Float64(dpLength, max, min)，注：随机数包括min和max
 func Float64(dpLength int, rangeSize ...int) float64 {
 	dp := 0.0
 	if dpLength > 0 {
