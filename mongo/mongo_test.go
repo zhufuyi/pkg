@@ -10,10 +10,13 @@ import (
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/k0kubun/pp"
+	"github.com/zhufuyi/pkg/krand"
 )
 
 var (
-	server = "mongodb://vison:123456@192.168.8.200:27017/test1"
+	server = "mongodb://collectdata:123456@192.168.101.88:27018/collectdata"
+	//server = "mongodb://vison:123456@192.168.8.200:27017/test1"
 	srcURL = "mongodb://vison:123456@192.168.8.200:27017/test2"
 	dstURL = "mongodb://vison:123456@192.168.8.200:27017/test3"
 
@@ -295,10 +298,57 @@ func TestBenchInsert(t *testing.T) {
 	fmt.Printf("\nwrite success count = %d, time = %s\n", successCount, time.Now().Sub(start))
 }
 
+type UserInfo struct {
+	PublicFields `bson:",inline"` // 公共字段，id和时间
+
+	Name   string `bson:"name"`
+	Age    int    `bson:"age"`
+	Weight int    `bson:"weight"`
+}
+
+// 测试并发插入数据
+func TestBenchInsert2(t *testing.T) {
+	var successCount int32
+	var wg sync.WaitGroup
+	var total = 5000
+	var start = time.Now()
+
+	for i := 0; i < total; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			mconn := GetSession()
+			defer mconn.Close()
+
+			ui := &UserInfo{
+				Name:   fmt.Sprintf("zhansan_%d", i),
+				Age:    krand.Int(50) + 10,
+				Weight: krand.Int(50) + 40,
+			}
+			ui.SetFieldsValue()
+
+			err := mconn.Insert("user", ui)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			atomic.AddInt32(&successCount, 1)
+		}(i)
+	}
+
+	wg.Wait()
+
+	fmt.Printf("\nwrite success count = %d, total = %d, time = %s\n", successCount, total, time.Now().Sub(start))
+	// write success count = 5000, total = 5000, time = 606.3412ms
+}
+
 // 测试并发读取数据，建立索引前后并发查询速度相差10倍左右
 func TestBenchRead(t *testing.T) {
 	var successCount int32
 	var wg sync.WaitGroup
+	var total = 5000
 	var start = time.Now()
 
 	for i := 0; i < 5000; i++ {
@@ -309,15 +359,15 @@ func TestBenchRead(t *testing.T) {
 			mconn := GetSession()
 			defer mconn.Close()
 
-			selector := bson.M{"name": fmt.Sprintf("zhansan_%d", i)}
-			td := &testData{}
-			err := mconn.FindOne(testDataCollection, td, selector, nil)
+			query := bson.M{"name": fmt.Sprintf("zhansan_%d", i)}
+			ui := &UserInfo{}
+			err := mconn.FindOne("user", ui, query, nil)
 			if err != nil {
 				t.Error(err)
 				return
 			}
-			if td.Age < 1 {
-				t.Errorf("got %d, expected >0", td.Age)
+			if ui.Age < 1 {
+				t.Errorf("got %d, expected >0", ui.Age)
 				return
 			}
 
@@ -327,10 +377,61 @@ func TestBenchRead(t *testing.T) {
 
 	wg.Wait()
 
-	fmt.Printf("\nfind success count = %d, time = %s\n", successCount, time.Now().Sub(start))
+	fmt.Printf("\nfind success count = %d, total = %d, time = %s\n", successCount, total, time.Now().Sub(start))
+	// find success count = 5000, total = 5000, time = 747.966ms
 }
 
 func randAge() int {
 	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(99) + 1
+}
+
+type result struct {
+	//ID    bson.ObjectId `json:"_id" bson:"_id"`
+	//Total float64       `json:"total" bson:"total"`
+	Price    float64 `json:"price" bson:"price"`       // 成交价格
+	Quantity float64 `json:"quantity" bson:"quantity"` // 买卖数量
+	Volume   float64 `json:"volume" bson:"volume"`     // 成交额
+}
+
+func TestDefaultSession_Run(t *testing.T) {
+	//	cmd := `
+	//db.gridTradeRecord.aggregate([
+	//    {
+	//        $match:{"gsid":ObjectId("5f3a2816c7ef825a00e96578"),"side":"sell","orderState":"filled"}
+	//    },
+	//    {
+	//        $group: {
+	//            _id: "$gsid",
+	//            total: { $sum: "$quantity"}
+	//        },
+	//    }
+	//])
+	//`
+
+	cmd2 := bson.M{"aggregate": bson.D{
+		{"$match", bson.M{
+			"gsid":       bson.ObjectIdHex("5f3a2816c7ef825a00e96578"),
+			"side":       "sell",
+			"orderState": "filled",
+		}},
+		{"$group", bson.M{
+			"_id":   "$gsid",
+			"total": bson.M{"$sum": "$quantity"},
+		}},
+	},
+	}
+
+	res := &result{}
+
+	mconn := GetSession()
+	defer mconn.Close()
+
+	err := mconn.Run(cmd2, res)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	pp.Println(res)
 }

@@ -109,6 +109,7 @@ type Sessioner interface {
 	FindAndModify(collection string, result interface{}, selector bson.M, update bson.M) error
 	EnsureIndexKey(collection string, indexKeys ...string) error
 	EnsureIndex(collection string, index mgo.Index) error
+	Run(cmd interface{}, result interface{}) error
 }
 
 // DefaultSession 默认mgo的会话
@@ -127,6 +128,11 @@ func (d *DefaultSession) WithLog() Sessioner {
 // Close 关闭连接
 func (d *DefaultSession) Close() {
 	d.newSession.Close()
+}
+
+// Close 关闭连接
+func (d *DefaultSession) Run(cmd interface{}, result interface{}) error {
+	return d.newSession.Run(cmd, result)
 }
 
 // Insert 插入一条新数据
