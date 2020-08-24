@@ -39,27 +39,22 @@ type Clienter interface {
 	EnsureUniques(collection string, uniques []string) error
 	Aggregate(collection string, matchStage primitive.D, groupStage primitive.D) ([]bson.M, error)
 	Transaction(collection string, callback func(sessCtx context.Context) (interface{}, error)) (interface{}, error)
-	GetQClient(collection string) *qmgo.QmgoClient
+	GetQmgoClient(collection string) *qmgo.QmgoClient
 }
 
-// GetCli 获取新的session，结合InitializeMongodb使用，使用前先调用函数InitializeMongodb初始化session，否则抛出异常
+// GetCli 获取新的session，使用前先调用函数InitToGlobal，否则抛出异常
 func GetCli() Clienter {
 	if defaultClient == nil {
 		panic("mongodb session is nil, go to connect mongodb first, eg: mongo.InitToGlobal(uri)")
 	}
-
-	return defaultClient // 并发时共用同一个socket，可能会造成goroutine的等待
-	//return &DefaultClient{qmgoClient: session.Copy()} // 复制一个新的session，必须手动close，经过并发压测，性能不如session.Clone()好
+	return &DefaultClient{
+		ctx:      defaultClient.ctx,
+		mdbName:  defaultClient.mdbName,
+		cli:      defaultClient.cli,
+		printLog: defaultClient.printLog,
+	}
+	//return defaultClient
 }
-
-// Clone 获取新的session，使用前先调用函数InitializeMongodb初始化session，否则抛出异常
-//func Clone(mdbName string, ses *mgo.Session) Clienter {
-//	if ses == nil {
-//		panic("session is nil, go to connect mongodb first, eg: mongo.InitMongo(uri)")
-//	}
-//
-//	return &DefaultClient{mdbName: mdbName, qmgoClient: ses.Clone()}
-//}
 
 // InitToGlobal 初始化mongodb，全局使用，只适用对单个mongodb操作，如果不指定数据库，默认数据库名为test
 // 		形式一：localhost 或 localhost:27017
@@ -106,11 +101,10 @@ func Init(url string) (string, Clienter, error) {
 
 // DefaultClient mgo的客户端对象
 type DefaultClient struct {
-	ctx     context.Context // 上下文
-	mdbName string          // 数据库名称
-	cli     *qmgo.Client    // 客户端
-	//db       *qmgo.Database
-	printLog bool // 是否打印执行命令信息
+	ctx      context.Context // 上下文
+	mdbName  string          // 数据库名称
+	cli      *qmgo.Client    // 客户端
+	printLog bool            // 是否打印执行命令信息
 }
 
 // WithLog 打印执行命令
@@ -530,7 +524,7 @@ func (d *DefaultClient) Aggregate(collection string, matchStage primitive.D, gro
 	return showsWithInfo, nil
 }
 
-func (d *DefaultClient) GetQClient(collection string) *qmgo.QmgoClient {
+func (d *DefaultClient) GetQmgoClient(collection string) *qmgo.QmgoClient {
 	db := d.cli.Database(d.mdbName)
 	coll := db.Collection(collection)
 	cli := &qmgo.QmgoClient{

@@ -1,13 +1,12 @@
 package qmgo
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"context"
 
 	"github.com/k0kubun/pp"
 	"github.com/zhufuyi/pkg/krand"
@@ -283,7 +282,7 @@ func TestDefaultClient_Aggregate(t *testing.T) {
 }
 
 func TestDefaultClient_Transaction(t *testing.T) {
-	cli := GetCli().GetQClient(collectionName)
+	cli := GetCli().GetQmgoClient(collectionName)
 
 	callback := func(sessCtx context.Context) (interface{}, error) {
 		ui := &UserInfo{
@@ -350,7 +349,7 @@ func TestBenchInsert(t *testing.T) {
 	// write success count = 5000, total =5000, time = 1.1688409s
 }
 
-// 测试并发读取数据，建立索引前后并发查询速度相差10倍左右
+// 测试并发读取数据
 func TestBenchRead(t *testing.T) {
 	var successCount int32
 	var wg sync.WaitGroup
@@ -382,5 +381,5 @@ func TestBenchRead(t *testing.T) {
 	wg.Wait()
 
 	fmt.Printf("\nfind success count = %d, total = %d, time = %s\n", successCount, total, time.Now().Sub(start))
-	// find success count = 5000, total = 5000, time = 1.6625511s
+	// find success count = 5000, total = 5000, time = 1.1190005s
 }
