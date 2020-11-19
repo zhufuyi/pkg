@@ -9,11 +9,12 @@
 
 ## 安装
 
-> go get -u github.com/zhufuyi/pkg/cmd
+> go get -u github.com/zhufuyi/pkg/gobash
 
 <br>
 
 ## 使用
 
-使用方式请看[test文件](./cmd_test.go)。
+使用方式请看[test文件1](gobash_test.go)，[test文件2](cmd/cmd_test.go)。
+
 
