@@ -1,11 +1,10 @@
 package render
 
 import (
-	"monitor-api/pkg/errcode"
-	"monitor-api/pkg/gohttp"
-	"monitor-api/pkg/logger"
-
 	"github.com/gin-gonic/gin"
+	"github.com/zhufuyi/pkg/errcode"
+	"github.com/zhufuyi/pkg/gohttp"
+	"github.com/zhufuyi/pkg/logger"
 )
 
 // AuthResp 鉴权返回值
