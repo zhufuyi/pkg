@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"monitor-api/pkg/errcode"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,7 @@ func writeJSON(c *gin.Context, code int, res interface{}) {
 	}
 }
 
-// JSON 输出JSONResponse
+// JSON 输出JSONResponse，只取第一项返回
 func JSON(c *gin.Context, code int, msg string, data ...interface{}) {
 	resp := JSONResponse{Code: code}
 
@@ -242,4 +243,14 @@ func RespondJSONWithTrace(c *gin.Context, code int, msgs ...interface{}) {
 	case http.StatusInternalServerError:
 		Err500WithTrace(c, errMsg, msg)
 	}
+}
+
+// Success 正确
+func Success(c *gin.Context, data ...interface{}) {
+	JSON(c, 0, "ok", data...)
+}
+
+// Error 错误
+func Error(c *gin.Context, err *errcode.Error, data ...interface{}) {
+	JSON(c, err.Code(), err.Msg(), data...)
 }
