@@ -2,12 +2,12 @@ package render
 
 import (
 	"fmt"
-	"monitor-api/pkg/errcode"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	"github.com/json-iterator/go"
+	"github.com/zhufuyi/pkg/errcode"
 )
 
 // JSONResponse 输出格式
