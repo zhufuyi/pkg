@@ -13,7 +13,7 @@ func init() {
 		accessToken = "9146327e87b5232ceccaab36d7858f327960a335e0798920eaca8a6cb4c4f5f1"
 		secret      = "SEC153e828c1294afd15771cbe23136f92e81351b5773c0842b6dd002ed520b561e"
 	)
-	InitDingTalk([]TokenSecret{{name, accessToken, secret}})
+	Init([]TokenSecret{{name, accessToken, secret}})
 }
 
 func TestSendTextMessage(t *testing.T) {
@@ -106,7 +106,7 @@ func TestCheckFrequency(t *testing.T) {
 }
 
 func TestInitDingTalk(t *testing.T) {
-	InitDingTalk([]TokenSecret{
+	Init([]TokenSecret{
 		{"robot1", "token1", "secret1"},
 		{"robot2", "token2", "secret2"},
 		{"robot3", "token3", "secret3"},
@@ -124,7 +124,7 @@ func TestInitDingTalk(t *testing.T) {
 }
 
 func TestConcurrentGet(t *testing.T) {
-	InitDingTalk([]TokenSecret{
+	Init([]TokenSecret{
 		{"robot1", "token1", "secret1"},
 		{"robot2", "token2", "secret2"},
 		{"robot3", "token3", "secret3"},
@@ -152,7 +152,7 @@ func TestConcurrentGet(t *testing.T) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	InitDingTalk([]TokenSecret{
+	Init([]TokenSecret{
 		{"robot1", "token1", "secret1"},
 		{"robot2", "token2", "secret2"},
 		{"robot3", "token3", "secret3"},

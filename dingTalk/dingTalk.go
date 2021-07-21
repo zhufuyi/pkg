@@ -16,9 +16,9 @@ const (
 
 //TokenSecret 钉钉机器人的信息
 type TokenSecret struct {
-	Name        string // 机器人名称
-	AccessToken string // token
-	Secret      string // 密钥
+	Name   string // 机器人名称
+	Token  string // token
+	Secret string // 密钥
 }
 
 // Client 钉钉客户端
@@ -27,21 +27,41 @@ type Client struct {
 	names        []string                        // 机器人名称
 	clients      map[string]*dingtalk.Client     // 机器人名称对应的客户端
 	timestamps   map[string]*[limitFrequency]int // 机器人对应的发送时刻表，用来判断20次/分钟限制
-	mutex        *sync.Mutex                     // 锁
+	mutex        *sync.Mutex                     // 互斥锁
 }
 
 var client *Client
 
-// InitDingTalk 初始化钉钉客户端
-func InitDingTalk(tss []TokenSecret) {
-	var robotNames []string
-	var robotClients = make(map[string]*dingtalk.Client)
-	var tts = make(map[string]*[limitFrequency]int)
+// Init 初始化钉钉客户端
+func Init(tss []TokenSecret) int {
+	var (
+		robotNames   []string
+		robotClients = make(map[string]*dingtalk.Client)
+		tts          = make(map[string]*[limitFrequency]int)
+		count        = 0
+
+		// 去重map
+		l                   = len(tss)
+		checkDuplicateName  = make(map[string]struct{}, l)
+		checkDuplicateToken = make(map[string]struct{}, l)
+	)
 
 	for _, ts := range tss {
+		if _, ok := checkDuplicateName[ts.Name]; ok {
+			continue
+		} else {
+			checkDuplicateName[ts.Name] = struct{}{}
+		}
+		if _, ok := checkDuplicateToken[ts.Token]; ok {
+			continue
+		} else {
+			checkDuplicateToken[ts.Token] = struct{}{}
+		}
+
 		robotNames = append(robotNames, ts.Name)
-		robotClients[ts.Name] = dingtalk.NewClient(ts.AccessToken, ts.Secret)
+		robotClients[ts.Name] = dingtalk.NewClient(ts.Token, ts.Secret)
 		tts[ts.Name] = new([limitFrequency]int)
+		count++
 	}
 
 	client = &Client{
@@ -51,6 +71,13 @@ func InitDingTalk(tss []TokenSecret) {
 		timestamps:   tts,
 		mutex:        &sync.Mutex{},
 	}
+
+	return count
+}
+
+// NewClient 初始化client
+func NewClient(token string, secret string) *dingtalk.Client {
+	return dingtalk.NewClient(token, secret)
 }
 
 // Get 顺序获取钉钉机器人客户端client，并发安全
@@ -115,9 +142,6 @@ func checkFrequency(timestamps *[limitFrequency]int, nowSecond int) (int, bool) 
 			}
 		}
 	}
-	//fmt.Println(*timestamps)
-	//fmt.Println("minIndex = ", minIndex)
-	//fmt.Println()
 
 	flag := false
 	val := nowSecond - timestamps[minIndex]
