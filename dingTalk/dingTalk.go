@@ -75,11 +75,6 @@ func Init(tss []TokenSecret) int {
 	return count
 }
 
-// NewClient 初始化client
-func NewClient(token string, secret string) *dingtalk.Client {
-	return dingtalk.NewClient(token, secret)
-}
-
 // Get 顺序获取钉钉机器人客户端client，并发安全
 func Get() (*dingtalk.Client, error) {
 	if client == nil {
@@ -155,6 +150,11 @@ func checkFrequency(timestamps *[limitFrequency]int, nowSecond int) (int, bool) 
 }
 
 // ---------------------------------------------------------------------------------------
+
+// NewClient 初始化client
+func NewClient(token string, secret string) *dingtalk.Client {
+	return dingtalk.NewClient(token, secret)
+}
 
 // NewTextMessage 实例化text消息类型对象
 func NewTextMessage() *dingtalk.TextMessage {
