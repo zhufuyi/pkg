@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zhufuyi/pkg/nats/pub"
+	"github.com/zhufuyi/pkg/nats/npub"
 )
 
 var natsAddr = []string{"nats://192.168.101.88:4222"}
 
 func init() {
-	if err := pub.Init(natsAddr); err != nil {
+	if err := npub.Init(natsAddr); err != nil {
 		panic(err)
 	}
 
@@ -37,7 +37,7 @@ func TestClient_SubscribeSync(t *testing.T) {
 					Birthday string `json:"birthday"`
 				}{"张三", "男", time.Now().AddDate(-10, 0, 0).Format("2006-01-02T15:04:05Z")}
 
-				err := pub.GetClient().PushJSON(topic, &msg)
+				err := npub.GetClient().PushJSON(topic, &msg)
 				if err != nil {
 					t.Error(err)
 				}
