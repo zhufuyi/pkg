@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+
+	"gopkg.in/yaml.v2"
 )
 
 func init() {

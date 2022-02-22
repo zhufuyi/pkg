@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+)
 
 func main() {
-	fmt.Println("hello world")
+	data,err:=ioutil.ReadFile("README.md")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(data))
 }

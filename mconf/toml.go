@@ -39,7 +39,7 @@ func (p *TOMLParser) ToBytes(value interface{}, options ...ReadWriteOption) ([]b
 		switch o.Key {
 		case OptionIndent:
 			if indent, ok := o.Value.(string); ok {
-				enc.Indentation(indent)
+				enc.Indent=indent
 			}
 		case OptionColourise:
 			if value, ok := o.Value.(bool); ok {
