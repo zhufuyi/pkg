@@ -5,7 +5,7 @@
 - [email 发邮件客户端](./email)
 - [errorcode 错误码定义](./errcode)
 - [gobash 在go程序执行命令或可执行文件](./gobash)
-- [gofile 文件处理](./goFile)
+- [goFile 文件处理](./goFile)
 - [gohttp http客户端](./gohttp)
 - [jwt 鉴权](./jwt)
 - [krand 随机数和字符串生成器](./krand)
