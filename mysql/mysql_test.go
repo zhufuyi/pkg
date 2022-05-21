@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"pkg/logger"
+
 	"github.com/jinzhu/gorm"
-	"github.com/zhufuyi/pkg/logger"
 )
 
 var addr = "root:123456@(192.168.101.88:3306)/rt_market?charset=utf8mb4&parseTime=True&loc=Local"

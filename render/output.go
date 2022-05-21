@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"pkg/errcode"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	"github.com/json-iterator/go"
-	"github.com/zhufuyi/pkg/errcode"
 )
 
 // JSONResponse 输出格式

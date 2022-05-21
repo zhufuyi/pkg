@@ -6,10 +6,8 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-
 	"sync"
 	"sync/atomic"
-
 	"log"
 
 	"github.com/k0kubun/pp"

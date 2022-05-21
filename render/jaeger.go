@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/zhufuyi/pkg/logger"
-	"go.uber.org/zap"
-
 	jaegerConfig "github.com/uber/jaeger-client-go/config"
+	"go.uber.org/zap"
 )
 
 var (

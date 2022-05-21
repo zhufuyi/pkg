@@ -27,6 +27,13 @@ func TestLogger(t *testing.T) {
 	pMap := map[string]people{"123": *p, "456": *p}
 	Debug("this is debug object", Any("object1", p), Any("object2", ps), Any("object3", pMap))
 	Info("err is not equal nil ", Any("object", ps))
+
+	defer func() {
+		if err:=recover();err != nil {
+			Debug("triggered the panic",Any("err",err))
+		}
+	}()
+	Panic("this is panic")
 }
 
 func BenchmarkString(b *testing.B) {

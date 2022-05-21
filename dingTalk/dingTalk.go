@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CatchZeng/dingtalk"
+	"github.com/CatchZeng/dingtalk/pkg/dingtalk"
 )
 
 const (

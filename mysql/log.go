@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zhufuyi/pkg/logger"
+	"pkg/logger"
 )
 
 // gormLogger gorm日志

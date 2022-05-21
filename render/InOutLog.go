@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"pkg/logger"
+
 	"github.com/gin-gonic/gin"
-	"github.com/zhufuyi/pkg/logger"
 )
 
 // 忽略部分路由打印
