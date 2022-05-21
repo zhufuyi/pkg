@@ -7,12 +7,12 @@ require (
 	github.com/CatchZeng/dingtalk v1.5.0
 	github.com/alecthomas/chroma v0.10.0
 	github.com/aws/aws-sdk-go v1.44.18
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gomodule/redigo v1.8.8
 	github.com/jinzhu/gorm v1.9.16
 	github.com/json-iterator/go v1.1.12
