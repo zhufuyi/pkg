@@ -1,4 +1,4 @@
-package render
+package middleware
 
 import (
 	"time"
@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// 跨域
+// Cors 跨域
 func Cors() gin.HandlerFunc {
 	return cors.New(
 		cors.Config{

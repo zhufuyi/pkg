@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"pkg/nats/npub"
+	"github.com/zhufuyi/pkg/nats/npub"
 )
 
 var natsAddr = []string{"nats://192.168.101.88:4222"}

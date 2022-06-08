@@ -6,10 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"pkg/logger"
-
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
+	"github.com/zhufuyi/pkg/logger"
 )
 
 var (

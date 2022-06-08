@@ -1,4 +1,4 @@
-package render
+package middleware
 
 import (
 	"bytes"
@@ -8,22 +8,59 @@ import (
 	"strings"
 	"time"
 
-	"pkg/logger"
-
 	"github.com/gin-gonic/gin"
+	"github.com/zhufuyi/pkg/logger"
 )
 
-// 忽略部分路由打印
-var ignoreRoutes map[string]bool
+var (
+	// 限制显示body内容最大长度
+	defaultMaxLength = 300
 
-func init() {
-	ignoreRoutes = map[string]bool{
-		"/getSubID": true,
+	// 忽略打印路由
+	defaultIgnoreRoutes = map[string]struct{}{
+		"/ping": struct{}{},
+		"/pong": struct{}{},
+	}
+)
+
+func defaultOptions() *options {
+	return &options{
+		maxLength:    defaultMaxLength,
+		ignoreRoutes: defaultIgnoreRoutes,
 	}
 }
 
-// 限制显示body内容最大长度
-const limitSize = 300
+type options struct {
+	maxLength    int
+	ignoreRoutes map[string]struct{}
+}
+
+// Option logger middleware options
+type Option func(*options)
+
+func (o *options) apply(opts ...Option) {
+	for _, opt := range opts {
+		opt(o)
+	}
+}
+
+// WithMaxLen logger content max length
+func WithMaxLen(maxLen int) Option {
+	return func(o *options) {
+		o.maxLength = maxLen
+	}
+}
+
+// WithIgnoreRoutes no logger content routes
+func WithIgnoreRoutes(routes ...string) Option {
+	return func(o *options) {
+		for _, route := range routes {
+			o.ignoreRoutes[route] = struct{}{}
+		}
+	}
+}
+
+// ------------------------------------------------------------------------------------------
 
 type bodyLogWriter struct {
 	gin.ResponseWriter
@@ -36,10 +73,13 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 }
 
 // InOutLog gin输入输出日志
-func InOutLog() gin.HandlerFunc {
+func InOutLog(opts ...Option) gin.HandlerFunc {
+	o := defaultOptions()
+	o.apply(opts...)
+
 	return func(c *gin.Context) {
 		// 忽略打印指定的路由
-		if isIgnoreRoute(c.Request.URL.Path) {
+		if _, ok := o.ignoreRoutes[c.Request.URL.Path]; ok {
 			c.Next()
 			return
 		}
@@ -54,7 +94,7 @@ func InOutLog() gin.HandlerFunc {
 				logger.String("method", c.Request.Method),
 				logger.Any("url", c.Request.URL),
 				logger.Int("size", buf.Len()),
-				logger.String("body", getBodyData(&buf)),
+				logger.String("body", getBodyData(&buf, o.maxLength)),
 			)
 		} else {
 			logger.Info("<<<<<<",
@@ -78,30 +118,20 @@ func InOutLog() gin.HandlerFunc {
 			logger.String("url", c.Request.URL.Path),
 			logger.String("time", fmt.Sprintf("%dus", time.Now().Sub(start).Nanoseconds()/1000)),
 			logger.Int("size", newWriter.body.Len()),
-			logger.String("response", strings.TrimRight(getBodyData(newWriter.body), "\n")),
+			logger.String("response", strings.TrimRight(getBodyData(newWriter.body, o.maxLength), "\n")),
 		)
 	}
 }
 
-func getBodyData(buf *bytes.Buffer) string {
+func getBodyData(buf *bytes.Buffer, maxLen int) string {
 	var body string
 
-	if buf.Len() > limitSize {
-		body = string(buf.Bytes()[:limitSize]) + " ...... "
+	if buf.Len() > maxLen {
+		body = string(buf.Bytes()[:maxLen]) + " ...... "
 		// 如果有敏感数据需要过滤掉，比如明文密码
 	} else {
 		body = buf.String()
 	}
 
 	return body
-}
-
-func isIgnoreRoute(routeValue string) bool {
-	for route, v := range ignoreRoutes {
-		if strings.Contains(routeValue, route) {
-			return v
-		}
-	}
-
-	return false
 }

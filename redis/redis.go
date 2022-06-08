@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"pkg/logger"
-
 	"github.com/gomodule/redigo/redis"
+	"github.com/zhufuyi/pkg/logger"
 )
 
 // 当前应用允许最大连接数，最大不能超过redis极限连接数

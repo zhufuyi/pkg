@@ -6,9 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"pkg/logger"
-
 	"github.com/qiniu/qmgo"
+	"github.com/zhufuyi/pkg/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -383,7 +382,7 @@ func (d *DefaultClient) DeleteOneCompletely(collection string, query bson.M) err
 
 // DeleteAllReal 删除所有匹配的记录，包括标记性删除的记录
 func (d *DefaultClient) DeleteAllCompletely(collection string, query bson.M) (int64, error) {
-	deleteResult, err := d.cli.Database(d.mdbName).Collection(collection).DeleteAll(d.ctx, query)
+	deleteResult, err := d.cli.Database(d.mdbName).Collection(collection).RemoveAll(d.ctx, query)
 	if err != nil {
 		if d.printLog {
 			d.printLog = false

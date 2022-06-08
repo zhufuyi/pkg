@@ -3,12 +3,12 @@ package render
 import (
 	"fmt"
 	"net/http"
-
-	"pkg/errcode"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	"github.com/json-iterator/go"
+	"github.com/zhufuyi/pkg/gin/errcode"
 )
 
 // JSONResponse 输出格式
@@ -70,8 +70,8 @@ func OK(c *gin.Context, data ...interface{}) {
 
 // Err 输出错误
 func Err(c *gin.Context, code int, msg ...string) {
-	if len(msg) == 1 {
-		JSON(c, code, msg[0])
+	if len(msg) > 0 {
+		JSON(c, code, strings.Join(msg, ", "))
 	} else {
 		JSON(c, code, "")
 	}
@@ -128,68 +128,6 @@ func Abort(c *gin.Context, code int, msg string) {
 	c.AbortWithStatus(http.StatusOK)
 }
 
-// OKWithTrace 正确200输出
-func OKWithTrace(c *gin.Context, data ...interface{}) {
-	c.Set("code", http.StatusOK)
-	JSON(c, http.StatusOK, "ok", data...)
-}
-
-// Err400WithTrace 无效参数
-func Err400WithTrace(c *gin.Context, errMsg interface{}) {
-	c.Set("code", http.StatusBadRequest)
-	c.Set("error", errMsg)
-	Err400(c)
-}
-
-// Err401WithTrace 鉴权失败
-func Err401WithTrace(c *gin.Context, errMsg interface{}) {
-	c.Set("code", http.StatusUnauthorized)
-	c.Set("error", errMsg)
-	Err401(c)
-}
-
-// Err403WithTrace 禁止访问
-func Err403WithTrace(c *gin.Context, errMsg interface{}) {
-	c.Set("code", http.StatusForbidden)
-	c.Set("error", errMsg)
-	Err403(c)
-}
-
-// Err404WithTrace 资源不存在
-func Err404WithTrace(c *gin.Context, errMsg interface{}) {
-	c.Set("code", http.StatusNotFound)
-	c.Set("error", errMsg)
-	Err404(c)
-}
-
-// Err408WithTrace 请求超时
-func Err408WithTrace(c *gin.Context, errMsg interface{}) {
-	c.Set("code", http.StatusRequestTimeout)
-	c.Set("error", fmt.Sprintf("time out, %+v", errMsg))
-	Err408(c)
-}
-
-// Err409WithTrace 资源冲突，已存在
-func Err409WithTrace(c *gin.Context, errMsg interface{}) {
-	c.Set("code", http.StatusConflict)
-	c.Set("error", errMsg)
-	Err409(c)
-}
-
-// Err410WithTrace 资源消失
-func Err410WithTrace(c *gin.Context, errMsg interface{}) {
-	c.Set("code", http.StatusGone)
-	c.Set("error", errMsg)
-	Err410(c)
-}
-
-// Err500WithTrace 服务内部错误
-func Err500WithTrace(c *gin.Context, errMsg interface{}, msg interface{}) {
-	c.Set("code", http.StatusInternalServerError)
-	c.Set("error", errMsg)
-	Err500(c, msg)
-}
-
 // RespondJSON 根据code返回对应结果
 func RespondJSON(c *gin.Context, code int, msg ...interface{}) {
 	switch code {
@@ -211,38 +149,6 @@ func RespondJSON(c *gin.Context, code int, msg ...interface{}) {
 		Err410(c)
 	case http.StatusInternalServerError:
 		Err500(c, msg)
-	}
-}
-
-// RespondJSONWithTrace http返回根据json信息
-func RespondJSONWithTrace(c *gin.Context, code int, msgs ...interface{}) {
-	var errMsg, msg interface{}
-	if len(msgs) == 1 {
-		errMsg = msgs[0]
-	} else if len(msgs) == 2 {
-		errMsg = msgs[0]
-		msg = msgs[1]
-	}
-
-	switch code {
-	case http.StatusOK:
-		OKWithTrace(c)
-	case http.StatusBadRequest:
-		Err400WithTrace(c, errMsg)
-	case http.StatusUnauthorized:
-		Err401WithTrace(c, errMsg)
-	case http.StatusForbidden:
-		Err403WithTrace(c, errMsg)
-	case http.StatusNotFound:
-		Err404WithTrace(c, errMsg)
-	case http.StatusRequestTimeout:
-		Err408WithTrace(c, errMsg)
-	case http.StatusConflict:
-		Err409WithTrace(c, errMsg)
-	case http.StatusGone:
-		Err410WithTrace(c, errMsg)
-	case http.StatusInternalServerError:
-		Err500WithTrace(c, errMsg, msg)
 	}
 }
 

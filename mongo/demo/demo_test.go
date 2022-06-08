@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"pkg/mongo"
-
 	"github.com/globalsign/mgo/bson"
+	"github.com/zhufuyi/pkg/mongo"
 )
 
 var server = "mongodb://collectdata:123456@192.168.101.88:27018/collectdata"

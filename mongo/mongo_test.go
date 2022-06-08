@@ -8,11 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"pkg/krand"
-
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/k0kubun/pp"
+	"github.com/zhufuyi/pkg/krand"
 )
 
 var (

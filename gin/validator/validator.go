@@ -7,20 +7,25 @@ import (
 	valid "github.com/go-playground/validator/v10"
 )
 
-func Init() interface{} {
-	validator := NewCustomValidator()
-	return validator.Engine()
+// Gin request body file valid
+func Gin() *CustomValidator {
+	valid := NewCustomValidator()
+	valid.Engine()
+	return valid
 }
 
+// CustomValidator Custom valid objects
 type CustomValidator struct {
 	Once     sync.Once
 	Validate *valid.Validate
 }
 
+// NewCustomValidator Instantiate
 func NewCustomValidator() *CustomValidator {
 	return &CustomValidator{}
 }
 
+// Engine Instantiate struct valid
 func (v *CustomValidator) ValidateStruct(obj interface{}) error {
 	if kindOfData(obj) == reflect.Struct {
 		v.lazyinit()
@@ -32,6 +37,7 @@ func (v *CustomValidator) ValidateStruct(obj interface{}) error {
 	return nil
 }
 
+// Engine Instantiate valid
 func (v *CustomValidator) Engine() interface{} {
 	v.lazyinit()
 	return v.Validate
