@@ -1,6 +1,12 @@
 # pkg
 
-go常用包列表
+## 安装
+
+> go get -u github.com/zhufuyi/pkg
+
+<br>
+
+## go常用包列表
 
 - [awss3 aws s3客户端](awss3)
 - [dingTalk 钉钉机器人客户端](dingTalk)
@@ -21,9 +27,3 @@ go常用包列表
 - [nats 客户端](nats)
 - [redis 客户端](redis)
 - [snowFlake id生成器](snowFlake)
-
-<br>
-
-## 安装
-
-> go get -u github.com/zhufuyi/pkg
