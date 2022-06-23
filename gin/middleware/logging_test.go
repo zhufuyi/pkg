@@ -5,15 +5,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 )
 
+var requestAddr string
+
 func init() {
+	port, _ := getAvailablePort()
+	requestAddr = fmt.Sprintf("http://localhost:%d", port)
+	addr := fmt.Sprintf(":%d", port)
+
 	r := gin.Default()
-	r.Use(InOutLog())
+
+	// 默认打印日志
+	r.Use(Logging())
+	// 自定义打印日志
+	r.Use(Logging(
+		WithMaxLen(400),
+		WithRequestID("X-Request-Id"),
+		WithIgnoreRoutes("/hello"),
+	))
 
 	pingFun := func(c *gin.Context) {
 		c.JSON(200, "pong")
@@ -35,11 +50,29 @@ func init() {
 	r.PATCH("/hello", helloFun)
 
 	go func() {
-		err := r.Run(":8080")
+		err := r.Run(addr)
 		if err != nil {
 			panic(err)
 		}
 	}()
+}
+
+// 获取可用端口
+func getAvailablePort() (int, error) {
+	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", "0.0.0.0"))
+	if err != nil {
+		return 0, err
+	}
+
+	listener, err := net.ListenTCP("tcp", address)
+	if err != nil {
+		return 0, err
+	}
+
+	port := listener.Addr().(*net.TCPAddr).Port
+	err = listener.Close()
+
+	return port, err
 }
 
 // ------------------------------------------------------------------------------------------
@@ -119,7 +152,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	t.Run("ping", func(t *testing.T) {
-		got, err := get("http://localhost:8080/pong")
+		got, err := get(requestAddr + "/pong")
 		if err != nil {
 			t.Error(err)
 			return
@@ -130,7 +163,7 @@ func TestRequest(t *testing.T) {
 	})
 
 	t.Run("pong", func(t *testing.T) {
-		got, err := get("http://localhost:8080/ping")
+		got, err := get(requestAddr + "/ping")
 		if err != nil {
 			t.Error(err)
 			return
@@ -141,7 +174,7 @@ func TestRequest(t *testing.T) {
 	})
 
 	t.Run("get hello", func(t *testing.T) {
-		got, err := get("http://localhost:8080/hello")
+		got, err := get(requestAddr + "/hello")
 		if err != nil {
 			t.Error(err)
 			return
@@ -152,7 +185,7 @@ func TestRequest(t *testing.T) {
 	})
 
 	t.Run("delete hello", func(t *testing.T) {
-		got, err := delete("http://localhost:8080/hello")
+		got, err := delete(requestAddr + "/hello")
 		if err != nil {
 			t.Error(err)
 			return
@@ -163,7 +196,7 @@ func TestRequest(t *testing.T) {
 	})
 
 	t.Run("post hello", func(t *testing.T) {
-		got, err := post("http://localhost:8080/hello", &User{"foo"})
+		got, err := post(requestAddr+"/hello", &User{"foo"})
 		if err != nil {
 			t.Error(err)
 			return
@@ -174,7 +207,7 @@ func TestRequest(t *testing.T) {
 	})
 
 	t.Run("put hello", func(t *testing.T) {
-		got, err := put("http://localhost:8080/hello", &User{"foo"})
+		got, err := put(requestAddr+"/hello", &User{"foo"})
 		if err != nil {
 			t.Error(err)
 			return
@@ -185,7 +218,7 @@ func TestRequest(t *testing.T) {
 	})
 
 	t.Run("patch hello", func(t *testing.T) {
-		got, err := patch("http://localhost:8080/hello", &User{"foo"})
+		got, err := patch(requestAddr+"/hello", &User{"foo"})
 		if err != nil {
 			t.Error(err)
 			return

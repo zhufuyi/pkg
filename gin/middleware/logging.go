@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -13,10 +12,13 @@ import (
 )
 
 var (
-	// 限制显示body内容最大长度
+	// Print body max length
 	defaultMaxLength = 300
 
-	// 忽略打印路由
+	// Default request id name
+	defaultRequestIDName = "X-Request-Id"
+
+	// Ignore route list
 	defaultIgnoreRoutes = map[string]struct{}{
 		"/ping": struct{}{},
 		"/pong": struct{}{},
@@ -25,14 +27,16 @@ var (
 
 func defaultOptions() *options {
 	return &options{
-		maxLength:    defaultMaxLength,
-		ignoreRoutes: defaultIgnoreRoutes,
+		maxLength:     defaultMaxLength,
+		ignoreRoutes:  defaultIgnoreRoutes,
+		requestIDName: "",
 	}
 }
 
 type options struct {
-	maxLength    int
-	ignoreRoutes map[string]struct{}
+	maxLength     int
+	ignoreRoutes  map[string]struct{}
+	requestIDName string
 }
 
 // Option logger middleware options
@@ -60,6 +64,19 @@ func WithIgnoreRoutes(routes ...string) Option {
 	}
 }
 
+// WithRequestID name is field in header, eg:X-Request-Id
+func WithRequestID(name ...string) Option {
+	var requestIDName string
+	if len(name) > 0 && name[0] != "" {
+		requestIDName = name[0]
+	} else {
+		requestIDName = defaultRequestIDName
+	}
+	return func(o *options) {
+		o.requestIDName = requestIDName
+	}
+}
+
 // ------------------------------------------------------------------------------------------
 
 type bodyLogWriter struct {
@@ -72,36 +89,41 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-// InOutLog gin输入输出日志
-func InOutLog(opts ...Option) gin.HandlerFunc {
+// Logging 请求日志
+func Logging(opts ...Option) gin.HandlerFunc {
 	o := defaultOptions()
 	o.apply(opts...)
 
 	return func(c *gin.Context) {
+		start := time.Now()
+
 		// 忽略打印指定的路由
 		if _, ok := o.ignoreRoutes[c.Request.URL.Path]; ok {
 			c.Next()
 			return
 		}
 
-		start := time.Now()
-
 		//  处理前打印输入信息
 		buf := bytes.Buffer{}
 		buf.ReadFrom(c.Request.Body)
-		if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodPatch {
-			logger.Info("<<<<<<",
-				logger.String("method", c.Request.Method),
-				logger.Any("url", c.Request.URL),
+
+		fields := []logger.Field{
+			logger.String("method", c.Request.Method),
+			logger.String("url", c.Request.URL.String()),
+		}
+		if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodPatch || c.Request.Method == http.MethodDelete {
+			fields = append(fields,
 				logger.Int("size", buf.Len()),
 				logger.String("body", getBodyData(&buf, o.maxLength)),
 			)
-		} else {
-			logger.Info("<<<<<<",
-				logger.String("method", c.Request.Method),
-				logger.Any("url", c.Request.URL),
-			)
 		}
+		reqID := ""
+		if o.requestIDName != "" {
+			reqID = c.Request.Header.Get(o.requestIDName)
+			fields = append(fields, logger.String(o.requestIDName, reqID))
+		}
+		logger.Info("<<<<", fields...)
+
 		c.Request.Body = ioutil.NopCloser(&buf)
 
 		//  替换writer
@@ -112,14 +134,18 @@ func InOutLog(opts ...Option) gin.HandlerFunc {
 		c.Next()
 
 		// 处理后打印返回信息
-		logger.Info(">>>>>>",
+		fields = []logger.Field{
 			logger.Int("code", c.Writer.Status()),
 			logger.String("method", c.Request.Method),
 			logger.String("url", c.Request.URL.Path),
-			logger.String("time", fmt.Sprintf("%dus", time.Now().Sub(start).Nanoseconds()/1000)),
+			logger.Int64("time_us", time.Now().Sub(start).Nanoseconds()/1000),
 			logger.Int("size", newWriter.body.Len()),
 			logger.String("response", strings.TrimRight(getBodyData(newWriter.body, o.maxLength), "\n")),
-		)
+		}
+		if o.requestIDName != "" {
+			fields = append(fields, logger.String(o.requestIDName, reqID))
+		}
+		logger.Info(">>>>", fields...)
 	}
 }
 

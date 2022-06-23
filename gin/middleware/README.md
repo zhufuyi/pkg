@@ -6,7 +6,7 @@ gin中间件插件。
 
 ## 安装
 
-> go get -u github.com/zhufuyi/pkg/middleware
+> go get -u github.com/zhufuyi/pkg/gin/middleware
 
 <br>
 
