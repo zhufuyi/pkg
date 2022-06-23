@@ -3,10 +3,8 @@ package render
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/render"
 	"github.com/json-iterator/go"
 	"github.com/zhufuyi/pkg/gin/errcode"
 )
@@ -16,7 +14,22 @@ type JSONResponse struct {
 	Code int         `json:"code"`
 	Msg  string      `json:"msg"`
 	Data interface{} `json:"data"`
-	//Data interface{} `json:"data,omitempty"`
+}
+
+func newResp(code int, msg string, data interface{}) *JSONResponse {
+	resp := &JSONResponse{
+		Code: code,
+		Msg:  msg,
+	}
+
+	// 保证返回时data字段不为nil，注意resp.Data=[]interface {}时不为nil，经过序列化变成了null
+	if data == nil {
+		resp.Data = &struct{}{}
+	} else {
+		resp.Data = data
+	}
+
+	return resp
 }
 
 var jsonContentType = []string{"application/json; charset=utf-8"}
@@ -31,133 +44,64 @@ func writeContentType(w http.ResponseWriter, value []string) {
 func writeJSON(c *gin.Context, code int, res interface{}) {
 	c.Writer.WriteHeader(code)
 	writeContentType(c.Writer, jsonContentType)
-	//err := json.NewEncoder(c.Writer).Encode(res)
 	err := jsoniter.NewEncoder(c.Writer).Encode(res)
 	if err != nil {
 		fmt.Printf("json encode error, err = %s", err.Error())
 	}
 }
 
-// JSON 输出JSONResponse，只取第一项返回
-func JSON(c *gin.Context, code int, msg string, data ...interface{}) {
-	resp := JSONResponse{Code: code}
-
-	if msg != "" {
-		resp.Msg = msg
+func respJSONWithStatusCode(c *gin.Context, code int, msg string, data ...interface{}) {
+	var FirstData interface{}
+	if len(data) > 0 {
+		FirstData = data[0]
 	}
+	resp := newResp(code, msg, FirstData)
 
-	if len(data) == 1 {
-		resp.Data = data[0]
-	}
-
-	// 保证返回时data字段不为nil
-	if resp.Data == nil {
-		resp.Data = &struct{}{}
-	}
-
-	if c.IsAborted() {
-		writeJSON(c, code, resp)
-	} else {
-		writeJSON(c, http.StatusOK, resp)
-	}
-	//writeJSON(c, code, resp)
+	writeJSON(c, code, resp)
 }
 
-// OK 正确200输出
-func OK(c *gin.Context, data ...interface{}) {
-	JSON(c, http.StatusOK, "ok", data...)
-}
-
-// Err 输出错误
-func Err(c *gin.Context, code int, msg ...string) {
-	if len(msg) > 0 {
-		JSON(c, code, strings.Join(msg, ", "))
-	} else {
-		JSON(c, code, "")
-	}
-}
-
-// Err400 无效参数
-func Err400(c *gin.Context) {
-	JSON(c, http.StatusBadRequest, "参数无效")
-}
-
-// Err400Msg 无效参数
-func Err400Msg(c *gin.Context, msg interface{}) {
-	JSON(c, http.StatusBadRequest, "参数无效, "+fmt.Sprint(msg))
-}
-
-// Err401 鉴权失败
-func Err401(c *gin.Context) {
-	JSON(c, http.StatusUnauthorized, "鉴权失败")
-}
-
-// Err403 禁止访问
-func Err403(c *gin.Context) {
-	JSON(c, http.StatusForbidden, "禁止访问")
-}
-
-// Err404 资源不存在
-func Err404(c *gin.Context) {
-	JSON(c, http.StatusNotFound, "资源不存在")
-}
-
-// Err408 请求超时
-func Err408(c *gin.Context) {
-	JSON(c, http.StatusRequestTimeout, "请求超时")
-}
-
-// Err409 资源冲突，已存在
-func Err409(c *gin.Context) {
-	JSON(c, http.StatusConflict, "资源冲突，已存在")
-}
-
-// Err410 资源消失
-func Err410(c *gin.Context) {
-	JSON(c, http.StatusGone, "资源已消失")
-}
-
-// Err500 服务内部错误
-func Err500(c *gin.Context, msg interface{}) {
-	JSON(c, http.StatusInternalServerError, fmt.Sprint(msg))
-}
-
-// Abort 中断并报错
-func Abort(c *gin.Context, code int, msg string) {
-	render.WriteJSON(c.Writer, JSONResponse{Code: code, Msg: msg})
-	c.AbortWithStatus(http.StatusOK)
-}
-
-// RespondJSON 根据code返回对应结果
-func RespondJSON(c *gin.Context, code int, msg ...interface{}) {
+// Respond 根据http status code返回json数据
+func Respond(c *gin.Context, code int, msg ...interface{}) {
 	switch code {
 	case http.StatusOK:
-		OK(c)
+		respJSONWithStatusCode(c, http.StatusOK, "ok", msg...)
 	case http.StatusBadRequest:
-		Err400(c)
+		respJSONWithStatusCode(c, http.StatusBadRequest, errcode.InvalidParams.Msg())
 	case http.StatusUnauthorized:
-		Err401(c)
+		respJSONWithStatusCode(c, http.StatusUnauthorized, errcode.Unauthorized.Msg())
 	case http.StatusForbidden:
-		Err403(c)
+		respJSONWithStatusCode(c, http.StatusForbidden, errcode.Forbidden.Msg())
 	case http.StatusNotFound:
-		Err404(c)
+		respJSONWithStatusCode(c, http.StatusNotFound, errcode.NotFound.Msg())
 	case http.StatusRequestTimeout:
-		Err408(c)
+		respJSONWithStatusCode(c, http.StatusRequestTimeout, errcode.Timeout.Msg())
 	case http.StatusConflict:
-		Err409(c)
-	case http.StatusGone:
-		Err410(c)
+		respJSONWithStatusCode(c, http.StatusConflict, errcode.AlreadyExists.Msg())
 	case http.StatusInternalServerError:
-		Err500(c, msg)
+		respJSONWithStatusCode(c, http.StatusInternalServerError, errcode.InternalServerError.Msg())
+
+	default:
+		respJSONWithStatusCode(c, code, http.StatusText(code))
 	}
+}
+
+// 状态码统一200，自定义错误码在data.code
+func respJSONWith200(c *gin.Context, code int, msg string, data ...interface{}) {
+	var FirstData interface{}
+	if len(data) > 0 {
+		FirstData = data[0]
+	}
+	resp := newResp(code, msg, FirstData)
+
+	writeJSON(c, http.StatusOK, resp)
 }
 
 // Success 正确
 func Success(c *gin.Context, data ...interface{}) {
-	JSON(c, 0, "ok", data...)
+	respJSONWith200(c, 0, "ok", data...)
 }
 
 // Error 错误
 func Error(c *gin.Context, err *errcode.Error, data ...interface{}) {
-	JSON(c, err.Code(), err.Msg(), data...)
+	respJSONWith200(c, err.Code(), err.Msg(), data...)
 }
