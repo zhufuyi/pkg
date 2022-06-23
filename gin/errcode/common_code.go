@@ -1,14 +1,15 @@
 package errcode
 
+// 公共错误码
 var (
-	Success                   = NewError(0, "成功")
-	InvalidParams             = NewError(40000000, "入参错误")
-	ServerError               = NewError(40000001, "服务内部错误")
-	NotFound                  = NewError(40000002, "找不到")
-	UnauthorizedAuthNotExist  = NewError(40000003, "鉴权失败，找不到对应的AppKey和AppSecret")
-	UnauthorizedTokenError    = NewError(40000004, "鉴权失败，Token错误")
-	UnauthorizedTokenTimeout  = NewError(40000005, "鉴权失败，Token超时")
-	UnauthorizedTokenGenerate = NewError(40000006, "鉴权失败，Token生成失败")
-	TooManyRequests           = NewError(40000007, "请求过多")
-	AlreadyExists             = NewError(40000008, "已存在")
+	Success             = NewError(0, "ok")
+	InvalidParams       = NewError(100001, "参数错误")
+	Unauthorized        = NewError(100002, "认证错误")
+	InternalServerError = NewError(100003, "服务内部错误")
+	NotFound            = NewError(100004, "资源不存在")
+	AlreadyExists       = NewError(100005, "资源已存在")
+	Timeout             = NewError(10006, "超时")
+	TooManyRequests     = NewError(100007, "请求过多")
+	Forbidden           = NewError(10008, "拒绝访问")
+	LimitExceed         = NewError(10009, "访问限制")
 )

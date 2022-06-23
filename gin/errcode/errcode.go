@@ -54,24 +54,25 @@ func (e *Error) WithDetails(details ...string) *Error {
 	return &newError
 }
 
+// StatusCode 对应http错误码
 func (e *Error) StatusCode() int {
 	switch e.Code() {
 	case Success.Code():
 		return http.StatusOK
-	case ServerError.Code():
+	case InternalServerError.Code():
 		return http.StatusInternalServerError
 	case InvalidParams.Code():
 		return http.StatusBadRequest
-	case UnauthorizedAuthNotExist.Code():
-		fallthrough
-	case UnauthorizedTokenError.Code():
-		fallthrough
-	case UnauthorizedTokenGenerate.Code():
-		fallthrough
-	case UnauthorizedTokenTimeout.Code():
+	case Unauthorized.Code():
 		return http.StatusUnauthorized
-	case TooManyRequests.Code():
+	case TooManyRequests.Code(), LimitExceed.Code():
 		return http.StatusTooManyRequests
+	case Forbidden.Code():
+		return http.StatusForbidden
+	case NotFound.Code():
+		return http.StatusNotFound
+	case Timeout.Code():
+		return http.StatusRequestTimeout
 	}
 
 	return http.StatusInternalServerError
