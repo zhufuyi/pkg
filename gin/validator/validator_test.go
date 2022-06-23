@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,9 +17,15 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
+var requestAddr string
+
 func init() {
+	port, _ := getAvailablePort()
+	requestAddr = fmt.Sprintf("http://localhost:%d", port)
+	addr := fmt.Sprintf(":%d", port)
+
 	r := gin.Default()
-	binding.Validator = Gin()
+	binding.Validator = Init()
 
 	r.POST("/hello", createHello)
 	r.DELETE("/hello", deleteHello)
@@ -28,11 +35,29 @@ func init() {
 	r.GET("/hellos", getHellos)
 
 	go func() {
-		err := r.Run(":8080")
+		err := r.Run(addr)
 		if err != nil {
 			panic(err)
 		}
 	}()
+}
+
+// 获取可用端口
+func getAvailablePort() (int, error) {
+	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", "0.0.0.0"))
+	if err != nil {
+		return 0, err
+	}
+
+	listener, err := net.ListenTCP("tcp", address)
+	if err != nil {
+		return 0, err
+	}
+
+	port := listener.Addr().(*net.TCPAddr).Port
+	err = listener.Close()
+
+	return port, err
 }
 
 var (
@@ -136,7 +161,7 @@ func getHellos(c *gin.Context) {
 
 func TestPostValidate(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		got, err := do(http.MethodPost, "http://localhost:8080/hello", &postForm{
+		got, err := do(http.MethodPost, requestAddr+"/hello", &postForm{
 			Name:  "foo",
 			Age:   10,
 			Email: "bar@gmail.com",
@@ -151,7 +176,7 @@ func TestPostValidate(t *testing.T) {
 	})
 
 	t.Run("missing field error", func(t *testing.T) {
-		got, err := do(http.MethodPost, "http://localhost:8080/hello", &postForm{
+		got, err := do(http.MethodPost, requestAddr+"/hello", &postForm{
 			Age:   10,
 			Email: "bar@gmail.com",
 		})
@@ -165,7 +190,7 @@ func TestPostValidate(t *testing.T) {
 	})
 
 	t.Run("field range  error", func(t *testing.T) {
-		got, err := do(http.MethodPost, "http://localhost:8080/hello", &postForm{
+		got, err := do(http.MethodPost, requestAddr+"/hello", &postForm{
 			Name:  "foo",
 			Age:   -1,
 			Email: "bar@gmail.com",
@@ -180,7 +205,7 @@ func TestPostValidate(t *testing.T) {
 	})
 
 	t.Run("email error", func(t *testing.T) {
-		got, err := do(http.MethodPost, "http://localhost:8080/hello", &postForm{
+		got, err := do(http.MethodPost, requestAddr+"/hello", &postForm{
 			Name:  "foo",
 			Age:   10,
 			Email: "bar",
@@ -199,7 +224,7 @@ func TestPostValidate(t *testing.T) {
 
 func TestDeleteValidate(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		got, err := do(http.MethodDelete, "http://localhost:8080/hello", &deleteForm{
+		got, err := do(http.MethodDelete, requestAddr+"/hello", &deleteForm{
 			IDS: []uint64{1, 2, 3},
 		})
 		if err != nil {
@@ -212,7 +237,7 @@ func TestDeleteValidate(t *testing.T) {
 	})
 
 	t.Run("missing field error", func(t *testing.T) {
-		got, err := do(http.MethodDelete, "http://localhost:8080/hello", nil)
+		got, err := do(http.MethodDelete, requestAddr+"/hello", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -223,7 +248,7 @@ func TestDeleteValidate(t *testing.T) {
 	})
 
 	t.Run("ids  error", func(t *testing.T) {
-		got, err := do(http.MethodDelete, "http://localhost:8080/hello", &deleteForm{IDS: []uint64{}})
+		got, err := do(http.MethodDelete, requestAddr+"/hello", &deleteForm{IDS: []uint64{}})
 		if err != nil {
 			t.Error(err)
 			return
@@ -238,7 +263,7 @@ func TestDeleteValidate(t *testing.T) {
 
 func TestPutValidate(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		got, err := do(http.MethodPut, "http://localhost:8080/hello", &updateForm{
+		got, err := do(http.MethodPut, requestAddr+"/hello", &updateForm{
 			ID:    100,
 			Age:   10,
 			Email: "bar@gmail.com",
@@ -253,7 +278,7 @@ func TestPutValidate(t *testing.T) {
 	})
 
 	t.Run("missing field error", func(t *testing.T) {
-		got, err := do(http.MethodPut, "http://localhost:8080/hello", &updateForm{
+		got, err := do(http.MethodPut, requestAddr+"/hello", &updateForm{
 			Age:   10,
 			Email: "bar@gmail.com",
 		})
@@ -267,7 +292,7 @@ func TestPutValidate(t *testing.T) {
 	})
 
 	t.Run("email error", func(t *testing.T) {
-		got, err := do(http.MethodPut, "http://localhost:8080/hello", &updateForm{
+		got, err := do(http.MethodPut, requestAddr+"/hello", &updateForm{
 			ID:    101,
 			Age:   10,
 			Email: "bar",
@@ -286,7 +311,7 @@ func TestPutValidate(t *testing.T) {
 
 func TestGetValidate(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		got, err := do(http.MethodGet, "http://localhost:8080/hello?id=100", nil)
+		got, err := do(http.MethodGet, requestAddr+"/hello?id=100", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -297,7 +322,7 @@ func TestGetValidate(t *testing.T) {
 	})
 
 	t.Run("success2", func(t *testing.T) {
-		got, err := do(http.MethodGet, "http://localhost:8080/hello/101", nil)
+		got, err := do(http.MethodGet, requestAddr+"/hello/101", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -308,7 +333,7 @@ func TestGetValidate(t *testing.T) {
 	})
 
 	t.Run("miss id error", func(t *testing.T) {
-		got, err := do(http.MethodGet, "http://localhost:8080/hello", nil)
+		got, err := do(http.MethodGet, requestAddr+"/hello", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -323,7 +348,7 @@ func TestGetValidate(t *testing.T) {
 
 func TestGetsValidate(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		got, err := do(http.MethodGet, "http://localhost:8080/hellos?page=0&size=10&sort=-id", nil)
+		got, err := do(http.MethodGet, requestAddr+"/hellos?page=0&size=10&sort=-id", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -334,7 +359,7 @@ func TestGetsValidate(t *testing.T) {
 	})
 
 	t.Run("missing field error", func(t *testing.T) {
-		got, err := do(http.MethodGet, "http://localhost:8080/hellos?page=0&size=10", nil)
+		got, err := do(http.MethodGet, requestAddr+"/hellos?page=0&size=10", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -345,7 +370,7 @@ func TestGetsValidate(t *testing.T) {
 	})
 
 	t.Run("size error", func(t *testing.T) {
-		got, err := do(http.MethodGet, "http://localhost:8080/hellos?page=0&size=0&sort=-id", nil)
+		got, err := do(http.MethodGet, requestAddr+"/hellos?page=0&size=0&sort=-id", nil)
 		if err != nil {
 			t.Error(err)
 			return

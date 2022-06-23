@@ -7,8 +7,8 @@ import (
 	valid "github.com/go-playground/validator/v10"
 )
 
-// Gin request body file valid
-func Gin() *CustomValidator {
+// Init request body file valid
+func Init() *CustomValidator {
 	valid := NewCustomValidator()
 	valid.Engine()
 	return valid
