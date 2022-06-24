@@ -5,99 +5,70 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"io/ioutil"
+	"strings"
 )
 
-var (
-	db     *gorm.DB
-	tables []interface{} // 各个对象指针地址集合
-	tlsKey = ""          // 默认不使用tls传输，如果不为空，使用tls传输数据
+// DB gorm.DB 别名
+type DB = gorm.DB
 
+var (
 	// ErrNotFound 空记录
 	ErrNotFound = errors.New("record not found")
 )
 
 // Init 初始化mysql
-func Init(addr string, isEnableLog ...bool) error {
-	var err error
+func Init(addr string, opts ...Option) (*gorm.DB, error) {
+	o := defaultOptions()
+	o.apply(opts...)
 
-	if tlsKey != "" {
-		addr += fmt.Sprintf("&tls=%s", tlsKey)
+	if o.caFile != "" {
+		// 优先使用addr里的tls值
+		if !strings.Contains(addr, "tls=") {
+			addr += fmt.Sprintf("&tls=%s", o.tlsKey)
+		} else {
+			tlsKey := getTLSKeyFromAddr(addr)
+			if tlsKey != "" {
+				o.tlsKey = tlsKey
+			}
+		}
+		registerTLS(o.tlsKey, o.caFile, o.clientKeyFile, o.clientCertFile)
 	}
 
-	db, err = gorm.Open("mysql", addr)
+	db, err := gorm.Open("mysql", addr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	db.DB().SetMaxIdleConns(3)                  // 空闲连接数
-	db.DB().SetMaxOpenConns(100)                // 最大连接数
-	db.DB().SetConnMaxLifetime(3 * time.Minute) // 3分钟后断开多余的空闲连接
-	db.SingularTable(true)                      // 保持表名和对象名一致
-
-	if len(isEnableLog) == 1 && isEnableLog[0] {
+	db.DB().SetMaxIdleConns(o.maxIdleConns)       // 空闲连接数
+	db.DB().SetMaxOpenConns(o.maxOpenConns)       // 最大连接数
+	db.DB().SetConnMaxLifetime(o.connMaxLifetime) // 断开多余的空闲连接事件
+	db.SingularTable(true)                        // 保持表名和对象名一致
+	if o.IsLog {
 		db.LogMode(true)              // 开启日志
 		db.SetLogger(newGormLogger()) // 自定义日志
 	}
 
 	if err = db.DB().Ping(); err != nil {
-		return err
+		return nil, err
 	}
 
-	SyncTable()
-
-	return nil
-}
-
-// GetDB 获取连接
-func GetDB() *gorm.DB {
-	if db == nil {
-		panic("db is nil, please reconnect mysql.")
+	if len(o.tables) > 0 {
+		db.AutoMigrate(o.tables...) // 如果表不存在，自动创建，只支持自动添加新的列，对于存在的列不可以修改列属性
 	}
-	return db
+
+	return db, nil
 }
 
-// AddTables 添加表
-func AddTables(object ...interface{}) {
-	tables = append(tables, object...)
-}
-
-// SyncTable 同步表
-func SyncTable() {
-	GetDB().AutoMigrate(tables...) // 确保对象和mysql表一致，只支持自动添加新的列，对于存在的列不可以修改列属性
-}
-
-// Model 表内嵌字段
-type Model struct {
-	ID        uint       `gorm:"primary_key" json:"id"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `sql:"index" json:"deletedAt"`
-}
-
-// KV map类型
-type KV map[string]interface{}
-
-// TxRecover 在事务执行过程发生panic后回滚，使用时在前面添加defer关键字，例如：defer TxRecover(tx)
-func TxRecover(tx *gorm.DB) {
-	if r := recover(); r != nil {
-		fmt.Printf("transaction failed, err = %v\n", r)
-		tx.Rollback()
-	}
-}
-
-// RegisterTLS 注册tls配置，caFile是cat.pem文件路径， 规定可变参数keyCertFiles的第一个值为client-key.pem文件路径, 第二值为client-cert.pem文件路径
-func RegisterTLS(caFile string, keyCertFiles ...string) {
-	tlsKey = ""
-
+// registerTLS 注册tls配置，caFile是ca.pem文件路径， 规定可变参数keyCertFiles的第一个值为client-key.pem文件路径, 第二值为client-cert.pem文件路径
+func registerTLS(tlsKey string, caFile string, clientKeyCertFiles ...string) {
 	var clientKeyFile, clientCertFile string
-	if len(keyCertFiles) == 2 {
-		clientKeyFile = keyCertFiles[0]
-		clientCertFile = keyCertFiles[1]
+	if len(clientKeyCertFiles) == 2 {
+		clientKeyFile = clientKeyCertFiles[0]
+		clientCertFile = clientKeyCertFiles[1]
 	}
 
 	if caFile == "" {
@@ -123,17 +94,25 @@ func RegisterTLS(caFile string, keyCertFiles ...string) {
 
 		clientCert := make([]tls.Certificate, 0, 1)
 		clientCert = append(clientCert, certs)
-		mysql.RegisterTLSConfig("custom", &tls.Config{
+		mysql.RegisterTLSConfig(tlsKey, &tls.Config{
 			RootCAs:            rootCertPool,
 			Certificates:       clientCert,
 			InsecureSkipVerify: true,
 		})
-		tlsKey = "custom"
 	} else { // 只使用ca.pem
-		mysql.RegisterTLSConfig("custom", &tls.Config{
+		mysql.RegisterTLSConfig(tlsKey, &tls.Config{
 			RootCAs:            rootCertPool,
 			InsecureSkipVerify: true,
 		})
-		tlsKey = "custom"
 	}
+}
+
+func getTLSKeyFromAddr(addr string) string {
+	splits := strings.Split(addr, "&")
+	for _, split := range splits {
+		if strings.Contains(split, "tls=") {
+			return strings.Replace(split, "tls=", "", -1)
+		}
+	}
+	return ""
 }
