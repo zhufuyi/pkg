@@ -1,6 +1,6 @@
 ## logger
 
-在[zap](https://github.com/uber-go/zap)基础上封装的go语言日志库
+在[zap](https://github.com/uber-go/zap)封装的日志库，支持终端打印和保存日志，支持日志文件切割，支持json格式和console日志格式输出。
 
 <br>
 
@@ -12,4 +12,4 @@
 
 ## 使用
 
-使用方式请看[test文件](./logger_test.go)。
+使用方式看[示例](./logger_test.go)。

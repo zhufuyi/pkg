@@ -5,35 +5,88 @@ import (
 	"testing"
 )
 
-type people struct {
-	Name string `json:"name"`
-	Age  int    `json:"age"`
-}
+func printInfo() {
+	defer func() {
+		recover()
+	}()
 
-func init() {
-	//InitLogger(false, "", "debug") // 以console数据格式输出到控台(默认)
-	//InitLogger(false, "", "debug", "json") // 以json数据格式输出到控台
-	//InitLogger(true, "out.log", "debug") // 以json数据格式输出到文件
-}
-
-func TestLogger(t *testing.T) {
 	Debug("this is debug")
 	Info("this is info")
 	Warn("this is warn")
 	Error("this is error")
 
+	type people struct {
+		Name string `json:"name"`
+		Age  int    `json:"age"`
+	}
 	p := &people{"张三", 11}
 	ps := []people{{"张三", 11}, {"李四", 12}}
-	pMap := map[string]people{"123": *p, "456": *p}
-	Debug("this is debug object", Any("object1", p), Any("object2", ps), Any("object3", pMap))
-	Info("err is not equal nil ", Any("object", ps))
+	pMap := map[string]*people{"123": p, "456": p}
+	Info("this is debug object", Any("object1", p), Any("object2", ps), Any("object3", pMap)) // 使用debug不能打印这一句
 
-	defer func() {
-		if err:=recover();err != nil {
-			Debug("triggered the panic",Any("err",err))
-		}
-	}()
 	Panic("this is panic")
+}
+
+func TestInit(t *testing.T) {
+	type args struct {
+		opts []Option
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "terminal console debug",
+			args:    args{},
+			wantErr: false,
+		},
+		{
+			name: "terminal json debug",
+			args: args{[]Option{
+				WithJSON(),
+			}},
+			wantErr: false,
+		},
+		{
+			name: "terminal json warn",
+			args: args{[]Option{
+				WithJSON(), WithLevel("warn"),
+			}},
+			wantErr: false,
+		},
+		{
+			name:    "file console debug",
+			args:    args{[]Option{WithSave()}},
+			wantErr: false,
+		},
+		{
+			name: "file json debug",
+			args: args{[]Option{
+				WithJSON(),
+				WithSave(
+					WithFileName("my.log"),
+					WithFileMaxSize(5),
+					WithFileMaxBackups(5),
+					WithFileMaxAge(10),
+					WithFileIsCompression(true),
+				),
+			}},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Init(tt.args.opts...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Init() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			printInfo()
+		})
+	}
 }
 
 func BenchmarkString(b *testing.B) {
@@ -50,6 +103,6 @@ func BenchmarkInt(b *testing.B) {
 
 func BenchmarkAny(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		Info("benchmark type any", Any(fmt.Sprintf("object_%d", i), &people{"张三", 11}))
+		Info("benchmark type any", Any(fmt.Sprintf("object_%d", i), map[string]int{"张三": 11}))
 	}
 }
