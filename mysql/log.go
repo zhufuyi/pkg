@@ -5,19 +5,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zhufuyi/pkg/logger"
+	"go.uber.org/zap"
 )
 
-// gormLogger gorm日志
 type gormLogger struct {
-	Log *logger.ZapLogger
+	Log *zap.Logger
 }
 
-func newGormLogger() *gormLogger {
-	return &gormLogger{logger.WithFields()}
+func newGormLogger(log *zap.Logger) *gormLogger {
+	return &gormLogger{log}
 }
 
-func (l *gormLogger) Print(values ...interface{}) {
+func (g *gormLogger) Print(values ...interface{}) {
 	if len(values) > 5 {
 		skip := 8
 		sqlStr := values[3].(string)
@@ -32,11 +31,11 @@ func (l *gormLogger) Print(values ...interface{}) {
 			paramStr = paramStr[0:300] + " ......"
 		}
 
-		logger.GetLogger(skip).Info("gorm",
-			logger.Int64("ns", int64(values[2].(time.Duration))),
-			logger.Int64("rows", values[5].(int64)),
-			logger.String("sql", sqlStr),
-			logger.String("values", paramStr),
+		g.Log.WithOptions(zap.AddCallerSkip(skip)).Info("gorm",
+			zap.Int64("ns", int64(values[2].(time.Duration))),
+			zap.Int64("rows", values[5].(int64)),
+			zap.String("sql", sqlStr),
+			zap.String("values", paramStr),
 		)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/zhufuyi/pkg/logger"
 	"github.com/zhufuyi/pkg/mysql"
 	"github.com/zhufuyi/pkg/mysql/example/dao"
 	"github.com/zhufuyi/pkg/mysql/example/model"
@@ -14,7 +15,7 @@ var daoDb *dao.Dao
 var addr = "root:123456@(192.168.3.37:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
 
 func init() {
-	db, err := mysql.Init(addr, mysql.WithLog())
+	db, err := mysql.Init(addr, mysql.WithLog(logger.Get()))
 	if err != nil {
 		panic(fmt.Sprintf("connect to mysql failed, err=%s, addr=%s", err, addr))
 	}

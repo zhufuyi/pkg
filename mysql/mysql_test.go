@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/zhufuyi/pkg/logger"
 )
 
 var addr = "vison:123456@(192.168.3.37:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
@@ -21,7 +23,7 @@ func TestInit(t *testing.T) {
 func TestInitNoTLS(t *testing.T) {
 	db, err := Init(
 		addr,
-		WithLog(),
+		WithLog(logger.Get()),
 		WithMaxIdleConns(5),
 		WithMaxOpenConns(50),
 		WithConnMaxLifetime(time.Minute*3),
@@ -38,7 +40,7 @@ func TestInitNoTLS(t *testing.T) {
 func TestInitTLS(t *testing.T) {
 	db, err := Init(
 		addr,
-		WithLog(),
+		WithLog(logger.Get()),
 		WithMaxIdleConns(5),
 		WithMaxOpenConns(50),
 		WithConnMaxLifetime(time.Minute*3),
@@ -62,7 +64,7 @@ func TestInitTLS(t *testing.T) {
 func TestInitTLSx509(t *testing.T) {
 	db, err := Init(
 		addr,
-		WithLog(),
+		WithLog(logger.Get()),
 		WithMaxIdleConns(5),
 		WithMaxOpenConns(50),
 		WithConnMaxLifetime(time.Minute*3),

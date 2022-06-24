@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
 	"io/ioutil"
 	"strings"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
 )
 
 // DB gorm.DB 别名
@@ -48,8 +49,8 @@ func Init(addr string, opts ...Option) (*gorm.DB, error) {
 	db.DB().SetConnMaxLifetime(o.connMaxLifetime) // 断开多余的空闲连接事件
 	db.SingularTable(true)                        // 保持表名和对象名一致
 	if o.IsLog {
-		db.LogMode(true)              // 开启日志
-		db.SetLogger(newGormLogger()) // 自定义日志
+		db.LogMode(true)                   // 开启日志
+		db.SetLogger(newGormLogger(o.log)) // 自定义日志
 	}
 
 	if err = db.DB().Ping(); err != nil {

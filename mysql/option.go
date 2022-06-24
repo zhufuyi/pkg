@@ -1,9 +1,14 @@
 package mysql
 
-import "time"
+import (
+	"time"
+
+	"go.uber.org/zap"
+)
 
 var (
-	defaultIsLog = false // 输出日志
+	defaultIsLog     = false                // 输出日志
+	defaultLogger, _ = zap.NewDevelopment() // 默认日志输出
 
 	defaultMaxIdleConns    = 3               // 空闲连接数
 	defaultMaxOpenConns    = 30              // 最大连接数
@@ -19,6 +24,7 @@ var (
 
 type options struct {
 	IsLog           bool
+	log             *zap.Logger
 	maxIdleConns    int
 	maxOpenConns    int
 	connMaxLifetime time.Duration
@@ -40,6 +46,7 @@ func (o *options) apply(opts ...Option) {
 func defaultOptions() *options {
 	return &options{
 		IsLog:           defaultIsLog,
+		log:             defaultLogger,
 		maxIdleConns:    defaultMaxIdleConns,
 		maxOpenConns:    defaultMaxOpenConns,
 		connMaxLifetime: defaultConnMaxLifetime,
@@ -52,9 +59,12 @@ func defaultOptions() *options {
 }
 
 // WithLog set log sql
-func WithLog() Option {
+func WithLog(log *zap.Logger) Option {
 	return func(o *options) {
 		o.IsLog = true
+		if log != nil {
+			o.log = log
+		}
 	}
 }
 

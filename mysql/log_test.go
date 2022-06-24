@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	gLog    = newGormLogger()
+	gLog    = newGormLogger(nil)
 	gValues = []interface{}{
 		"sql",
 		"user.go:59",

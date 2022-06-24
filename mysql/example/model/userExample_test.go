@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/jinzhu/gorm"
+	"github.com/zhufuyi/pkg/logger"
 	"github.com/zhufuyi/pkg/mysql"
 )
 
@@ -13,7 +14,7 @@ var addr = "root:123456@(192.168.3.37:3306)/test?charset=utf8mb4&parseTime=True&
 
 func init() {
 	var err error
-	db, err = mysql.Init(addr, mysql.WithLog())
+	db, err = mysql.Init(addr, mysql.WithLog(logger.Get()))
 	if err != nil {
 		panic(fmt.Sprintf("connect to mysql failed, err=%s, addr=%s", err, addr))
 	}
