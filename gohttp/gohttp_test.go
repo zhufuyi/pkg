@@ -2,18 +2,25 @@ package gohttp
 
 import (
 	"fmt"
+	"net"
 	"reflect"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Body struct {
+type myBody struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
+var requestAddr string
+
 func init() {
+	port, _ := getAvailablePort()
+	requestAddr = fmt.Sprintf("http://localhost:%d", port)
+	addr := fmt.Sprintf(":%d", port)
+
 	r := gin.Default()
 	oKFun := func(c *gin.Context) {
 		uid := c.Query("uid")
@@ -35,7 +42,7 @@ func init() {
 	}
 
 	oKPFun := func(c *gin.Context) {
-		var body Body
+		var body myBody
 		c.BindJSON(&body)
 		fmt.Println("body data:", body)
 		c.JSON(200, JSONResponse{
@@ -45,7 +52,7 @@ func init() {
 		})
 	}
 	errPFun := func(c *gin.Context) {
-		var body Body
+		var body myBody
 		c.BindJSON(&body)
 		fmt.Println("body data:", body)
 		c.JSON(401, JSONResponse{
@@ -78,11 +85,29 @@ func init() {
 	r.PATCH("/patch_err", errPFun)
 
 	go func() {
-		err := r.Run(":8080")
+		err := r.Run(addr)
 		if err != nil {
 			panic(err)
 		}
 	}()
+}
+
+// 获取可用端口
+func getAvailablePort() (int, error) {
+	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", "0.0.0.0"))
+	if err != nil {
+		return 0, err
+	}
+
+	listener, err := net.ListenTCP("tcp", address)
+	if err != nil {
+		return 0, err
+	}
+
+	port := listener.Addr().(*net.TCPAddr).Port
+	err = listener.Close()
+
+	return port, err
 }
 
 // ------------------------------------------------------------------------------------------
@@ -101,7 +126,7 @@ func TestGetStandard(t *testing.T) {
 		{
 			name: "get standard success",
 			args: args{
-				url:    "http://localhost:8080/getStandard",
+				url:    requestAddr + "/getStandard",
 				params: KV{"uid": 123},
 			},
 			want: &JSONResponse{
@@ -114,7 +139,7 @@ func TestGetStandard(t *testing.T) {
 		{
 			name: "get standard err",
 			args: args{
-				url:    "http://localhost:8080/getStandard_err",
+				url:    requestAddr + "/getStandard_err",
 				params: KV{"uid": 123},
 			},
 			want: &JSONResponse{
@@ -127,7 +152,7 @@ func TestGetStandard(t *testing.T) {
 		{
 			name: "get not found",
 			args: args{
-				url:    "http://localhost:8080/notfound",
+				url:    requestAddr + "/notfound",
 				params: KV{"uid": 123},
 			},
 			want: &JSONResponse{
@@ -166,7 +191,7 @@ func TestDeleteStandard(t *testing.T) {
 		{
 			name: "delete standard success",
 			args: args{
-				url:    "http://localhost:8080/deleteStandard",
+				url:    requestAddr + "/deleteStandard",
 				params: KV{"uid": 123},
 			},
 			want: &JSONResponse{
@@ -179,7 +204,7 @@ func TestDeleteStandard(t *testing.T) {
 		{
 			name: "delete standard err",
 			args: args{
-				url:    "http://localhost:8080/deleteStandard_err",
+				url:    requestAddr + "/deleteStandard_err",
 				params: KV{"uid": 123},
 			},
 			want: &JSONResponse{
@@ -192,7 +217,7 @@ func TestDeleteStandard(t *testing.T) {
 		{
 			name: "delete not found",
 			args: args{
-				url:    "http://localhost:8080/notfound",
+				url:    requestAddr + "/notfound",
 				params: KV{"uid": 123},
 			},
 			want: &JSONResponse{
@@ -233,8 +258,8 @@ func TestPostStandard(t *testing.T) {
 		{
 			name: "post standard success",
 			args: args{
-				url: "http://localhost:8080/postStandard",
-				body: &Body{
+				url: requestAddr + "/postStandard",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -249,8 +274,8 @@ func TestPostStandard(t *testing.T) {
 		{
 			name: "post standard error",
 			args: args{
-				url: "http://localhost:8080/postStandard_err",
-				body: &Body{
+				url: requestAddr + "/postStandard_err",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -265,8 +290,8 @@ func TestPostStandard(t *testing.T) {
 		{
 			name: "post not found",
 			args: args{
-				url: "http://localhost:8080/notfound",
-				body: &Body{
+				url: requestAddr + "/notfound",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -308,8 +333,8 @@ func TestPutStandard(t *testing.T) {
 		{
 			name: "put standard success",
 			args: args{
-				url: "http://localhost:8080/putStandard",
-				body: &Body{
+				url: requestAddr + "/putStandard",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -324,8 +349,8 @@ func TestPutStandard(t *testing.T) {
 		{
 			name: "put standard error",
 			args: args{
-				url: "http://localhost:8080/putStandard_err",
-				body: &Body{
+				url: requestAddr + "/putStandard_err",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -340,8 +365,8 @@ func TestPutStandard(t *testing.T) {
 		{
 			name: "put not found",
 			args: args{
-				url: "http://localhost:8080/notfound",
-				body: &Body{
+				url: requestAddr + "/notfound",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -383,8 +408,8 @@ func TestPatchStandard(t *testing.T) {
 		{
 			name: "patch standard success",
 			args: args{
-				url: "http://localhost:8080/patchStandard",
-				body: &Body{
+				url: requestAddr + "/patchStandard",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -399,8 +424,8 @@ func TestPatchStandard(t *testing.T) {
 		{
 			name: "patch standard error",
 			args: args{
-				url: "http://localhost:8080/patchStandard_err",
-				body: &Body{
+				url: requestAddr + "/patchStandard_err",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -415,8 +440,8 @@ func TestPatchStandard(t *testing.T) {
 		{
 			name: "patch not found",
 			args: args{
-				url: "http://localhost:8080/notfound",
-				body: &Body{
+				url: requestAddr + "/notfound",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -461,7 +486,7 @@ func TestGet(t *testing.T) {
 			name: "get success",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/get",
+				url:    requestAddr + "/get",
 				params: KV{"uid": 123},
 			},
 			wantErr: false,
@@ -475,7 +500,7 @@ func TestGet(t *testing.T) {
 			name: "get err",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/get_err",
+				url:    requestAddr + "/get_err",
 				params: KV{"uid": 123},
 			},
 			wantErr: true,
@@ -489,7 +514,7 @@ func TestGet(t *testing.T) {
 			name: "get not found",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/notfound",
+				url:    requestAddr + "/notfound",
 				params: KV{"uid": 123},
 			},
 			wantErr: true,
@@ -530,7 +555,7 @@ func TestDelete(t *testing.T) {
 			name: "delete success",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/delete",
+				url:    requestAddr + "/delete",
 				params: KV{"uid": 123},
 			},
 			wantErr: false,
@@ -544,7 +569,7 @@ func TestDelete(t *testing.T) {
 			name: "delete err",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/delete_err",
+				url:    requestAddr + "/delete_err",
 				params: KV{"uid": 123},
 			},
 			wantErr: true,
@@ -558,7 +583,7 @@ func TestDelete(t *testing.T) {
 			name: "delete not found",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/notfound",
+				url:    requestAddr + "/notfound",
 				params: KV{"uid": 123},
 			},
 			wantErr: true,
@@ -600,8 +625,8 @@ func TestPost(t *testing.T) {
 			name: "post success",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/post",
-				body: &Body{
+				url:    requestAddr + "/post",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -617,8 +642,8 @@ func TestPost(t *testing.T) {
 			name: "post error",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/post_err",
-				body: &Body{
+				url:    requestAddr + "/post_err",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -634,8 +659,8 @@ func TestPost(t *testing.T) {
 			name: "post not found",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/notfound",
-				body: &Body{
+				url:    requestAddr + "/notfound",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -679,8 +704,8 @@ func TestPut(t *testing.T) {
 			name: "put success",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/put",
-				body: &Body{
+				url:    requestAddr + "/put",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -696,8 +721,8 @@ func TestPut(t *testing.T) {
 			name: "put error",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/put_err",
-				body: &Body{
+				url:    requestAddr + "/put_err",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -713,8 +738,8 @@ func TestPut(t *testing.T) {
 			name: "post not found",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/notfound",
-				body: &Body{
+				url:    requestAddr + "/notfound",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -758,8 +783,8 @@ func TestPatch(t *testing.T) {
 			name: "patch success",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/patch",
-				body: &Body{
+				url:    requestAddr + "/patch",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -775,8 +800,8 @@ func TestPatch(t *testing.T) {
 			name: "patch error",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/patch_err",
-				body: &Body{
+				url:    requestAddr + "/patch_err",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
@@ -792,8 +817,8 @@ func TestPatch(t *testing.T) {
 			name: "post not found",
 			args: args{
 				result: &JSONResponse{},
-				url:    "http://localhost:8080/notfound",
-				body: &Body{
+				url:    requestAddr + "/notfound",
+				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
