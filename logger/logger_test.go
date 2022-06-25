@@ -44,27 +44,28 @@ func TestInit(t *testing.T) {
 		{
 			name: "terminal json debug",
 			args: args{[]Option{
-				WithJSON(),
+				WithFormat("json"),
 			}},
 			wantErr: false,
 		},
 		{
 			name: "terminal json warn",
 			args: args{[]Option{
-				WithJSON(), WithLevel("warn"),
+				WithFormat("json"), WithLevel("warn"),
 			}},
 			wantErr: false,
 		},
 		{
 			name:    "file console debug",
-			args:    args{[]Option{WithSave()}},
+			args:    args{[]Option{WithSave(true)}},
 			wantErr: false,
 		},
 		{
 			name: "file json debug",
 			args: args{[]Option{
-				WithJSON(),
+				WithFormat("json"),
 				WithSave(
+					true,
 					WithFileName("my.log"),
 					WithFileMaxSize(5),
 					WithFileMaxBackups(5),

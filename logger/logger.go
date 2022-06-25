@@ -21,9 +21,11 @@ func getLogger() *zap.Logger {
 // Init 初始化打印设置
 // 在终端打印debug级别日志示例：Init()
 // 在终端打印info级别日志示例：Init(WithLevel("info"))
-// 在终端打印json格式、debug级别日志示例：Init(WithJSON())
+// 在终端打印json格式、debug级别日志示例：Init(WithFormat("json"))
 // 把日志输出到文件out.log，使用默认的切割日志相关参数，debug级别日志示例：Init(WithSave())
-// 把日志输出到指定文件，自定义设置日志文件切割日志参数，json格式，debug级别日志示例：Init(WithJSON(), WithSave(
+// 把日志输出到指定文件，自定义设置日志文件切割日志参数，json格式，debug级别日志示例：
+// Init(WithFormat("json"), WithSave(
+//     true,
 //		WithFileName("my.log"),
 //		WithFileMaxSize(5),
 //		WithFileMaxBackups(5),
@@ -43,7 +45,7 @@ func Init(opts ...Option) (*zap.Logger, error) {
 		Infof("initialize logger finish, config is output to 'terminal', format=%s, level=%s", encoding, levelName)
 	} else {
 		defaultLogger = log2File(encoding, levelName, o.fileConfig)
-		Info("initialize logger finish, config is output to 'file', format=%s, level=%s,", String("format", encoding), String("level", levelName), Any("file", o.fileConfig))
+		Info("initialize logger finish, config is output to 'file'", String("format", encoding), String("level", levelName), Any("file", o.fileConfig))
 	}
 
 	return defaultLogger, err

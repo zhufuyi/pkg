@@ -3,12 +3,11 @@ package logger
 import "strings"
 
 var (
-	defaultIsSave = false
-
-	defaultLevel    = "debug"
+	defaultLevel    = "debug" //  输出日志级别 debug, info, warn, error，默认是debug
 	defaultEncoding = "console"
+	defaultIsSave   = false // false:输出到终端，true:输出到文件，默认是false
 
-	// 保存文件相关设置
+	// 保存文件相关默认设置
 	defaultFilename      = "out.log" // 文件名称
 	defaultMaxSize       = 10        // 最大文件大小(MB)
 	defaultMaxBackups    = 100       // 保留旧文件的最大个数
@@ -17,19 +16,19 @@ var (
 )
 
 type options struct {
-	isSave   bool
 	level    string
 	encoding string
+	isSave   bool
 
-	// 保存文件相关设置
+	// 保存文件相关默认设置
 	fileConfig *fileOptions
 }
 
 func defaultOptions() *options {
 	return &options{
-		isSave:   defaultIsSave,
 		level:    defaultLevel,
 		encoding: defaultEncoding,
+		isSave:   defaultIsSave,
 	}
 }
 
@@ -54,20 +53,24 @@ func WithLevel(levelName string) Option {
 	}
 }
 
-// WithJSON 使用json格式显示
-func WithJSON() Option {
+// WithFormat 设置输出日志格式，console或json
+func WithFormat(format string) Option {
 	return func(o *options) {
-		o.encoding = "json"
+		if strings.ToLower(format) == "json" {
+			o.encoding = "json"
+		}
 	}
 }
 
 // WithSave 保存日志到指定文件
-func WithSave(opts ...FileOption) Option {
+func WithSave(isSave bool, opts ...FileOption) Option {
 	return func(o *options) {
-		o.isSave = true
-		fo := defaultFileOptions()
-		fo.apply(opts...)
-		o.fileConfig = fo
+		if isSave {
+			o.isSave = true
+			fo := defaultFileOptions()
+			fo.apply(opts...)
+			o.fileConfig = fo
+		}
 	}
 }
 
@@ -98,14 +101,6 @@ func (o *fileOptions) apply(opts ...FileOption) {
 }
 
 type FileOption func(*fileOptions)
-
-/*
-	defaultFilename      = "out.log" // 文件名称
-	defaultMaxSize       = 10        // 最大文件大小(MB)
-	defaultMaxBackups    = 100       // 保留旧文件的最个数
-	defaultMaxAge        = 30        // 保留旧文件的最大天数
-	defaultIsCompression = false     // 是否压缩/归档旧文件
-*/
 
 // WithFileName 自定义文件名称
 func WithFileName(filename string) FileOption {
