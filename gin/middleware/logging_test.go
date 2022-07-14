@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,20 +16,24 @@ import (
 var requestAddr string
 
 func init() {
-	port, _ := getAvailablePort()
-	requestAddr = fmt.Sprintf("http://localhost:%d", port)
-	addr := fmt.Sprintf(":%d", port)
-
+	addr := getAddr()
 	r := gin.Default()
 
 	// 默认打印日志
-	r.Use(Logging())
+	//	r.Use(Logging())
+
 	// 自定义打印日志
 	r.Use(Logging(
 		WithMaxLen(400),
-		WithRequestID("X-Request-Id"),
-		WithIgnoreRoutes("/hello"),
+		WithRequestID(),
+		//WithIgnoreRoutes("/hello"), // 忽略/hello
 	))
+
+	// 自定义zap log
+	//log, _ := logger.Init(logger.WithFormat("json"))
+	//r.Use(Logging(
+	//	WithLog(log),
+	//))
 
 	pingFun := func(c *gin.Context) {
 		c.JSON(200, "pong")
@@ -57,91 +62,7 @@ func init() {
 	}()
 }
 
-// 获取可用端口
-func getAvailablePort() (int, error) {
-	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", "0.0.0.0"))
-	if err != nil {
-		return 0, err
-	}
-
-	listener, err := net.ListenTCP("tcp", address)
-	if err != nil {
-		return 0, err
-	}
-
-	port := listener.Addr().(*net.TCPAddr).Port
-	err = listener.Close()
-
-	return port, err
-}
-
 // ------------------------------------------------------------------------------------------
-
-func do(method string, url string, body interface{}) ([]byte, error) {
-	var (
-		resp        *http.Response
-		err         error
-		contentType = "application/json"
-	)
-
-	v, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	switch method {
-	case http.MethodGet:
-		resp, err = http.Get(url)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-	case http.MethodPost:
-		resp, err = http.Post(url, contentType, bytes.NewReader(v))
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-	case http.MethodDelete, http.MethodPut, http.MethodPatch:
-		req, err := http.NewRequest(method, url, bytes.NewReader(v))
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Content-Type", contentType)
-		resp, err = http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-	default:
-		fmt.Errorf("%s method not supported", method)
-	}
-
-	return ioutil.ReadAll(resp.Body)
-}
-
-func get(url string) ([]byte, error) {
-	return do(http.MethodGet, url, nil)
-}
-
-func delete(url string) ([]byte, error) {
-	return do(http.MethodDelete, url, nil)
-}
-
-func post(url string, body interface{}) ([]byte, error) {
-	return do(http.MethodPost, url, body)
-}
-
-func put(url string, body interface{}) ([]byte, error) {
-	return do(http.MethodPut, url, body)
-}
-
-func patch(url string, body interface{}) ([]byte, error) {
-	return do(http.MethodPatch, url, body)
-}
 
 func TestRequest(t *testing.T) {
 	wantPong := `"pong"`
@@ -227,4 +148,95 @@ func TestRequest(t *testing.T) {
 			t.Errorf("got: %s, want: %s", got, wantHello)
 		}
 	})
+
+	time.Sleep(time.Millisecond * 100)
+}
+
+func getAddr() string {
+	port, _ := getAvailablePort()
+	requestAddr = fmt.Sprintf("http://localhost:%d", port)
+	return fmt.Sprintf(":%d", port)
+}
+
+func getAvailablePort() (int, error) {
+	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", "0.0.0.0"))
+	if err != nil {
+		return 0, err
+	}
+
+	listener, err := net.ListenTCP("tcp", address)
+	if err != nil {
+		return 0, err
+	}
+
+	port := listener.Addr().(*net.TCPAddr).Port
+	err = listener.Close()
+
+	return port, err
+}
+
+func do(method string, url string, body interface{}) ([]byte, error) {
+	var (
+		resp        *http.Response
+		err         error
+		contentType = "application/json"
+	)
+
+	v, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	switch method {
+	case http.MethodGet:
+		resp, err = http.Get(url)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+	case http.MethodPost:
+		resp, err = http.Post(url, contentType, bytes.NewReader(v))
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+	case http.MethodDelete, http.MethodPut, http.MethodPatch:
+		req, err := http.NewRequest(method, url, bytes.NewReader(v))
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Content-Type", contentType)
+		resp, err = http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+	default:
+		fmt.Errorf("%s method not supported", method)
+	}
+
+	return ioutil.ReadAll(resp.Body)
+}
+
+func get(url string) ([]byte, error) {
+	return do(http.MethodGet, url, nil)
+}
+
+func delete(url string) ([]byte, error) {
+	return do(http.MethodDelete, url, nil)
+}
+
+func post(url string, body interface{}) ([]byte, error) {
+	return do(http.MethodPost, url, body)
+}
+
+func put(url string, body interface{}) ([]byte, error) {
+	return do(http.MethodPut, url, body)
+}
+
+func patch(url string, body interface{}) ([]byte, error) {
+	return do(http.MethodPatch, url, body)
 }

@@ -8,12 +8,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zhufuyi/pkg/logger"
+	"go.uber.org/zap"
 )
 
 var (
 	// Print body max length
 	defaultMaxLength = 300
+
+	// default zap log
+	defaultLogger, _ = zap.NewDevelopment() // 默认日志输出
 
 	// Default request id name
 	defaultRequestIDName = "X-Request-Id"
@@ -28,6 +31,7 @@ var (
 func defaultOptions() *options {
 	return &options{
 		maxLength:     defaultMaxLength,
+		log:           defaultLogger,
 		ignoreRoutes:  defaultIgnoreRoutes,
 		requestIDName: "",
 	}
@@ -35,6 +39,7 @@ func defaultOptions() *options {
 
 type options struct {
 	maxLength     int
+	log           *zap.Logger
 	ignoreRoutes  map[string]struct{}
 	requestIDName string
 }
@@ -52,6 +57,15 @@ func (o *options) apply(opts ...Option) {
 func WithMaxLen(maxLen int) Option {
 	return func(o *options) {
 		o.maxLength = maxLen
+	}
+}
+
+// WithLog set log
+func WithLog(log *zap.Logger) Option {
+	return func(o *options) {
+		if log != nil {
+			o.log = log
+		}
 	}
 }
 
@@ -89,7 +103,20 @@ func (w bodyLogWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-// Logging 请求日志
+func getBodyData(buf *bytes.Buffer, maxLen int) string {
+	var body string
+
+	if buf.Len() > maxLen {
+		body = string(buf.Bytes()[:maxLen]) + " ...... "
+		// 如果有敏感数据需要过滤掉，比如明文密码
+	} else {
+		body = buf.String()
+	}
+
+	return body
+}
+
+// Logging print request and response info
 func Logging(opts ...Option) gin.HandlerFunc {
 	o := defaultOptions()
 	o.apply(opts...)
@@ -107,22 +134,22 @@ func Logging(opts ...Option) gin.HandlerFunc {
 		buf := bytes.Buffer{}
 		buf.ReadFrom(c.Request.Body)
 
-		fields := []logger.Field{
-			logger.String("method", c.Request.Method),
-			logger.String("url", c.Request.URL.String()),
+		fields := []zap.Field{
+			zap.String("method", c.Request.Method),
+			zap.String("url", c.Request.URL.String()),
 		}
 		if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodPatch || c.Request.Method == http.MethodDelete {
 			fields = append(fields,
-				logger.Int("size", buf.Len()),
-				logger.String("body", getBodyData(&buf, o.maxLength)),
+				zap.Int("size", buf.Len()),
+				zap.String("body", getBodyData(&buf, o.maxLength)),
 			)
 		}
 		reqID := ""
 		if o.requestIDName != "" {
 			reqID = c.Request.Header.Get(o.requestIDName)
-			fields = append(fields, logger.String(o.requestIDName, reqID))
+			fields = append(fields, zap.String(o.requestIDName, reqID))
 		}
-		logger.Info("<<<<", fields...)
+		o.log.Info("<<<<", fields...)
 
 		c.Request.Body = ioutil.NopCloser(&buf)
 
@@ -134,30 +161,17 @@ func Logging(opts ...Option) gin.HandlerFunc {
 		c.Next()
 
 		// 处理后打印返回信息
-		fields = []logger.Field{
-			logger.Int("code", c.Writer.Status()),
-			logger.String("method", c.Request.Method),
-			logger.String("url", c.Request.URL.Path),
-			logger.Int64("time_us", time.Now().Sub(start).Nanoseconds()/1000),
-			logger.Int("size", newWriter.body.Len()),
-			logger.String("response", strings.TrimRight(getBodyData(newWriter.body, o.maxLength), "\n")),
+		fields = []zap.Field{
+			zap.Int("code", c.Writer.Status()),
+			zap.String("method", c.Request.Method),
+			zap.String("url", c.Request.URL.Path),
+			zap.Int64("time_us", time.Now().Sub(start).Nanoseconds()/1000),
+			zap.Int("size", newWriter.body.Len()),
+			zap.String("response", strings.TrimRight(getBodyData(newWriter.body, o.maxLength), "\n")),
 		}
 		if o.requestIDName != "" {
-			fields = append(fields, logger.String(o.requestIDName, reqID))
+			fields = append(fields, zap.String(o.requestIDName, reqID))
 		}
-		logger.Info(">>>>", fields...)
+		o.log.Info(">>>>", fields...)
 	}
-}
-
-func getBodyData(buf *bytes.Buffer, maxLen int) string {
-	var body string
-
-	if buf.Len() > maxLen {
-		body = string(buf.Bytes()[:maxLen]) + " ...... "
-		// 如果有敏感数据需要过滤掉，比如明文密码
-	} else {
-		body = buf.String()
-	}
-
-	return body
 }
