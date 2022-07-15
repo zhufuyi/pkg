@@ -6,32 +6,23 @@ import (
 	"time"
 )
 
-func TestVerifyTokenStandard(t *testing.T) {
-	SetSigningKey("123456")
-	token, err := GenerateTokenStandard()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println(token)
-
-	err = VerifyTokenStandard(token)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
 func TestVerifyTokenCustom(t *testing.T) {
 	uid := "123"
 	role := "admin"
-	SetSigningKey("123456")
+
+	Init(
+		WithSigningKey("123456"),
+		WithExpire(time.Second),
+		WithSigningMethod(HS512),
+	)
 
 	// 正常验证
-	token, err := GenerateTokenWithCustom(uid, role)
+	token, err := GenerateToken(uid, role)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println(token)
-	v, err := VerifyTokenCustom(token)
+	v, err := VerifyToken(token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,26 +30,25 @@ func TestVerifyTokenCustom(t *testing.T) {
 
 	// 无效token格式
 	token2 := "xxx.xxx.xxx"
-	v, err = VerifyTokenCustom(token2)
+	v, err = VerifyToken(token2)
 	if !compareErr(err, formatErr) {
 		t.Fatal(err)
 	}
 
 	// 签名失败
 	token3 := token + "xxx"
-	v, err = VerifyTokenCustom(token3)
+	v, err = VerifyToken(token3)
 	if !compareErr(err, signatureErr) {
 		t.Fatal(err)
 	}
 
 	// token已过期
-	SetExpire(time.Second)
-	token, err = GenerateTokenWithCustom(uid, role)
+	token, err = GenerateToken(uid, role)
 	if err != nil {
 		t.Fatal(err)
 	}
 	time.Sleep(time.Second * 2)
-	v, err = VerifyTokenCustom(token)
+	v, err = VerifyToken(token)
 	if !compareErr(err, expiredErr) {
 		t.Fatal(err)
 	}

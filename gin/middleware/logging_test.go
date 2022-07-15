@@ -15,7 +15,7 @@ import (
 
 var requestAddr string
 
-func init() {
+func initServer1() {
 	addr := getAddr()
 	r := gin.Default()
 
@@ -65,6 +65,8 @@ func init() {
 // ------------------------------------------------------------------------------------------
 
 func TestRequest(t *testing.T) {
+	initServer1()
+
 	wantPong := `"pong"`
 	wantPing := `"ping"`
 	wantHello := `"hello world"`
