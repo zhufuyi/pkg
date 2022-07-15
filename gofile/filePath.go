@@ -21,16 +21,6 @@ func GetRunPath() string {
 	return filepath.Dir(dir)
 }
 
-// 根据系统类型获取分隔符
-func getDelimiter() string {
-	delimiter := "/"
-	if runtime.GOOS == "windows" {
-		delimiter = "\\"
-	}
-
-	return delimiter
-}
-
 // 通过迭代方式遍历文件
 func walkDir(dirPath string, allFiles *[]string) error {
 	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
@@ -221,4 +211,14 @@ func getLevel(dir string) int {
 		return strings.Count(dir, "\\")
 	}
 	return strings.Count(dir, "/")
+}
+
+// 根据系统类型获取分隔符
+func getDelimiter() string {
+	delimiter := "/"
+	if runtime.GOOS == "windows" {
+		delimiter = "\\"
+	}
+
+	return delimiter
 }

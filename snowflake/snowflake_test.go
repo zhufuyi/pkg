@@ -1,4 +1,4 @@
-package snowFlake
+package snowflake
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ func TestNewID(t *testing.T) {
 	uidsChan := make(chan int64)
 	uids := []int64{}
 
-	InitSnowFlake(1)
+	Init(1)
 	for i := 0; i < max; i++ {
 		go func(uidsChan chan int64) {
 			id := NewID()
@@ -43,4 +43,11 @@ func RemoveDuplicate(slice []int64) int {
 	}
 
 	return len(slice)
+}
+
+func BenchmarkNewID(b *testing.B) {
+	Init(1)
+	for i := 0; i < b.N; i++ {
+		NewID()
+	}
 }

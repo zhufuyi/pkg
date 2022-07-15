@@ -3,8 +3,6 @@ package gofile
 import (
 	"fmt"
 	"testing"
-
-	"github.com/k0kubun/pp"
 )
 
 func TestGetRunPath(t *testing.T) {
@@ -50,7 +48,7 @@ func TestListDirsAndFiles(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	pp.Println(df)
+	fmt.Println(df)
 }
 
 func TestDeleteDir(t *testing.T) {
@@ -58,5 +56,5 @@ func TestDeleteDir(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	pp.Println(vals)
+	fmt.Println(vals)
 }

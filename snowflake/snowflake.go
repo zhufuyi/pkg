@@ -1,4 +1,4 @@
-package snowFlake
+package snowflake
 
 // This package provides unique id in distribute system
 // the algorithm is inspired by Twitter's famous snowflake
@@ -123,8 +123,8 @@ func (iw *IDWorker) NextID() (ts int64, err error) {
 
 var iw *IDWorker
 
-// InitSnowFlake 初始化SnowFlake
-func InitSnowFlake(workID int64) error {
+// Init 初始化SnowFlake
+func Init(workID int64) error {
 	var err error
 	iw, err = NewIDWorker(workID)
 	if err != nil {
