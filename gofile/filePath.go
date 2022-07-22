@@ -10,6 +10,16 @@ import (
 	"strings"
 )
 
+// IsExists 判断文件或文件夹是否存在
+func IsExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+
+	return false
+}
+
 // GetRunPath 获取程序执行的绝对路径
 func GetRunPath() string {
 	dir, err := os.Executable()

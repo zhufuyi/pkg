@@ -313,14 +313,17 @@ func (resp *Response) BindJSON(v interface{}) error {
 
 // -------------------------------------------------------------------------------------------------
 
-var requestErr = func(err error) error { return fmt.Errorf("request error, error=%v", err) }
-var jsonParseErr = func(err error) error { return fmt.Errorf("json parsing error, error=%v", err) }
+var requestErr = func(err error) error { return fmt.Errorf("request error, err=%v", err) }
+var jsonParseErr = func(err error) error { return fmt.Errorf("json parsing error, err=%v", err) }
 var notOKErr = func(resp *Response) error {
 	body, err := resp.ReadBody()
 	if err != nil {
-		return fmt.Errorf("status code is not 200, statusCode=%d, body=%v", resp.StatusCode, err)
+		return fmt.Errorf("statusCode=%d, err=%v", resp.StatusCode, err)
 	}
-	return fmt.Errorf("status code is not 200, statusCode=%d, body=%s", resp.StatusCode, body)
+	if len(body) > 500 {
+		body = append(body[:500], []byte(" ......")...)
+	}
+	return fmt.Errorf("statusCode=%d, body=%s", resp.StatusCode, body)
 }
 
 func do(method string, result interface{}, url string, body interface{}, params ...KV) error {
