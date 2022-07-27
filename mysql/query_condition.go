@@ -76,16 +76,17 @@ func (column *Column) convert() error {
 	return nil
 }
 
-// GetQueryConditions 获取查询条件，如果只查询一列，忽略第一列的逻辑类型
+// GetQueryConditions 获取查询条件，无论是一列还是多列查询，忽略最后一列的逻辑类型
 func GetQueryConditions(columns []*Column) (string, []interface{}, error) {
 	str := ""
 	args := []interface{}{}
-	if len(columns) == 0 {
+	l := len(columns)
+	if l == 0 {
 		return str, nil, nil
 	}
 
 	isUseIN := true
-	if len(columns) == 1 {
+	if l == 1 {
 		isUseIN = false
 	}
 	field := columns[0].Name
@@ -96,10 +97,10 @@ func GetQueryConditions(columns []*Column) (string, []interface{}, error) {
 			return "", nil, err
 		}
 
-		if i == 0 { // 忽略第一列的逻辑类型
-			str = column.Name + column.ExpType + "?"
+		if i == l-1 { // 忽略最后一列的逻辑类型
+			str += column.Name + column.ExpType + "?"
 		} else {
-			str += column.LogicType + column.Name + column.ExpType + "?"
+			str += column.Name + column.ExpType + "?" + column.LogicType
 		}
 		args = append(args, column.Value)
 

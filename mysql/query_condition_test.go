@@ -263,13 +263,13 @@ func TestGetQueryConditions(t *testing.T) {
 			args: args{
 				columns: []*Column{
 					{
-						Name:  "name",
-						Value: "刘备",
+						Name:      "name",
+						Value:     "刘备",
+						LogicType: OR,
 					},
 					{
-						Name:      "gender",
-						Value:     "女",
-						LogicType: OR,
+						Name:  "gender",
+						Value: "女",
 					},
 				},
 			},
@@ -282,14 +282,14 @@ func TestGetQueryConditions(t *testing.T) {
 			args: args{
 				columns: []*Column{
 					{
-						Name:  "name",
-						Value: "刘备",
+						Name:      "name",
+						Value:     "刘备",
+						LogicType: OR,
 					},
 					{
-						Name:      "gender",
-						Value:     "男",
-						ExpType:   Neq,
-						LogicType: OR,
+						Name:    "gender",
+						Value:   "男",
+						ExpType: Neq,
 					},
 				},
 			},
