@@ -31,23 +31,14 @@ func GetRunPath() string {
 	return filepath.Dir(dir)
 }
 
-// 通过迭代方式遍历文件
-func walkDir(dirPath string, allFiles *[]string) error {
-	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
-	if err != nil {
-		return err
+// GetPathDelimiter 根据系统类型获取分隔符
+func GetPathDelimiter() string {
+	delimiter := "/"
+	if runtime.GOOS == "windows" {
+		delimiter = "\\"
 	}
 
-	for _, file := range files {
-		deepFile := dirPath + getDelimiter() + file.Name()
-		if file.IsDir() {
-			walkDir(deepFile, allFiles)
-			continue
-		}
-		*allFiles = append(*allFiles, deepFile)
-	}
-
-	return nil
+	return delimiter
 }
 
 // ListFiles 遍历指定目录下所有文件，返回文件的绝对路径
@@ -61,25 +52,6 @@ func ListFiles(dirPath string) ([]string, error) {
 	}
 
 	return files, walkDir(dirPath, &files)
-}
-
-func walkDir2(dirPath string, allDirs *[]string, allFiles *[]string) error {
-	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		deepFile := dirPath + getDelimiter() + file.Name()
-		if file.IsDir() {
-			*allDirs = append(*allDirs, deepFile)
-			walkDir2(deepFile, allDirs, allFiles)
-			continue
-		}
-		*allFiles = append(*allFiles, deepFile)
-	}
-
-	return nil
 }
 
 // ListDirsAndFiles 遍历指定目录下所有子目录文件，返回文件的绝对路径
@@ -104,16 +76,60 @@ func ListDirsAndFiles(dirPath string) (map[string][]string, error) {
 	return df, nil
 }
 
+type FilterFn func(string) bool
+
+// ListFilesWithFilter 带过滤条件遍历指定目录下所有文件，返回绝对路径
+func ListFilesWithFilter(dirPath string, filter FilterFn) ([]string, error) {
+	files := []string{}
+	err := error(nil)
+
+	dirPath, err = filepath.Abs(dirPath)
+	if err != nil {
+		return files, err
+	}
+
+	return files, walkDirWithFilter(dirPath, &files, filter)
+}
+
+// MatchSuffix 后缀匹配
+func MatchSuffix(suffixName string) FilterFn {
+	return func(filename string) bool {
+		if suffixName == "" {
+			return false
+		}
+
+		size := len(filename) - len(suffixName)
+		if size >= 0 && filename[size:] == suffixName { // 后缀
+			return true
+		}
+		return false
+	}
+}
+
+// MatchContain 包含字符串
+func MatchContain(baseName string) FilterFn {
+	return func(filename string) bool {
+		if baseName == "" {
+			return false
+		}
+
+		return strings.Contains(filename, baseName)
+	}
+}
+
 // DeleteDir 删除指定目录下所有文件和目录
 func DeleteDir(dirPath string) ([]string, error) {
 	var errStr string
 	var deleteFiles []string
 
-	// 禁止删除3级以下的文件夹和文件
-	if getLevel(dirPath) < 4 {
-		return deleteFiles, errors.New("you can not delete folders below level 4")
+	absPath, err := filepath.Abs(dirPath)
+	if err != nil {
+		return nil, err
 	}
-
+	if absPath == "/" || strings.Contains(absPath, ":\\") {
+		return nil, fmt.Errorf("can't delete directory %s", dirPath)
+	}
+	
 	df, err := ListDirsAndFiles(dirPath)
 	if err != nil {
 		return deleteFiles, err
@@ -124,7 +140,7 @@ func DeleteDir(dirPath string) ([]string, error) {
 
 	// 删除文件
 	for _, file := range files {
-		err := os.RemoveAll(file)
+		err = os.RemoveAll(file)
 		if err != nil {
 			errStr += err.Error() + "/n"
 			continue
@@ -135,7 +151,7 @@ func DeleteDir(dirPath string) ([]string, error) {
 	// 删除目录
 	size := len(dirs)
 	for i := size - 1; i >= 0; i-- {
-		err := os.RemoveAll(dirs[i])
+		err = os.RemoveAll(dirs[i])
 		if err != nil {
 			errStr += err.Error() + "/n"
 			continue
@@ -156,6 +172,51 @@ func DeleteDir(dirPath string) ([]string, error) {
 	return deleteFiles, nil
 }
 
+func getLevel(dir string) int {
+	if runtime.GOOS == "windows" {
+		return strings.Count(dir, "\\")
+	}
+	return strings.Count(dir, "/")
+}
+
+// 通过迭代方式遍历文件
+func walkDir(dirPath string, allFiles *[]string) error {
+	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		deepFile := dirPath + GetPathDelimiter() + file.Name()
+		if file.IsDir() {
+			walkDir(deepFile, allFiles)
+			continue
+		}
+		*allFiles = append(*allFiles, deepFile)
+	}
+
+	return nil
+}
+
+func walkDir2(dirPath string, allDirs *[]string, allFiles *[]string) error {
+	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		deepFile := dirPath + GetPathDelimiter() + file.Name()
+		if file.IsDir() {
+			*allDirs = append(*allDirs, deepFile)
+			walkDir2(deepFile, allDirs, allFiles)
+			continue
+		}
+		*allFiles = append(*allFiles, deepFile)
+	}
+
+	return nil
+}
+
 // 带过滤条件通过迭代方式遍历文件
 func walkDirWithFilter(dirPath string, allFiles *[]string, filter func(string) bool) error {
 	files, err := ioutil.ReadDir(dirPath) //读取目录下文件
@@ -164,7 +225,7 @@ func walkDirWithFilter(dirPath string, allFiles *[]string, filter func(string) b
 	}
 
 	for _, file := range files {
-		deepFile := dirPath + getDelimiter() + file.Name()
+		deepFile := dirPath + GetPathDelimiter() + file.Name()
 		if file.IsDir() {
 			walkDirWithFilter(deepFile, allFiles, filter)
 			continue
@@ -175,60 +236,4 @@ func walkDirWithFilter(dirPath string, allFiles *[]string, filter func(string) b
 	}
 
 	return nil
-}
-
-// ListFilesWithFilter 带过滤条件遍历指定目录下所有文件，返回绝对路径
-func ListFilesWithFilter(dirPath string, filter func(string) bool) ([]string, error) {
-	files := []string{}
-	err := error(nil)
-
-	dirPath, err = filepath.Abs(dirPath)
-	if err != nil {
-		return files, err
-	}
-
-	return files, walkDirWithFilter(dirPath, &files, filter)
-}
-
-// MatchSuffix 后缀匹配
-func MatchSuffix(suffixName string) func(fileName string) bool {
-	return func(filename string) bool {
-		if suffixName == "" {
-			return false
-		}
-
-		size := len(filename) - len(suffixName)
-		if size >= 0 && filename[size:] == suffixName { // 后缀
-			return true
-		}
-		return false
-	}
-}
-
-// MatchContain 包含匹配
-func MatchContain(baseName string) func(fileName string) bool {
-	return func(filename string) bool {
-		if baseName == "" {
-			return false
-		}
-
-		return strings.Contains(filename, baseName)
-	}
-}
-
-func getLevel(dir string) int {
-	if runtime.GOOS == "windows" {
-		return strings.Count(dir, "\\")
-	}
-	return strings.Count(dir, "/")
-}
-
-// 根据系统类型获取分隔符
-func getDelimiter() string {
-	delimiter := "/"
-	if runtime.GOOS == "windows" {
-		delimiter = "\\"
-	}
-
-	return delimiter
 }
