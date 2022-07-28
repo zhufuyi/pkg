@@ -2,22 +2,38 @@ package email
 
 import (
 	"crypto/tls"
+	"fmt"
+	"strings"
 
 	"gopkg.in/gomail.v2"
 )
 
 // https://pkg.go.dev/gopkg.in/gomail.v2#example-package
 
-type ServerType int
+// Client 发送客户端
+type Client struct {
+	Host     string // host smtp地址
+	Port     int    // port 端口
+	Username string // username 账户
+	Password string // password 密码
+}
 
-const (
-	// qq邮箱
-	ServerTypeQQ ServerType = 0
-	// 126邮箱
-	ServerType126 ServerType = 1
-	// 163邮箱
-	ServerType163 ServerType = 2
-)
+// Init 实例化
+func Init(username string, password string) (*Client, error) {
+	client := &Client{
+		Username: username,
+		Password: password,
+		Port:     465,
+	}
+
+	split := strings.Split(username, "@")
+	if len(split) != 2 {
+		return nil, fmt.Errorf("'%s' is not email address", username)
+	}
+	client.Host = "smtp." + split[1]
+
+	return client, nil
+}
 
 // Message 内容
 type Message struct {
@@ -29,38 +45,8 @@ type Message struct {
 	Attach      string   // 附件
 }
 
-// Client 发送客户端
-type Client struct {
-	Host     string // host smtp地址
-	Port     int    // port 端口
-	Username string // username 账户
-	Password string // password 密码
-}
-
-// NewClient 实例化邮件客户端
-func NewClient(username string, password string, st ServerType) *Client {
-	client := &Client{
-		Username: username,
-		Password: password,
-	}
-
-	switch st {
-	case ServerTypeQQ:
-		client.Host = "smtp.qq.com"
-		client.Port = 465
-	case ServerType126:
-		client.Host = "smtp.126.com"
-		client.Port = 465
-	case ServerType163:
-		client.Host = "smtp.163.com"
-		client.Port = 465
-	}
-
-	return client
-}
-
 // SendMessage 发送邮件
-func (c *Client) SendMessage(msg *Message) (bool, error) {
+func (c *Client) SendMessage(msg *Message) error {
 	gm := gomail.NewMessage()
 	gm.SetHeader("From", c.Username)
 	gm.SetHeader("To", msg.To...)
@@ -75,8 +61,5 @@ func (c *Client) SendMessage(msg *Message) (bool, error) {
 
 	dialer := gomail.NewDialer(c.Host, c.Port, c.Username, c.Password)
 	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-	if err := dialer.DialAndSend(gm); err != nil {
-		return false, err
-	}
-	return true, nil
+	return dialer.DialAndSend(gm)
 }
