@@ -6,7 +6,7 @@
 
 <br>
 
-## go常用包列表
+## pkg列表
 
 - [awss3 aws s3客户端](awss3)
 - [dingTalk 钉钉机器人客户端](dingTalk)
@@ -16,6 +16,7 @@
 - [render gin返回数据封装](gin/render)
 - [validator gin请求参数校验](gin/validator)
 - [gobash 执行bash命令](gobash)
+- [gocron 定时任务](gocron)
 - [gofile 文件处理](gofile)
 - [gohttp http客户端](gohttp)
 - [jwt 鉴权](jwt)
@@ -27,3 +28,4 @@
 - [nats 客户端](nats)
 - [redis 客户端](redis)
 - [snowflake id生成器](snowflake)
+
