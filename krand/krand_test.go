@@ -34,22 +34,22 @@ func TestFloat64(t *testing.T) {
 
 	fmt.Println("随机生成默认的随机数: [0, 100]")
 	for i := 0; i < l; i++ {
-		fmt.Printf("%f ", Float64(0))
+		fmt.Printf("%.f ", Float64(0))
 	}
 
 	fmt.Println("\n\n", "随机生成数: [0, max]")
 	for i := 0; i < l; i++ {
-		fmt.Printf("%f ", Float64(1, 20))
+		fmt.Printf("%.1f ", Float64(1, 20))
 	}
 
 	fmt.Println("\n\n", "随机生成数: [min, max]")
 	for i := 0; i < l; i++ {
-		fmt.Printf("%f ", Float64(2, 10, 20))
+		fmt.Printf("%.2f ", Float64(2, 10, 20))
 	}
 
 	fmt.Println("\n\n", "随机生成数: [max, min]")
 	for i := 0; i < l; i++ {
-		fmt.Printf("%f ", Float64(4, 2000, 1000))
+		fmt.Printf("%.4f ", Float64(4, 2000, 1000))
 	}
 }
 
@@ -79,39 +79,33 @@ func TestString(t *testing.T) {
 	fmt.Printf("%s\n", Bytes(R_All, 32))
 }
 
-func BenchmarkString_NUM_6(b *testing.B) {
+func BenchmarkInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		String(R_NUM)
+		Int()
 	}
 }
 
-func BenchmarkString_UPPER_6(b *testing.B) {
+func BenchmarkInt_10000(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		String(R_UPPER)
+		Int(10000)
 	}
 }
 
-func BenchmarkString_LOWER_6(b *testing.B) {
+func BenchmarkFloat64_0(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		String(R_LOWER)
+		Float64(0)
 	}
 }
 
-func BenchmarkString_NUM_UPPER_16(b *testing.B) {
+func BenchmarkFloat64(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		String(R_NUM|R_UPPER, 16)
+		Float64(2, 10000)
 	}
 }
 
-func BenchmarkString_NUM_LOWER_16(b *testing.B) {
+func BenchmarkString_ALL_6(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		String(R_NUM|R_LOWER, 16)
-	}
-}
-
-func BenchmarkString_UPPER_LOWER_16(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		String(R_UPPER|R_LOWER, 16)
+		String(R_All)
 	}
 }
 

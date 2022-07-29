@@ -35,10 +35,8 @@ func Bytes(kind int, size ...int) []byte {
 		kind = R_All
 	}
 
-	length := 0
-	if len(size) == 0 {
-		length = 6 // 默认长度
-	} else {
+	length := 6 // 默认长度
+	if len(size) > 0 {
 		length = size[0] // 只有第0个值有效，忽略其它值
 		if length < 1 {
 			length = 6 // 默认长度
