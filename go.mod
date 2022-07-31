@@ -31,6 +31,7 @@ require (
 require (
 	github.com/huandu/xstrings v1.3.1
 	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/robfig/cron/v3 v3.0.1
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
 )
 
@@ -65,7 +66,6 @@ require (
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/pelletier/go-toml v1.9.5-0.20220105141732-fed146406641 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/stretchr/testify v1.7.1 // indirect

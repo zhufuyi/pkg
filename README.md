@@ -17,6 +17,7 @@
 - [validator gin请求参数校验](gin/validator)
 - [gobash 执行bash命令](gobash)
 - [gocron 定时任务](gocron)
+- [gocrypto 加密解密](gocrypto)
 - [gofile 文件处理](gofile)
 - [gohttp http客户端](gohttp)
 - [jwt 鉴权](jwt)
