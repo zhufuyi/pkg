@@ -1,7 +1,6 @@
 package gofile
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,6 +30,12 @@ func GetRunPath() string {
 	return filepath.Dir(dir)
 }
 
+// GetFilename 获取文件名
+func GetFilename(filePath string) string {
+	_, name := filepath.Split(filePath)
+	return name
+}
+
 // GetPathDelimiter 根据系统类型获取分隔符
 func GetPathDelimiter() string {
 	delimiter := "/"
@@ -42,13 +47,25 @@ func GetPathDelimiter() string {
 }
 
 // ListFiles 遍历指定目录下所有文件，返回文件的绝对路径
-func ListFiles(dirPath string) ([]string, error) {
+func ListFiles(dirPath string, opts ...Option) ([]string, error) {
 	files := []string{}
 	err := error(nil)
 
 	dirPath, err = filepath.Abs(dirPath)
 	if err != nil {
 		return files, err
+	}
+
+	o := defaultOptions()
+	o.apply(opts...)
+
+	switch o.fiter {
+	case prefix:
+		return files, walkDirWithFilter(dirPath, &files, matchPrefix(o.name))
+	case suffix:
+		return files, walkDirWithFilter(dirPath, &files, matchSuffix(o.name))
+	case contain:
+		return files, walkDirWithFilter(dirPath, &files, matchContain(o.name))
 	}
 
 	return files, walkDir(dirPath, &files)
@@ -76,112 +93,9 @@ func ListDirsAndFiles(dirPath string) (map[string][]string, error) {
 	return df, nil
 }
 
-type FilterFn func(string) bool
-
-// ListFilesWithFilter 带过滤条件遍历指定目录下所有文件，返回绝对路径
-func ListFilesWithFilter(dirPath string, filter FilterFn) ([]string, error) {
-	files := []string{}
-	err := error(nil)
-
-	dirPath, err = filepath.Abs(dirPath)
-	if err != nil {
-		return files, err
-	}
-
-	return files, walkDirWithFilter(dirPath, &files, filter)
-}
-
-// MatchSuffix 后缀匹配
-func MatchSuffix(suffixName string) FilterFn {
-	return func(filename string) bool {
-		if suffixName == "" {
-			return false
-		}
-
-		size := len(filename) - len(suffixName)
-		if size >= 0 && filename[size:] == suffixName { // 后缀
-			return true
-		}
-		return false
-	}
-}
-
-// MatchContain 包含字符串
-func MatchContain(baseName string) FilterFn {
-	return func(filename string) bool {
-		if baseName == "" {
-			return false
-		}
-
-		return strings.Contains(filename, baseName)
-	}
-}
-
-// DeleteDir 删除指定目录下所有文件和目录
-func DeleteDir(dirPath string) ([]string, error) {
-	var errStr string
-	var deleteFiles []string
-
-	absPath, err := filepath.Abs(dirPath)
-	if err != nil {
-		return nil, err
-	}
-	if absPath == "/" || strings.Contains(absPath, ":\\") {
-		return nil, fmt.Errorf("can't delete directory %s", dirPath)
-	}
-	
-	df, err := ListDirsAndFiles(dirPath)
-	if err != nil {
-		return deleteFiles, err
-	}
-
-	files := df["files"]
-	dirs := df["dirs"]
-
-	// 删除文件
-	for _, file := range files {
-		err = os.RemoveAll(file)
-		if err != nil {
-			errStr += err.Error() + "/n"
-			continue
-		}
-		deleteFiles = append(deleteFiles, file)
-	}
-
-	// 删除目录
-	size := len(dirs)
-	for i := size - 1; i >= 0; i-- {
-		err = os.RemoveAll(dirs[i])
-		if err != nil {
-			errStr += err.Error() + "/n"
-			continue
-		}
-		deleteFiles = append(deleteFiles, dirs[i])
-	}
-
-	// 删除指定目录
-	err = os.RemoveAll(dirPath)
-	if err != nil {
-		errStr += err.Error() + "/n"
-	}
-
-	if errStr != "" {
-		return deleteFiles, errors.New(errStr)
-	}
-
-	return deleteFiles, nil
-}
-
-func getLevel(dir string) int {
-	if runtime.GOOS == "windows" {
-		return strings.Count(dir, "\\")
-	}
-	return strings.Count(dir, "/")
-}
-
-// 通过迭代方式遍历文件
-func walkDir(dirPath string, allFiles *[]string) error {
-	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
+// 带过滤条件通过迭代方式遍历文件
+func walkDirWithFilter(dirPath string, allFiles *[]string, filter filterFn) error {
+	files, err := ioutil.ReadDir(dirPath) //读取目录下文件
 	if err != nil {
 		return err
 	}
@@ -189,10 +103,12 @@ func walkDir(dirPath string, allFiles *[]string) error {
 	for _, file := range files {
 		deepFile := dirPath + GetPathDelimiter() + file.Name()
 		if file.IsDir() {
-			walkDir(deepFile, allFiles)
+			walkDirWithFilter(deepFile, allFiles, filter)
 			continue
 		}
-		*allFiles = append(*allFiles, deepFile)
+		if filter(deepFile) {
+			*allFiles = append(*allFiles, deepFile)
+		}
 	}
 
 	return nil
@@ -217,9 +133,52 @@ func walkDir2(dirPath string, allDirs *[]string, allFiles *[]string) error {
 	return nil
 }
 
-// 带过滤条件通过迭代方式遍历文件
-func walkDirWithFilter(dirPath string, allFiles *[]string, filter func(string) bool) error {
-	files, err := ioutil.ReadDir(dirPath) //读取目录下文件
+type filterFn func(string) bool
+
+// 后缀匹配
+func matchSuffix(suffixName string) filterFn {
+	return func(filename string) bool {
+		if suffixName == "" {
+			return false
+		}
+
+		size := len(filename) - len(suffixName)
+		if size >= 0 && filename[size:] == suffixName { // 后缀
+			return true
+		}
+		return false
+	}
+}
+
+// 前缀匹配
+func matchPrefix(prefixName string) filterFn {
+	return func(filePath string) bool {
+		if prefixName == "" {
+			return false
+		}
+		filename := GetFilename(filePath)
+		size := len(filename) - len(prefixName)
+		if size >= 0 && filename[:len(prefixName)] == prefixName { // 前缀
+			return true
+		}
+		return false
+	}
+}
+
+// 包含字符串
+func matchContain(containName string) filterFn {
+	return func(filePath string) bool {
+		if containName == "" {
+			return false
+		}
+		filename := GetFilename(filePath)
+		return strings.Contains(filename, containName)
+	}
+}
+
+// 通过迭代方式遍历文件
+func walkDir(dirPath string, allFiles *[]string) error {
+	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
 	if err != nil {
 		return err
 	}
@@ -227,12 +186,10 @@ func walkDirWithFilter(dirPath string, allFiles *[]string, filter func(string) b
 	for _, file := range files {
 		deepFile := dirPath + GetPathDelimiter() + file.Name()
 		if file.IsDir() {
-			walkDirWithFilter(deepFile, allFiles, filter)
+			walkDir(deepFile, allFiles)
 			continue
 		}
-		if filter(deepFile) {
-			*allFiles = append(*allFiles, deepFile)
-		}
+		*allFiles = append(*allFiles, deepFile)
 	}
 
 	return nil

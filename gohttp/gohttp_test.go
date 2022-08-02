@@ -3,7 +3,6 @@ package gohttp
 import (
 	"fmt"
 	"net"
-	"reflect"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +24,7 @@ func init() {
 	oKFun := func(c *gin.Context) {
 		uid := c.Query("uid")
 		fmt.Printf("request parameters: uid=%s\n", uid)
-		c.JSON(200, JSONResponse{
+		c.JSON(200, StdResult{
 			Code: 0,
 			Msg:  "ok",
 			Data: fmt.Sprintf("uid=%v", uid),
@@ -34,7 +33,7 @@ func init() {
 	errFun := func(c *gin.Context) {
 		uid := c.Query("uid")
 		fmt.Printf("request parameters: uid=%s\n", uid)
-		c.JSON(401, JSONResponse{
+		c.JSON(401, StdResult{
 			Code: 401,
 			Msg:  "authentication failure",
 			Data: fmt.Sprintf("uid=%v", uid),
@@ -45,33 +44,22 @@ func init() {
 		var body myBody
 		c.BindJSON(&body)
 		fmt.Println("body data:", body)
-		c.JSON(200, JSONResponse{
+		c.JSON(200, StdResult{
 			Code: 0,
 			Msg:  "ok",
-			Data: nil,
+			Data: body,
 		})
 	}
 	errPFun := func(c *gin.Context) {
 		var body myBody
 		c.BindJSON(&body)
 		fmt.Println("body data:", body)
-		c.JSON(401, JSONResponse{
+		c.JSON(401, StdResult{
 			Code: 401,
 			Msg:  "authentication failure",
 			Data: nil,
 		})
 	}
-
-	r.GET("/getStandard", oKFun)
-	r.GET("/getStandard_err", errFun)
-	r.DELETE("/deleteStandard", oKFun)
-	r.DELETE("/deleteStandard_err", errFun)
-	r.POST("/postStandard", oKPFun)
-	r.POST("/postStandard_err", errPFun)
-	r.PUT("/putStandard", oKPFun)
-	r.PUT("/putStandard_err", errPFun)
-	r.PATCH("/patchStandard", oKPFun)
-	r.PATCH("/patchStandard_err", errPFun)
 
 	r.GET("/get", oKFun)
 	r.GET("/get_err", errFun)
@@ -113,359 +101,126 @@ func getAvailablePort() (int, error) {
 // ------------------------------------------------------------------------------------------
 
 func TestGetStandard(t *testing.T) {
-	type args struct {
-		url    string
-		params KV
+	req := Request{}
+	req.SetURL(requestAddr + "/get")
+	req.SetHeaders(map[string]string{
+		"Authorization": "Bearer token",
+	})
+	req.SetParams(KV{
+		"name": "foo",
+	})
+
+	resp, err := req.GET()
+	if err != nil {
+		t.Fatal(err)
 	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *JSONResponse
-		wantErr bool
-	}{
-		{
-			name: "get standard success",
-			args: args{
-				url:    requestAddr + "/getStandard",
-				params: KV{"uid": 123},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "ok",
-				Data: "uid=123",
-			},
-			wantErr: false,
-		},
-		{
-			name: "get standard err",
-			args: args{
-				url:    requestAddr + "/getStandard_err",
-				params: KV{"uid": 123},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
-		{
-			name: "get not found",
-			args: args{
-				url:    requestAddr + "/notfound",
-				params: KV{"uid": 123},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
+
+	result := &StdResult{}
+	err = resp.BindJSON(result)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetStandard(tt.args.url, tt.args.params)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetStandard() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetStandard() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	t.Logf("%+v", result)
 }
 
 func TestDeleteStandard(t *testing.T) {
-	type args struct {
-		url    string
-		params KV
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *JSONResponse
-		wantErr bool
-	}{
-		{
-			name: "delete standard success",
-			args: args{
-				url:    requestAddr + "/deleteStandard",
-				params: KV{"uid": 123},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "ok",
-				Data: "uid=123",
-			},
-			wantErr: false,
-		},
-		{
-			name: "delete standard err",
-			args: args{
-				url:    requestAddr + "/deleteStandard_err",
-				params: KV{"uid": 123},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
-		{
-			name: "delete not found",
-			args: args{
-				url:    requestAddr + "/notfound",
-				params: KV{"uid": 123},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
+	req := Request{}
+	req.SetURL(requestAddr + "/delete")
+	req.SetHeaders(map[string]string{
+		"Authorization": "Bearer token",
+	})
+	req.SetParams(KV{
+		"uid": 123,
+	})
+
+	resp, err := req.DELETE()
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := DeleteStandard(tt.args.url, tt.args.params)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DeleteStandard() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DeleteStandard() got = %v, want %v", got, tt.want)
-			}
-		})
+	result := &StdResult{}
+	err = resp.BindJSON(result)
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	t.Logf("%+v", result)
 }
 
 func TestPostStandard(t *testing.T) {
-	type args struct {
-		url    string
-		body   interface{}
-		params []KV
+	req := Request{}
+	req.SetURL(requestAddr + "/post")
+	req.SetHeaders(map[string]string{
+		"Authorization": "Bearer token",
+	})
+	req.SetJSONBody(&myBody{
+		Name:  "foo",
+		Email: "bar@gmail.com",
+	})
+
+	resp, err := req.POST()
+	if err != nil {
+		t.Fatal(err)
 	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *JSONResponse
-		wantErr bool
-	}{
-		{
-			name: "post standard success",
-			args: args{
-				url: requestAddr + "/postStandard",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "ok",
-				Data: nil,
-			},
-			wantErr: false,
-		},
-		{
-			name: "post standard error",
-			args: args{
-				url: requestAddr + "/postStandard_err",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
-		{
-			name: "post not found",
-			args: args{
-				url: requestAddr + "/notfound",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
+
+	result := &StdResult{}
+	err = resp.BindJSON(result)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := PostStandard(tt.args.url, tt.args.body, tt.args.params...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PostStandard() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PostStandard() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	t.Logf("%+v", result)
 }
 
 func TestPutStandard(t *testing.T) {
-	type args struct {
-		url    string
-		body   interface{}
-		params []KV
+	req := Request{}
+	req.SetURL(requestAddr + "/put")
+	req.SetHeaders(map[string]string{
+		"Authorization": "Bearer token",
+	})
+	req.SetJSONBody(&myBody{
+		Name:  "foo",
+		Email: "bar@gmail.com",
+	})
+
+	resp, err := req.PUT()
+	if err != nil {
+		t.Fatal(err)
 	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *JSONResponse
-		wantErr bool
-	}{
-		{
-			name: "put standard success",
-			args: args{
-				url: requestAddr + "/putStandard",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "ok",
-				Data: nil,
-			},
-			wantErr: false,
-		},
-		{
-			name: "put standard error",
-			args: args{
-				url: requestAddr + "/putStandard_err",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
-		{
-			name: "put not found",
-			args: args{
-				url: requestAddr + "/notfound",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
+
+	result := &StdResult{}
+	err = resp.BindJSON(result)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := PutStandard(tt.args.url, tt.args.body, tt.args.params...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PostStandard() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PostStandard() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	t.Logf("%+v", result)
 }
 
 func TestPatchStandard(t *testing.T) {
-	type args struct {
-		url    string
-		body   interface{}
-		params []KV
+	req := Request{}
+	req.SetURL(requestAddr + "/patch")
+	req.SetHeaders(map[string]string{
+		"Authorization": "Bearer token",
+	})
+	req.SetJSONBody(&myBody{
+		Name:  "foo",
+		Email: "bar@gmail.com",
+	})
+
+	resp, err := req.PATCH()
+	if err != nil {
+		t.Fatal(err)
 	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *JSONResponse
-		wantErr bool
-	}{
-		{
-			name: "patch standard success",
-			args: args{
-				url: requestAddr + "/patchStandard",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "ok",
-				Data: nil,
-			},
-			wantErr: false,
-		},
-		{
-			name: "patch standard error",
-			args: args{
-				url: requestAddr + "/patchStandard_err",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
-		{
-			name: "patch not found",
-			args: args{
-				url: requestAddr + "/notfound",
-				body: &myBody{
-					Name:  "foo",
-					Email: "bar@gmail.com",
-				},
-			},
-			want: &JSONResponse{
-				Code: 0,
-				Msg:  "",
-				Data: nil,
-			},
-			wantErr: true,
-		},
+
+	result := &StdResult{}
+	err = resp.BindJSON(result)
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := PatchStandard(tt.args.url, tt.args.body, tt.args.params...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PostStandard() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PostStandard() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	t.Logf("%+v", result)
 }
 
 // ------------------------------------------------------------------------------------------
@@ -480,17 +235,17 @@ func TestGet(t *testing.T) {
 		name       string
 		args       args
 		wantErr    bool
-		wantResult *JSONResponse
+		wantResult *StdResult
 	}{
 		{
 			name: "get success",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/get",
 				params: KV{"uid": 123},
 			},
 			wantErr: false,
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "ok",
 				Data: "uid=123",
@@ -499,12 +254,12 @@ func TestGet(t *testing.T) {
 		{
 			name: "get err",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/get_err",
 				params: KV{"uid": 123},
 			},
 			wantErr: true,
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -513,12 +268,12 @@ func TestGet(t *testing.T) {
 		{
 			name: "get not found",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/notfound",
 				params: KV{"uid": 123},
 			},
 			wantErr: true,
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -532,7 +287,7 @@ func TestGet(t *testing.T) {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.args.result.(*JSONResponse).Msg != tt.wantResult.Msg {
+			if tt.args.result.(*StdResult).Msg != tt.wantResult.Msg {
 				t.Errorf("gotResult = %v, wantResult =  %v", tt.args.result, tt.wantResult)
 			}
 		})
@@ -549,17 +304,17 @@ func TestDelete(t *testing.T) {
 		name       string
 		args       args
 		wantErr    bool
-		wantResult *JSONResponse
+		wantResult *StdResult
 	}{
 		{
 			name: "delete success",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/delete",
 				params: KV{"uid": 123},
 			},
 			wantErr: false,
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "ok",
 				Data: "uid=123",
@@ -568,12 +323,12 @@ func TestDelete(t *testing.T) {
 		{
 			name: "delete err",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/delete_err",
 				params: KV{"uid": 123},
 			},
 			wantErr: true,
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -582,12 +337,12 @@ func TestDelete(t *testing.T) {
 		{
 			name: "delete not found",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/notfound",
 				params: KV{"uid": 123},
 			},
 			wantErr: true,
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -601,7 +356,7 @@ func TestDelete(t *testing.T) {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.args.result.(*JSONResponse).Msg != tt.wantResult.Msg {
+			if tt.args.result.(*StdResult).Msg != tt.wantResult.Msg {
 				t.Errorf("gotResult = %v, wantResult =  %v", tt.args.result, tt.wantResult)
 			}
 		})
@@ -613,25 +368,24 @@ func TestPost(t *testing.T) {
 		result interface{}
 		url    string
 		body   interface{}
-		params []KV
 	}
 	tests := []struct {
 		name       string
 		args       args
-		wantResult *JSONResponse
+		wantResult *StdResult
 		wantErr    bool
 	}{
 		{
 			name: "post success",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/post",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "ok",
 				Data: nil,
@@ -641,14 +395,14 @@ func TestPost(t *testing.T) {
 		{
 			name: "post error",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/post_err",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -658,14 +412,14 @@ func TestPost(t *testing.T) {
 		{
 			name: "post not found",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/notfound",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -676,11 +430,11 @@ func TestPost(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := Post(tt.args.result, tt.args.url, tt.args.body, tt.args.params...); (err != nil) != tt.wantErr {
+			if err := Post(tt.args.result, tt.args.url, tt.args.body); (err != nil) != tt.wantErr {
 				t.Errorf("Post() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.args.result.(*JSONResponse).Msg != tt.wantResult.Msg {
+			if tt.args.result.(*StdResult).Msg != tt.wantResult.Msg {
 				t.Errorf("gotResult = %v, wantResult =  %v", tt.args.result, tt.wantResult)
 			}
 		})
@@ -692,25 +446,24 @@ func TestPut(t *testing.T) {
 		result interface{}
 		url    string
 		body   interface{}
-		params []KV
 	}
 	tests := []struct {
 		name       string
 		args       args
-		wantResult *JSONResponse
+		wantResult *StdResult
 		wantErr    bool
 	}{
 		{
 			name: "put success",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/put",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "ok",
 				Data: nil,
@@ -720,14 +473,14 @@ func TestPut(t *testing.T) {
 		{
 			name: "put error",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/put_err",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -737,14 +490,14 @@ func TestPut(t *testing.T) {
 		{
 			name: "post not found",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/notfound",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -755,11 +508,11 @@ func TestPut(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := Put(tt.args.result, tt.args.url, tt.args.body, tt.args.params...); (err != nil) != tt.wantErr {
+			if err := Put(tt.args.result, tt.args.url, tt.args.body); (err != nil) != tt.wantErr {
 				t.Errorf("Put() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.args.result.(*JSONResponse).Msg != tt.wantResult.Msg {
+			if tt.args.result.(*StdResult).Msg != tt.wantResult.Msg {
 				t.Errorf("gotResult = %v, wantResult =  %v", tt.args.result, tt.wantResult)
 			}
 		})
@@ -771,25 +524,24 @@ func TestPatch(t *testing.T) {
 		result interface{}
 		url    string
 		body   interface{}
-		params []KV
 	}
 	tests := []struct {
 		name       string
 		args       args
-		wantResult *JSONResponse
+		wantResult *StdResult
 		wantErr    bool
 	}{
 		{
 			name: "patch success",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/patch",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "ok",
 				Data: nil,
@@ -799,14 +551,14 @@ func TestPatch(t *testing.T) {
 		{
 			name: "patch error",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/patch_err",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -816,14 +568,14 @@ func TestPatch(t *testing.T) {
 		{
 			name: "post not found",
 			args: args{
-				result: &JSONResponse{},
+				result: &StdResult{},
 				url:    requestAddr + "/notfound",
 				body: &myBody{
 					Name:  "foo",
 					Email: "bar@gmail.com",
 				},
 			},
-			wantResult: &JSONResponse{
+			wantResult: &StdResult{
 				Code: 0,
 				Msg:  "",
 				Data: nil,
@@ -834,11 +586,11 @@ func TestPatch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := Patch(tt.args.result, tt.args.url, tt.args.body, tt.args.params...); (err != nil) != tt.wantErr {
+			if err := Patch(tt.args.result, tt.args.url, tt.args.body); (err != nil) != tt.wantErr {
 				t.Errorf("Put() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.args.result.(*JSONResponse).Msg != tt.wantResult.Msg {
+			if tt.args.result.(*StdResult).Msg != tt.wantResult.Msg {
 				t.Errorf("gotResult = %v, wantResult =  %v", tt.args.result, tt.wantResult)
 			}
 		})

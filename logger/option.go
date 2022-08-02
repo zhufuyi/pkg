@@ -12,7 +12,7 @@ var (
 	defaultMaxSize       = 10        // 最大文件大小(MB)
 	defaultMaxBackups    = 100       // 保留旧文件的最大个数
 	defaultMaxAge        = 30        // 保留旧文件的最大天数
-	defaultIsCompression = false     // 是否压缩/归档旧文件
+	defaultIsCompression = false     // 是否压缩归档旧文件
 )
 
 type options struct {
@@ -120,7 +120,7 @@ func WithFileMaxSize(maxSize int) FileOption {
 	}
 }
 
-// WithFileMaxBackups 自定义保留旧文件的最个数
+// WithFileMaxBackups 自定义保留旧文件的最大个数
 func WithFileMaxBackups(maxBackups int) FileOption {
 	return func(f *fileOptions) {
 		if f.maxBackups > 0 {
@@ -138,7 +138,7 @@ func WithFileMaxAge(maxAge int) FileOption {
 	}
 }
 
-// WithFileIsCompression 自定义是否压缩/归档旧文件
+// WithFileIsCompression 自定义是否压缩归档旧文件
 func WithFileIsCompression(isCompression bool) FileOption {
 	return func(f *fileOptions) {
 		f.isCompression = isCompression

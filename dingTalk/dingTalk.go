@@ -1,4 +1,4 @@
-package dingTalk
+package dingtalk
 
 import (
 	"errors"

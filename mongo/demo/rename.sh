@@ -1,8 +1,8 @@
 #!/bin/bash
 
 basePath=$1
-oldName=$2
-newName=$3
+newName=$2
+oldName="demo"
 
 function exit_1(){
     echo ""

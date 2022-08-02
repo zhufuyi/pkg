@@ -1,60 +1,67 @@
 package gofile
 
 import (
-	"fmt"
+	"strings"
 	"testing"
 )
 
+func TestIsExists(t *testing.T) {
+	ok := IsExists("/tmp/test")
+	if !ok {
+		t.Log("not exists")
+	}
+}
+
 func TestGetRunPath(t *testing.T) {
-	fmt.Println(GetRunPath())
+	t.Log(GetRunPath())
 }
 
 func TestListFiles(t *testing.T) {
-	//files, err := ListFiles(GetRunPath())
-	//files, err := ListFiles("C:\\Work\\Golang\\Project\\src\\ts")
-	files, err := ListFiles("C:\\Work\\Golang\\Package\\src")
-	//files, err := ListFiles(".")
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	dir := "."
 
-	for _, file := range files {
-		fmt.Println(file)
-	}
-	fmt.Println(len(files))
-}
+	t.Run("all files", func(t *testing.T) {
+		files, err := ListFiles(dir)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		t.Log(strings.Join(files, "\n"))
+	})
 
-func TestListFilesWithFilter(t *testing.T) {
-	//files, err := ListFilesWithFilter(GetRunPath(), MatchContain(".exe"))
-	//files, err := ListFilesWithFilter("C:\\Work\\Golang\\Project\\src\\ts", MatchSuffix("test.go"))
-	//files, err := ListFilesWithFilter("C:\\Work\\Golang\\Package\\src", MatchSuffix("test.go"))
-	files, err := ListFilesWithFilter("..", MatchSuffix(".go"))
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	t.Run("prefix name", func(t *testing.T) {
+		files, err := ListFiles(dir, WithPrefix("READ"))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		t.Log(strings.Join(files, "\n"))
+	})
 
-	for _, file := range files {
-		fmt.Println(file)
-	}
+	t.Run("suffix name", func(t *testing.T) {
+		files, err := ListFiles(dir, WithSuffix(".go"))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		t.Log(strings.Join(files, "\n"))
+	})
 
-	fmt.Println(len(files))
+	t.Run("contain name", func(t *testing.T) {
+		files, err := ListFiles(dir, WithContain("file"))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		t.Log(strings.Join(files, "\n"))
+	})
 }
 
 func TestListDirsAndFiles(t *testing.T) {
-	df, err := ListDirsAndFiles("..")
+	df, err := ListDirsAndFiles(".")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
-	fmt.Println(df)
-}
-
-func TestDeleteDir(t *testing.T) {
-	vals, err := DeleteDir("C:\\Users\\zhuya\\AppData\\Local\\Temp\\strategies\\dirs")
-	if err != nil {
-		t.Error(err)
+	for dir, files := range df {
+		t.Log(dir, strings.Join(files, "\n"))
 	}
-	fmt.Println(vals)
 }

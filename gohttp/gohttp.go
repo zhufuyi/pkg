@@ -114,6 +114,17 @@ func (req *Request) SetHeader(k, v string) *Request {
 	return req
 }
 
+// SetHeaders 设置Request Headers 的值
+func (req *Request) SetHeaders(headers map[string]string) *Request {
+	if req.headers == nil {
+		req.headers = make(map[string]string)
+	}
+	for k, v := range headers {
+		req.headers[k] = v
+	}
+	return req
+}
+
 // CustomRequest 自定义Request, 如添加sign, 设置header等
 func (req *Request) CustomRequest(f func(req *http.Request, data *bytes.Buffer)) *Request {
 	req.customRequest = f
@@ -180,8 +191,6 @@ func (req *Request) Do(method string, data interface{}) (*Response, error) {
 }
 
 func (req *Request) pull() (*Response, error) {
-	// 添加
-
 	val := ""
 	if len(req.params) > 0 {
 		values := url.Values{}
@@ -216,9 +225,7 @@ func (req *Request) push() (*Response, error) {
 			req.err = err
 			return nil, req.err
 		}
-
 		buf = bytes.NewBuffer(body)
-
 	} else {
 		buf = bytes.NewBufferString(req.body)
 	}
@@ -313,6 +320,41 @@ func (resp *Response) BindJSON(v interface{}) error {
 
 // -------------------------------------------------------------------------------------------------
 
+// 简单的crud函数，不支持设置header、超时等
+
+// Get 请求，返回自定义json格式
+func Get(result interface{}, url string, params ...KV) error {
+	var pms KV
+	if len(params) > 0 {
+		pms = params[0]
+	}
+	return gDo("GET", result, url, pms)
+}
+
+// Delete 请求，返回自定义json格式
+func Delete(result interface{}, url string, params ...KV) error {
+	var pms KV
+	if len(params) > 0 {
+		pms = params[0]
+	}
+	return gDo("DELETE", result, url, pms)
+}
+
+// Post 请求，返回自定义json格式
+func Post(result interface{}, url string, body interface{}) error {
+	return do("POST", result, url, body)
+}
+
+// Put 请求，返回自定义json格式
+func Put(result interface{}, url string, body interface{}) error {
+	return do("PUT", result, url, body)
+}
+
+// Patch 请求，返回自定义json格式
+func Patch(result interface{}, url string, body interface{}) error {
+	return do("PATCH", result, url, body)
+}
+
 var requestErr = func(err error) error { return fmt.Errorf("request error, err=%v", err) }
 var jsonParseErr = func(err error) error { return fmt.Errorf("json parsing error, err=%v", err) }
 var notOKErr = func(resp *Response) error {
@@ -396,71 +438,11 @@ func gDo(method string, result interface{}, url string, params KV) error {
 	return nil
 }
 
-// JSONResponse 输出格式
-type JSONResponse struct {
+// StdResult 标准返回数据
+type StdResult struct {
 	Code int         `json:"code"`
 	Msg  string      `json:"msg"`
 	Data interface{} `json:"data,omitempty"`
 }
 
 type KV map[string]interface{}
-
-// GetStandard get请求，返回是固定json格式
-func GetStandard(url string, params KV) (*JSONResponse, error) {
-	result := &JSONResponse{}
-	err := gDo("GET", result, url, params)
-	return result, err
-}
-
-// DeleteStandard delete请求，返回是固定json格式
-func DeleteStandard(url string, params KV) (*JSONResponse, error) {
-	result := &JSONResponse{}
-	err := gDo("DELETE", result, url, params)
-	return result, err
-}
-
-// PostStandard post请求，返回是固定json格式
-func PostStandard(url string, body interface{}, params ...KV) (*JSONResponse, error) {
-	result := &JSONResponse{}
-	err := do("POST", result, url, body, params...)
-	return result, err
-}
-
-// PutStandard put请求，返回是固定json格式
-func PutStandard(url string, body interface{}, params ...KV) (*JSONResponse, error) {
-	result := &JSONResponse{}
-	err := do("PUT", result, url, body, params...)
-	return result, err
-}
-
-// PatchStandard patch请求，返回是固定json格式
-func PatchStandard(url string, body interface{}, params ...KV) (*JSONResponse, error) {
-	result := &JSONResponse{}
-	err := do("PATCH", result, url, body, params...)
-	return result, err
-}
-
-// Get 请求，返回自定义json格式
-func Get(result interface{}, url string, params KV) error {
-	return gDo("GET", result, url, params)
-}
-
-// Delete 请求，返回自定义json格式
-func Delete(result interface{}, url string, params KV) error {
-	return gDo("DELETE", result, url, params)
-}
-
-// Post 请求，返回自定义json格式
-func Post(result interface{}, url string, body interface{}, params ...KV) error {
-	return do("POST", result, url, body, params...)
-}
-
-// Put 请求，返回自定义json格式
-func Put(result interface{}, url string, body interface{}, params ...KV) error {
-	return do("PUT", result, url, body, params...)
-}
-
-// Patch 请求，返回自定义json格式
-func Patch(result interface{}, url string, body interface{}, params ...KV) error {
-	return do("PATCH", result, url, body, params...)
-}

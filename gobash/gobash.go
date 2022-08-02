@@ -12,17 +12,15 @@ import (
 )
 
 // linux default path
-var executor = "/usr/bin/bash"
-
-// windows  path like "xxx\\git-for-windows\\usr\\bin\\bash.exe"
+var executor = "/bin/bash"
 
 // SetExecutorPath 设置执行器的路径
 func SetExecutorPath(path string) {
 	executor = path
 }
 
-// Simple 适合执行单条非阻塞命令，但是没有输出错误日志，多命令执行时缺陷：当执行到最后一个命令出现错误时，没有输出错误原因(输出错误码)，也没输出有已经成功执行的结果
-func Simple(command string) ([]byte, error) {
+// ExecCombined 适合执行单条非阻塞命令，但是没有输出错误日志，只输出错误码，日志输出不是实时，注：当执行命令永久阻塞，会造成协程泄露
+func ExecCombined(command string) ([]byte, error) {
 	// 生成cmd命令
 	cmd := exec.Command(executor, "-c", command)
 
@@ -30,10 +28,9 @@ func Simple(command string) ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 
-// ExecNonBlock 适合执行多条非阻塞命令，捕获标准和错误输出日志，但日志输出不是实时的
-func ExecNonBlock(command string) ([]byte, error) {
+// ExecCommand 适合执行单条非阻塞命令，输出标准和错误日志，但日志输出不是实时，注：当执行命令永久阻塞，会造成协程泄露
+func ExecCommand(command string) ([]byte, error) {
 	cmd := exec.Command(executor, "-c", command)
-	fmt.Println(cmd.Args)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -45,7 +42,7 @@ func ExecNonBlock(command string) ([]byte, error) {
 		return nil, err
 	}
 
-	if err := cmd.Start(); err != nil {
+	if err = cmd.Start(); err != nil {
 		return nil, err
 	}
 
@@ -68,6 +65,30 @@ func ExecNonBlock(command string) ([]byte, error) {
 	}
 
 	return bytes, nil
+}
+
+// ExecRealtime 执行命令，不能主动结束命令，执行结果实时返回在channel中，注：执行命令永久阻塞，会造成协程泄露
+func ExecRealtime(command string, result *Result) {
+	initResult(result)
+
+	go func() {
+		defer func() { close(result.StdOut) }() // 执行完毕，关闭通道
+
+		cmd := exec.Command(executor, "-c", command)
+		handleExec(cmd, result)
+	}()
+}
+
+// Exec 执行命令，可以主动结束命令，执行结果实时返回在channel中
+func Exec(ctx context.Context, command string, result *Result) {
+	initResult(result)
+
+	go func() {
+		defer func() { close(result.StdOut) }() // 执行完毕，关闭通道
+
+		cmd := exec.CommandContext(ctx, executor, "-c", command)
+		handleExec(cmd, result)
+	}()
 }
 
 // Result 执行命令的结果
@@ -139,28 +160,4 @@ func handleExec(cmd *exec.Cmd, result *Result) {
 		}
 		result.Err = fmt.Errorf("cmd wait error, err = %s", err.Error())
 	}
-}
-
-// ExecBlock 执行阻塞的shell命令，执行结果实时返回在channel中，有一种状况是，当执行命令出现卡死状态，无法主动去结束执行命令
-func ExecBlock(command string, result *Result) {
-	initResult(result)
-
-	go func() {
-		defer func() { close(result.StdOut) }() // 执行完毕，关闭通道
-
-		cmd := exec.Command(executor, "-c", command)
-		handleExec(cmd, result)
-	}()
-}
-
-// Exec 执行命令，可以主动结束命令
-func Exec(ctx context.Context, command string, result *Result) {
-	initResult(result)
-
-	go func() {
-		defer func() { close(result.StdOut) }() // 执行完毕，关闭通道
-
-		cmd := exec.CommandContext(ctx, executor, "-c", command)
-		handleExec(cmd, result)
-	}()
 }

@@ -25,7 +25,7 @@ func NewCustomValidator() *CustomValidator {
 	return &CustomValidator{}
 }
 
-// Engine Instantiate struct valid
+// ValidateStruct Instantiate struct valid
 func (v *CustomValidator) ValidateStruct(obj interface{}) error {
 	if kindOfData(obj) == reflect.Struct {
 		v.lazyinit()

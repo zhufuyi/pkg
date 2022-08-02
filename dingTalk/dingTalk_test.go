@@ -1,4 +1,4 @@
-package dingTalk
+package dingtalk
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func TestSendTextMessage(t *testing.T) {
 	}
 
 	msg := NewTextMessage().SetContent("测试文本 & @某个人").SetAt([]string{"168xxxxxx"}, false)
-	_,resp, err := client.Send(msg)
+	_, resp, err := client.Send(msg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -44,7 +44,7 @@ func TestSendLinkMessage(t *testing.T) {
 		"测试text",
 		"https://pic3.zhimg.com/v2-8962d626fed273e01f1ad08ebddf4ed5_1440w.jpg?source=172ae18b",
 		"https://www.baidu.com/")
-	_,resp, err := client.Send(msg)
+	_, resp, err := client.Send(msg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,7 +70,7 @@ func TestSendMarkdownMessage(t *testing.T) {
 ###### 11点00分发布 [天气](http://www.thinkpage.cn/)
 `
 	msg := NewMarkdownMessage().SetMarkdown("markdown消息测试title", mdText).SetAt([]string{"135xxxxxx"}, false)
-	_,resp, err := client.Send(msg)
+	_, resp, err := client.Send(msg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -89,7 +89,7 @@ func TestSendFeedCardMessage(t *testing.T) {
 		"链接feedCard消息测试title",
 		"https://pic3.zhimg.com/v2-8962d626fed273e01f1ad08ebddf4ed5_1440w.jpg?source=172ae18b",
 		"https://www.baidu.com/")
-	_,resp, err := client.Send(msg)
+	_, resp, err := client.Send(msg)
 	if err != nil {
 		t.Error(err)
 	}
