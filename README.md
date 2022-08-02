@@ -1,5 +1,7 @@
 # pkg
 
+pkg是经过封装，使用更方便的第三方库。
+
 ## 安装
 
 > go get -u github.com/zhufuyi/pkg
@@ -11,7 +13,7 @@
 - [awss3 aws s3客户端](awss3)
 - [dingtalk 钉钉机器人客户端](dingtalk)
 - [email 发邮件客户端](email)
-- [gin 相关，参数校验、返回、错误码、中间件]
+- [gin 相关，参数校验、返回、错误码、中间件](gin)
   - [validator gin请求参数校验](gin/validator)
   - [render gin返回数据封装](gin/render)
   - [errorcode 错误码定义](gin/errcode)
