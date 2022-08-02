@@ -1,6 +1,6 @@
 ## snowflake
 
-在[goSnowFlake](https://github.com/zheng-ji/goSnowFlake)基础上封装。
+在[goSnowFlake](https://github.com/zheng-ji/goSnowFlake)基础上封装库。
 
 <br>
 
@@ -10,17 +10,17 @@
 
 <br>
 
-## 使用
+## 使用示例
 
 ```go
-// 初始化
-Init(1)
+    // 初始化
+    snowflake.Init(1)
 
-// 生产id
-id := NewID()
+    // 生成id
+    id := snowflake.NewID()
 ```
 
-压测：
+生产id性能测试
 
 ```bash
 os: windows

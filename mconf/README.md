@@ -1,6 +1,6 @@
 # mconf
 
-在[dasel](github.com/tomwright/dasel)基础上封装的对yaml、json、toml文档进行增删改查。
+在[dasel](github.com/tomwright/dasel)基础上封装的yaml、json、toml文档进行增删改查库。
 
 <br>
 
@@ -10,9 +10,8 @@
 
 <br>
 
-## 使用
+## 使用示例
 
-- [查看文档字段测试文件](./select_test.go)。
-- [添加或修改文档字段测试文件](./put_test.go)。
-- [删除文档字段测试文件](./delete_test.go)。
-
+- [查看文档字段](select_test.go)。
+- [添加或修改文档字段](put_test.go)。
+- [删除文档字段](delete_test.go)。

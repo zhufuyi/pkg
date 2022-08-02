@@ -9,13 +9,14 @@
 ## pkg列表
 
 - [awss3 aws s3客户端](awss3)
-- [dingTalk 钉钉机器人客户端](dingTalk)
+- [dingtalk 钉钉机器人客户端](dingtalk)
 - [email 发邮件客户端](email)
-- [errorcode 错误码定义](gin/errcode)
-- [middleware gin中间件](gin/middleware)
-- [render gin返回数据封装](gin/render)
-- [validator gin请求参数校验](gin/validator)
-- [gobash 执行bash命令](gobash)
+- [gin 相关，参数校验、返回、错误码、中间件]
+  - [validator gin请求参数校验](gin/validator)
+  - [render gin返回数据封装](gin/render)
+  - [errorcode 错误码定义](gin/errcode)
+  - [middleware gin中间件](gin/middleware)
+- [gobash bash命令](gobash)
 - [gocron 定时任务](gocron)
 - [gocrypto 加密解密](gocrypto)
 - [gofile 文件处理](gofile)
@@ -23,10 +24,9 @@
 - [jwt 鉴权](jwt)
 - [krand 随机数和字符串生成器](krand)
 - [logger 日志](logger)
-- [mconf 配置处理](mconf)
+- [mconf 文本处理](mconf)
 - [mongo 客户端](mongo)
 - [mysql 客户端](mysql)
 - [nats 客户端](nats)
 - [redis 客户端](redis)
 - [snowflake id生成器](snowflake)
-

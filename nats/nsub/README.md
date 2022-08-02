@@ -10,7 +10,30 @@ nats的订阅消息客户端。
 
 <br>
 
-## 使用
+## 使用示例
 
-使用方式请看[示例](./nats_test.go)。
+```go
+    var natsAddr = []string{"nats://192.168.101.88:4222"}
+
+    // 初始化
+    err := nsub.Init(natsAddr)
+    
+	topic := "foo.json"
+	subData := make(chan []byte, 100)
+	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
+
+	// 订阅
+	go func() {
+		nsub.GetClient().SubscribeSync(ctx, topic, subData)
+	}()
+
+	for {
+		select {
+		case msg := <-subData:
+			fmt.Printf("[sub] %s\n\n", msg)
+		case <-ctx.Done():
+			return
+		}
+	}
+```
 

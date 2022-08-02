@@ -10,6 +10,14 @@ nats的推送消息客户端。
 
 <br>
 
-## 使用
+## 使用示例
 
-使用方式请看[示例](./nats_test.go)。
+```go
+    var natsAddr = []string{"nats://192.168.101.88:4222"}
+
+	err := npub.Init(natsAddr)  // 连接
+
+	err := npub.GetClient().PushString("foo.string", []byte(msg))  // 发送字符串
+
+	err := npub.GetClient().PushJSON("foo.json", &msg)   // 发送对象
+```

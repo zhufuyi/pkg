@@ -55,5 +55,11 @@ func main() {
     }...)
 
     time.Sleep(time.Minute)
+
+    // 删除任务task1
+    gocron.DeleteTask("task1")
+
+    // 查看正在运行的任务
+    fmt.Println("running task list:", gocron.GetRunningTasks())
 }
 ```

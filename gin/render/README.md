@@ -10,7 +10,7 @@ gin请求和返回的封装插件。
 
 <br>
 
-## 使用
+## 使用示例
 
 `Respond`函数返回兼容http状态码
 
@@ -26,4 +26,16 @@ gin请求和返回的封装插件。
 }
 ```
 
-具体使用看 [测试文件](output_test.go)
+```go
+    // c是*gin.Context
+
+    // 返回成功
+    render.Success(c)
+    // 返回成功，并返回数据
+    render.Success(c, gin.H{"users":users})
+
+    // 返回失败
+    render.Error(c, errcode.SendEmailErr)
+    // 返回失败，并返回数据
+    render.Error(c,  errcode.SendEmailErr, gin.H{"user":user})
+```
