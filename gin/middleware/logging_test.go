@@ -1,16 +1,12 @@
 package middleware
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"testing"
-	"time"
-
 	"github.com/gin-gonic/gin"
+	"github.com/zhufuyi/pkg/gin/render"
+	"github.com/zhufuyi/pkg/gohttp"
+	"net"
+	"testing"
 )
 
 var requestAddr string
@@ -35,18 +31,9 @@ func initServer1() {
 	//	WithLog(log),
 	//))
 
-	pingFun := func(c *gin.Context) {
-		c.JSON(200, "pong")
-	}
-	pongFun := func(c *gin.Context) {
-		c.JSON(200, "ping")
-	}
 	helloFun := func(c *gin.Context) {
-		c.JSON(200, "hello world")
+		render.Success(c, "hello world")
 	}
-
-	r.GET("/ping", pingFun)
-	r.GET("/pong", pongFun)
 
 	r.GET("/hello", helloFun)
 	r.DELETE("/hello", helloFun)
@@ -67,91 +54,72 @@ func initServer1() {
 func TestRequest(t *testing.T) {
 	initServer1()
 
-	wantPong := `"pong"`
-	wantPing := `"ping"`
-	wantHello := `"hello world"`
+	wantHello := "hello world"
+	result := &gohttp.StdResult{}
 	type User struct {
 		Name string `json:"name"`
 	}
 
-	t.Run("ping", func(t *testing.T) {
-		got, err := get(requestAddr + "/pong")
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if string(got) != wantPing {
-			t.Errorf("got: %s, want: %s", got, wantPing)
-		}
-	})
-
-	t.Run("pong", func(t *testing.T) {
-		got, err := get(requestAddr + "/ping")
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if string(got) != wantPong {
-			t.Errorf("got: %s, want: %s", got, wantPong)
-		}
-	})
-
 	t.Run("get hello", func(t *testing.T) {
-		got, err := get(requestAddr + "/hello")
+		err := gohttp.Get(result, requestAddr+"/hello", gohttp.KV{"id": "100"})
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if string(got) != wantHello {
+		got := result.Data.(string)
+		if got != wantHello {
 			t.Errorf("got: %s, want: %s", got, wantHello)
 		}
 	})
 
 	t.Run("delete hello", func(t *testing.T) {
-		got, err := delete(requestAddr + "/hello")
+		err := gohttp.Delete(result, requestAddr+"/hello", gohttp.KV{"id": "100"})
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if string(got) != wantHello {
+		got := result.Data.(string)
+		if got != wantHello {
 			t.Errorf("got: %s, want: %s", got, wantHello)
 		}
 	})
 
 	t.Run("post hello", func(t *testing.T) {
-		got, err := post(requestAddr+"/hello", &User{"foo"})
+		err := gohttp.Post(result, requestAddr+"/hello", &User{"foo"})
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if string(got) != wantHello {
+		got := result.Data.(string)
+		if got != wantHello {
 			t.Errorf("got: %s, want: %s", got, wantHello)
 		}
 	})
 
 	t.Run("put hello", func(t *testing.T) {
-		got, err := put(requestAddr+"/hello", &User{"foo"})
+		err := gohttp.Put(result, requestAddr+"/hello", &User{"foo"})
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if string(got) != wantHello {
+		got := result.Data.(string)
+		if got != wantHello {
 			t.Errorf("got: %s, want: %s", got, wantHello)
 		}
 	})
 
 	t.Run("patch hello", func(t *testing.T) {
-		got, err := patch(requestAddr+"/hello", &User{"foo"})
+		err := gohttp.Patch(result, requestAddr+"/hello", &User{"foo"})
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if string(got) != wantHello {
+		got := result.Data.(string)
+		if got != wantHello {
 			t.Errorf("got: %s, want: %s", got, wantHello)
 		}
 	})
 
-	time.Sleep(time.Millisecond * 100)
 }
 
 func getAddr() string {
@@ -175,70 +143,4 @@ func getAvailablePort() (int, error) {
 	err = listener.Close()
 
 	return port, err
-}
-
-func do(method string, url string, body interface{}) ([]byte, error) {
-	var (
-		resp        *http.Response
-		err         error
-		contentType = "application/json"
-	)
-
-	v, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	switch method {
-	case http.MethodGet:
-		resp, err = http.Get(url)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-	case http.MethodPost:
-		resp, err = http.Post(url, contentType, bytes.NewReader(v))
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-	case http.MethodDelete, http.MethodPut, http.MethodPatch:
-		req, err := http.NewRequest(method, url, bytes.NewReader(v))
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Content-Type", contentType)
-		resp, err = http.DefaultClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-	default:
-		fmt.Errorf("%s method not supported", method)
-	}
-
-	return ioutil.ReadAll(resp.Body)
-}
-
-func get(url string) ([]byte, error) {
-	return do(http.MethodGet, url, nil)
-}
-
-func delete(url string) ([]byte, error) {
-	return do(http.MethodDelete, url, nil)
-}
-
-func post(url string, body interface{}) ([]byte, error) {
-	return do(http.MethodPost, url, body)
-}
-
-func put(url string, body interface{}) ([]byte, error) {
-	return do(http.MethodPut, url, body)
-}
-
-func patch(url string, body interface{}) ([]byte, error) {
-	return do(http.MethodPatch, url, body)
 }

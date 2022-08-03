@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/zhufuyi/pkg/gin/render"
+	"github.com/zhufuyi/pkg/gohttp"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -21,15 +23,15 @@ func initServer2() {
 	tokenFun := func(c *gin.Context) {
 		token, _ := jwt.GenerateToken(uid)
 		fmt.Println("token =", token)
-		c.String(200, token)
+		render.Success(c, token)
 	}
 
 	userFun := func(c *gin.Context) {
-		c.JSON(200, "hello "+uid)
+		render.Success(c, "hello "+uid)
 	}
 
 	r.GET("/token", tokenFun)
-	r.GET("/user/:id", JWT(), userFun) // 需要鉴权
+	r.GET("/user/:id", Auth(), userFun) // 需要鉴权
 
 	go func() {
 		err := r.Run(addr)
@@ -39,29 +41,32 @@ func initServer2() {
 	}()
 }
 
-func TestJWT(t *testing.T) {
+func TestAuth(t *testing.T) {
 	initServer2()
 
-	token, err := get(requestAddr + "/token")
+	// 获取token
+	result := &gohttp.StdResult{}
+	err := gohttp.Get(result, requestAddr+"/token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := result.Data.(string)
+
+	// 使用访问
+	authorization := fmt.Sprintf("Bearer %s", token)
+	val, err := getUser(authorization)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	authentication := fmt.Sprintf("Bearer %s", token)
-	result, err := getUser(authentication)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fmt.Println(result)
+	fmt.Println(val)
 }
 
-func getUser(authentication string) (string, error) {
+func getUser(authorization string) (string, error) {
 	client := &http.Client{}
 	url := requestAddr + "/user/" + uid
 	reqest, err := http.NewRequest("GET", url, nil)
-	reqest.Header.Add("Authentication", authentication)
-	reqest.Header.Add("X-Uid", uid)
+	reqest.Header.Add("Authorization", authorization)
 	if err != nil {
 		return "", err
 	}

@@ -35,7 +35,7 @@ func init() {
 		fmt.Printf("request parameters: uid=%s\n", uid)
 		c.JSON(401, StdResult{
 			Code: 401,
-			Msg:  "authentication failure",
+			Msg:  "authorization failure",
 			Data: fmt.Sprintf("uid=%v", uid),
 		})
 	}
@@ -56,7 +56,7 @@ func init() {
 		fmt.Println("body data:", body)
 		c.JSON(401, StdResult{
 			Code: 401,
-			Msg:  "authentication failure",
+			Msg:  "authorization failure",
 			Data: nil,
 		})
 	}
