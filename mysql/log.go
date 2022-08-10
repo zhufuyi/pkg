@@ -16,6 +16,7 @@ func newGormLogger(log *zap.Logger) *gormLogger {
 	return &gormLogger{log}
 }
 
+// Print 打印日志，注：gorm在更新时候如果更新字段为空，不会调用Print打印日志
 func (g *gormLogger) Print(values ...interface{}) {
 	if len(values) > 5 {
 		skip := 8

@@ -1,6 +1,6 @@
 package errcode
 
-// 系统级别错误码，没有Err前缀
+// 系统级别错误码，无Err前缀
 var (
 	Success             = NewError(0, "ok")
 	InvalidParams       = NewError(10001, "参数错误")
