@@ -167,3 +167,24 @@ DES(`Data Encryption Standard`)数据加密标准，是目前最为流行的加�
     // (2) RsaSignBase64和RsaVerifyBase64这两个函数的密文是经过base64转码的，使用方式与RsaEncrypt、RsaDecrypt完全一样。
 
 ```
+
+<br>
+
+### 密码哈希和校验
+
+用户注册的密码经过哈希存储在数据库，登录的密码比较哈希值是否一直来判断密码是否正确，保证只有用户知道密码明文。
+
+```go
+	pwd := "123"
+
+	hashStr, err := HashAndSaltPassword(pwd)
+	if err != nil {
+		return err
+	}
+
+
+	ok := VerifyPassword(pwd, hashStr)
+	if !ok {
+		return errors.New("passwords mismatch")
+	}
+```
