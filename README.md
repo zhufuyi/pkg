@@ -15,7 +15,7 @@ pkg是经过封装，使用更方便的第三方库。
 - [email 发邮件客户端](email)
 - [gin 相关](gin)
   - [validator gin请求参数校验](gin/validator)
-  - [render gin返回数据封装](gin/render)
+  - [response gin返回数据封装](gin/render)
   - [errorcode 错误码定义](gin/errcode)
   - [middleware gin中间件](gin/middleware)
 - [grpc 相关](grpc)

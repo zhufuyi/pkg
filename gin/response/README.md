@@ -1,6 +1,6 @@
-## render
+## response
 
-gin返回的封装插件，这个插件已丢弃，被github.com/zhufuyi/pkg/gin/response代替。
+封装gin返回json数据插件。
 
 <br>
 
@@ -12,7 +12,7 @@ gin返回的封装插件，这个插件已丢弃，被github.com/zhufuyi/pkg/gin
 
 ## 使用示例
 
-`Respond`函数返回兼容http状态码
+`Output`函数返回兼容http状态码
 
 `Success`和`Error`统一返回状态码200，在data.code自定义状态码
 
@@ -30,12 +30,12 @@ gin返回的封装插件，这个插件已丢弃，被github.com/zhufuyi/pkg/gin
     // c是*gin.Context
 
     // 返回成功
-    render.Success(c)
+    response.Success(c)
     // 返回成功，并返回数据
-    render.Success(c, gin.H{"users":users})
+    response.Success(c, gin.H{"users":users})
 
     // 返回失败
-    render.Error(c, errcode.SendEmailErr)
+    response.Error(c, errcode.SendEmailErr)
     // 返回失败，并返回数据
-    render.Error(c,  errcode.SendEmailErr, gin.H{"user":user})
+    response.Error(c,  errcode.SendEmailErr, gin.H{"user":user})
 ```

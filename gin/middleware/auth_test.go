@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/zhufuyi/pkg/gin/render"
+	"github.com/zhufuyi/pkg/gin/response"
 	"github.com/zhufuyi/pkg/gohttp"
 	"io/ioutil"
 	"net/http"
@@ -23,11 +23,11 @@ func initServer2() {
 	tokenFun := func(c *gin.Context) {
 		token, _ := jwt.GenerateToken(uid)
 		fmt.Println("token =", token)
-		render.Success(c, token)
+		response.Success(c, token)
 	}
 
 	userFun := func(c *gin.Context) {
-		render.Success(c, "hello "+uid)
+		response.Success(c, "hello "+uid)
 	}
 
 	r.GET("/token", tokenFun)

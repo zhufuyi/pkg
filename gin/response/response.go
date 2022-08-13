@@ -1,8 +1,7 @@
-package render
+package response
 
 import (
 	"fmt"
-	"github.com/zhufuyi/pkg/gin/response"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,15 +9,15 @@ import (
 	"github.com/zhufuyi/pkg/gin/errcode"
 )
 
-// JSONResponse 输出格式
-type JSONResponse struct {
-	Code int         `json:"code"`
-	Msg  string      `json:"msg"`
-	Data interface{} `json:"data"`
+// Result 输出数据格式
+type Result struct {
+	Code int         `json:"code"` // 返回码
+	Msg  string      `json:"msg"`  // 返回信息说明
+	Data interface{} `json:"data"` // 返回数据
 }
 
-func newResp(code int, msg string, data interface{}) *JSONResponse {
-	resp := &JSONResponse{
+func newResp(code int, msg string, data interface{}) *Result {
+	resp := &Result{
 		Code: code,
 		Msg:  msg,
 	}
@@ -61,11 +60,29 @@ func respJSONWithStatusCode(c *gin.Context, code int, msg string, data ...interf
 	writeJSON(c, code, resp)
 }
 
-// Respond 根据http status code返回json数据
-//
-// Deprecated: this function simply calls response.Output.
-func Respond(c *gin.Context, code int, msg ...interface{}) {
-	response.Output(c, code, msg...)
+// Output 根据http status code返回json数据
+func Output(c *gin.Context, code int, msg ...interface{}) {
+	switch code {
+	case http.StatusOK:
+		respJSONWithStatusCode(c, http.StatusOK, "ok", msg...)
+	case http.StatusBadRequest:
+		respJSONWithStatusCode(c, http.StatusBadRequest, errcode.InvalidParams.Msg(), msg...)
+	case http.StatusUnauthorized:
+		respJSONWithStatusCode(c, http.StatusUnauthorized, errcode.Unauthorized.Msg(), msg...)
+	case http.StatusForbidden:
+		respJSONWithStatusCode(c, http.StatusForbidden, errcode.Forbidden.Msg(), msg...)
+	case http.StatusNotFound:
+		respJSONWithStatusCode(c, http.StatusNotFound, errcode.NotFound.Msg(), msg...)
+	case http.StatusRequestTimeout:
+		respJSONWithStatusCode(c, http.StatusRequestTimeout, errcode.Timeout.Msg(), msg...)
+	case http.StatusConflict:
+		respJSONWithStatusCode(c, http.StatusConflict, errcode.AlreadyExists.Msg(), msg...)
+	case http.StatusInternalServerError:
+		respJSONWithStatusCode(c, http.StatusInternalServerError, errcode.InternalServerError.Msg(), msg...)
+
+	default:
+		respJSONWithStatusCode(c, code, http.StatusText(code), msg...)
+	}
 }
 
 // 状态码统一200，自定义错误码在data.code
@@ -80,15 +97,11 @@ func respJSONWith200(c *gin.Context, code int, msg string, data ...interface{}) 
 }
 
 // Success 正确
-//
-// Deprecated: this function simply calls response.Success.
 func Success(c *gin.Context, data ...interface{}) {
-	response.Success(c, data...)
+	respJSONWith200(c, 0, "ok", data...)
 }
 
 // Error 错误
-//
-// Deprecated: this function simply calls response.Error.
 func Error(c *gin.Context, err *errcode.Error, data ...interface{}) {
-	response.Error(c, err, data...)
+	respJSONWith200(c, err.Code(), err.Msg(), data...)
 }

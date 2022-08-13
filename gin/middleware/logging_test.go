@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/zhufuyi/pkg/gin/render"
+	"github.com/zhufuyi/pkg/gin/response"
 	"github.com/zhufuyi/pkg/gohttp"
 	"net"
 	"testing"
@@ -32,7 +32,7 @@ func initServer1() {
 	//))
 
 	helloFun := func(c *gin.Context) {
-		render.Success(c, "hello world")
+		response.Success(c, "hello world")
 	}
 
 	r.GET("/hello", helloFun)

@@ -3,7 +3,7 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/zhufuyi/pkg/gin/errcode"
-	"github.com/zhufuyi/pkg/gin/render"
+	"github.com/zhufuyi/pkg/gin/response"
 	"github.com/zhufuyi/pkg/jwt"
 	"github.com/zhufuyi/pkg/logger"
 )
@@ -14,7 +14,7 @@ func Auth() gin.HandlerFunc {
 		authorization := c.GetHeader("Authorization")
 		if len(authorization) < 20 {
 			logger.Error("authorization is illegal", logger.String("authorization", authorization))
-			render.Error(c, errcode.Unauthorized)
+			response.Error(c, errcode.Unauthorized)
 			c.Abort()
 			return
 		}
@@ -22,7 +22,7 @@ func Auth() gin.HandlerFunc {
 		claims, err := jwt.VerifyToken(token)
 		if err != nil {
 			logger.Error("VerifyToken error", logger.Err(err))
-			render.Error(c, errcode.Unauthorized)
+			response.Error(c, errcode.Unauthorized)
 			c.Abort()
 			return
 		}
@@ -38,7 +38,7 @@ func AuthAdmin() gin.HandlerFunc {
 		authorization := c.GetHeader("Authorization")
 		if len(authorization) < 20 {
 			logger.Error("authorization is illegal", logger.String("authorization", authorization))
-			render.Error(c, errcode.Unauthorized)
+			response.Error(c, errcode.Unauthorized)
 			c.Abort()
 			return
 		}
@@ -46,7 +46,7 @@ func AuthAdmin() gin.HandlerFunc {
 		claims, err := jwt.VerifyToken(token)
 		if err != nil {
 			logger.Error("VerifyToken error", logger.Err(err))
-			render.Error(c, errcode.Unauthorized)
+			response.Error(c, errcode.Unauthorized)
 			c.Abort()
 			return
 		}
@@ -54,7 +54,7 @@ func AuthAdmin() gin.HandlerFunc {
 		// 判断是否为管理员
 		if claims.Role != "admin" {
 			logger.Error("prohibition of access", logger.String("uid", claims.Uid), logger.String("role", claims.Role))
-			render.Error(c, errcode.Forbidden)
+			response.Error(c, errcode.Forbidden)
 			c.Abort()
 			return
 		}
