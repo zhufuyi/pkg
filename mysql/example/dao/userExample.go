@@ -1,92 +1,97 @@
 package dao
 
 import (
+	"context"
 	"errors"
-	"strings"
 
 	"github.com/zhufuyi/pkg/mysql"
 	"github.com/zhufuyi/pkg/mysql/example/model"
 )
 
-// UserExample dao 对象
-type UserExample struct {
-	ID     uint64 `json:"id"`
-	Name   string `json:"name"`
-	Age    int    `json:"age"`
-	Gender string `json:"gender"`
+var _ UserExampleDao = (*userExampleDao)(nil)
+
+// UserExampleDao 定义dao接口
+type UserExampleDao interface {
+	Create(ctx context.Context, table *model.UserExample) error
+	DeleteByID(ctx context.Context, id uint64) error
+	UpdateByID(ctx context.Context, table *model.UserExample) error
+	GetByID(ctx context.Context, id uint64) (*model.UserExample, error)
+	GetByColumns(ctx context.Context, columns []*mysql.Column, page int, pageSize int, sort string) ([]model.UserExample, int64, error)
 }
 
-// CreateUserExample 创建一条记录
-func (d *Dao) CreateUserExample(param *UserExample) error {
-	data := &model.UserExample{
-		Model:  mysql.Model{ID: param.ID},
-		Name:   param.Name,
-		Age:    param.Age,
-		Gender: param.Gender,
+type userExampleDao struct {
+	*Dao
+}
+
+// NewUserExampleDao 创建dao接口
+func NewUserExampleDao(dao *Dao) UserExampleDao {
+	return &userExampleDao{dao}
+}
+
+// Create 创建一条记录，插入记录后，id值被回写到table中
+func (d *userExampleDao) Create(ctx context.Context, table *model.UserExample) error {
+	return d.db.WithContext(ctx).Create(table).Error
+}
+
+// DeleteByID 根据id删除一条记录
+func (d *userExampleDao) DeleteByID(ctx context.Context, id uint64) error {
+	return d.db.WithContext(ctx).Where("id = ?", id).Delete(&model.UserExample{}).Error
+}
+
+// Deletes 根据id删除多条记录
+func (d *userExampleDao) Deletes(ctx context.Context, ids []uint64) error {
+	return d.db.WithContext(ctx).Where("id IN (?)", ids).Delete(&model.UserExample{}).Error
+}
+
+// UpdateByID 根据id更新记录
+func (d *userExampleDao) UpdateByID(ctx context.Context, table *model.UserExample) error {
+	if table.ID < 1 {
+		return errors.New("id cannot be less than 0")
 	}
-	return data.Create(d.db)
-}
 
-// CreateUserExamples 创建多条记录
-func (d *Dao) CreateUserExamples(params []*UserExample) (int, error) {
-	errStr := []string{}
-	count := 0
-	for _, o := range params {
-		err := d.CreateUserExample(o)
-		if err != nil {
-			errStr = append(errStr, err.Error())
-			continue
-		}
-		count++
-	}
-
-	if len(errStr) == 0 {
-		return count, nil
-	}
-
-	return count, errors.New(strings.Join(errStr, " || "))
-}
-
-// DeleteUserExample 根据id删除一条记录
-func (d *Dao) DeleteUserExample(id uint64) error {
-	obj := &model.UserExample{}
-	obj.ID = id
-	return obj.DeleteByID(d.db)
-}
-
-// DeleteUserExamples 根据id删除多条记录
-func (d *Dao) DeleteUserExamples(ids []uint64) error {
-	obj := &model.UserExample{}
-	return obj.Delete(d.db, "id IN (?)", ids)
-}
-
-// UpdateUserExample 更新记录
-func (d *Dao) UpdateUserExample(param *UserExample) error {
-	obj := &model.UserExample{}
 	update := mysql.KV{}
-	if param.Name != "" {
-		update["name"] = param.Name
+
+	if table.Name != "" {
+		update["name"] = table.Name
 	}
-	if param.Age > 0 {
-		update["age"] = param.Age
+	if table.Password != "" {
+		update["password"] = table.Password
 	}
-	if param.Gender != "" {
-		update["gender"] = param.Gender
+	if table.Email != "" {
+		update["email"] = table.Email
 	}
-	return obj.Updates(d.db, update, "id = ?", param.ID)
+	if table.Phone != "" {
+		update["phone"] = table.Phone
+	}
+	if table.Age > 0 {
+		update["age"] = table.Age
+	}
+	if table.Gender > 0 {
+		update["gender"] = table.Gender
+	}
+	if table.LoginAt > 0 {
+		update["login_at"] = table.LoginAt
+	}
+
+	return d.db.WithContext(ctx).Model(table).Where("id = ?", table.ID).Updates(update).Error
 }
 
-// GetUserExample 根据id获取一条记录
-func (d *Dao) GetUserExample(id uint64) (*model.UserExample, error) {
-	obj := &model.UserExample{}
-	err := obj.GetByID(d.db, id)
-	return obj, err
+// GetByID 根据id获取一条记录
+func (d *userExampleDao) GetByID(ctx context.Context, id uint64) (*model.UserExample, error) {
+	table := &model.UserExample{}
+
+	err := d.db.WithContext(ctx).Where("id = ?", id).First(table).Error
+	if err != nil {
+		return nil, err
+	}
+	return table, nil
 }
 
-// GetUserExamplesByColumns 根据列信息筛选多条记录
+// GetByColumns 根据列信息筛选多条记录
 // columns 列信息，列名称、列值、表达式，列之间逻辑关系
 // page表示页码，从0开始, size表示每页行数, sort排序字段，默认是id倒叙，可以在字段前添加-号表示倒序，无-号表示升序
-// 查询年龄大于20的男人示例：
+// 示例：查询年龄大于20的男性
+//
 //	columns=[]*mysql.Column{
 //		{
 //			Name:  "gender",
@@ -98,20 +103,27 @@ func (d *Dao) GetUserExample(id uint64) (*model.UserExample, error) {
 //			ExpType: mysql.Gt,
 //		},
 //	}
-func (d *Dao) GetUserExamplesByColumns(columns []*mysql.Column, page int, pageSize int, sort string) ([]*model.UserExample, int, error) {
+func (d *userExampleDao) GetByColumns(ctx context.Context, columns []*mysql.Column, page int, pageSize int, sort string) ([]model.UserExample, int64, error) {
 	query, args, err := mysql.GetQueryConditions(columns)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	obj := &model.UserExample{}
-	total, err := obj.Count(d.db, query, args...)
+	var total int64
+	err = d.db.WithContext(ctx).Model(&model.UserExample{}).Where(query, args...).Count(&total).Error
 	if err != nil {
-		return nil, total, err
+		return nil, 0, err
 	}
 
+	tables := []model.UserExample{}
+	if total == 0 {
+		return tables, total, nil
+	}
 	pageSet := mysql.NewPage(page, pageSize, sort)
-	data, err := obj.Gets(d.db, pageSet, query, args...)
+	err = d.db.WithContext(ctx).Order(pageSet.Sort()).Limit(pageSet.Size()).Offset(pageSet.Offset()).Where(query, args...).Find(&tables).Error
+	if err != nil {
+		return nil, 0, err
+	}
 
-	return data, total, err
+	return tables, total, err
 }

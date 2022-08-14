@@ -1,16 +1,16 @@
 package mysql
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"errors"
+	"database/sql"
 	"fmt"
+	"log"
+	"os"
 
-	"io/ioutil"
-	"strings"
-
-	"github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	otelgorm "github.com/kostyay/gorm-opentelemetry"
+	mysqlDriver "gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 )
 
 // DB gorm.DB 别名
@@ -18,102 +18,69 @@ type DB = gorm.DB
 
 var (
 	// ErrNotFound 空记录
-	ErrNotFound = errors.New("record not found")
+	ErrNotFound = gorm.ErrRecordNotFound
 )
 
 // Init 初始化mysql
-func Init(addr string, opts ...Option) (*gorm.DB, error) {
+func Init(dns string, opts ...Option) (*gorm.DB, error) {
 	o := defaultOptions()
 	o.apply(opts...)
 
-	if o.caFile != "" {
-		// 优先使用addr里的tls值
-		if !strings.Contains(addr, "tls=") {
-			addr += fmt.Sprintf("&tls=%s", o.tlsKey)
-		} else {
-			tlsKey := getTLSKeyFromAddr(addr)
-			if tlsKey != "" {
-				o.tlsKey = tlsKey
-			}
-		}
-		registerTLS(o.tlsKey, o.caFile, o.clientKeyFile, o.clientCertFile)
-	}
-
-	db, err := gorm.Open("mysql", addr)
+	sqlDB, err := sql.Open("mysql", dns)
 	if err != nil {
 		return nil, err
 	}
+	sqlDB.SetMaxIdleConns(o.maxIdleConns)       // 空闲连接数
+	sqlDB.SetMaxOpenConns(o.maxOpenConns)       // 最大连接数
+	sqlDB.SetConnMaxLifetime(o.connMaxLifetime) // 断开多余的空闲连接事件
 
-	db.DB().SetMaxIdleConns(o.maxIdleConns)       // 空闲连接数
-	db.DB().SetMaxOpenConns(o.maxOpenConns)       // 最大连接数
-	db.DB().SetConnMaxLifetime(o.connMaxLifetime) // 断开多余的空闲连接事件
-	db.SingularTable(true)                        // 保持表名和对象名一致
-	if o.IsLog {
-		db.LogMode(true)                   // 开启日志
-		db.SetLogger(newGormLogger(o.log)) // 自定义日志
+	db, err := gorm.Open(mysqlDriver.New(mysqlDriver.Config{Conn: sqlDB}), gormConfig(o))
+	if err != nil {
+		return nil, fmt.Errorf("gorm.Open error, err: %v", err)
 	}
+	db.Set("gorm:table_options", "CHARSET=utf8mb4")
 
-	if err = db.DB().Ping(); err != nil {
-		return nil, err
-	}
+	// Initialize otel plugin with options
+	plugin := otelgorm.NewPlugin(
+	// include any options here
+	)
 
-	if len(o.tables) > 0 {
-		db.AutoMigrate(o.tables...) // 如果表不存在，自动创建，只支持自动添加新的列，对于存在的列不可以修改列属性
+	// set trace
+	err = db.Use(plugin)
+	if err != nil {
+		return nil, fmt.Errorf("using gorm opentelemetry, err: %v", err)
 	}
 
 	return db, nil
 }
 
-// registerTLS 注册tls配置，caFile是ca.pem文件路径， 规定可变参数keyCertFiles的第一个值为client-key.pem文件路径, 第二值为client-cert.pem文件路径
-func registerTLS(tlsKey string, caFile string, clientKeyCertFiles ...string) {
-	var clientKeyFile, clientCertFile string
-	if len(clientKeyCertFiles) == 2 {
-		clientKeyFile = clientKeyCertFiles[0]
-		clientCertFile = clientKeyCertFiles[1]
+// gorm设置
+func gormConfig(o *options) *gorm.Config {
+	config := &gorm.Config{
+		// 禁止外键约束, 生产环境不建议使用外键约束
+		DisableForeignKeyConstraintWhenMigrating: true,
+		// 去掉表名复数
+		NamingStrategy: schema.NamingStrategy{SingularTable: true},
 	}
 
-	if caFile == "" {
-		panic("caFile is empty.")
+	// 打印所有SQL
+	if o.isLog {
+		config.Logger = logger.Default.LogMode(logger.Info)
+	} else {
+		config.Logger = logger.Default.LogMode(logger.Silent)
 	}
 
-	pem, err := ioutil.ReadFile(caFile)
-	if err != nil {
-		panic(fmt.Sprintf("ioutil.ReadFile %s error, err = %v", caFile, err))
+	// 只打印慢查询
+	if o.slowThreshold > 0 {
+		config.Logger = logger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags), //将标准输出作为Writer
+			logger.Config{
+				SlowThreshold: o.slowThreshold,
+				Colorful:      true,
+				LogLevel:      logger.Warn, //设置日志级别，只有指定级别以上会输出慢查询日志
+			},
+		)
 	}
 
-	rootCertPool := x509.NewCertPool()
-	if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
-		panic(fmt.Sprintf(" rootCertPool.AppendCertsFromPEM error, failed to append root CA cert at %s", caFile))
-	}
-
-	// 如果mysql里使用命令(ALTER USER 'vison'@'%' REQUIRE x509;)强制要求使用x509，必须使用client-key.pem client-cert.pem
-	if clientKeyFile != "" && clientCertFile != "" {
-		certs, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
-		if err != nil {
-			panic(fmt.Sprintf("tls.LoadX509KeyPair error, err = %v", err))
-		}
-
-		clientCert := make([]tls.Certificate, 0, 1)
-		clientCert = append(clientCert, certs)
-		mysql.RegisterTLSConfig(tlsKey, &tls.Config{
-			RootCAs:            rootCertPool,
-			Certificates:       clientCert,
-			InsecureSkipVerify: true,
-		})
-	} else { // 只使用ca.pem
-		mysql.RegisterTLSConfig(tlsKey, &tls.Config{
-			RootCAs:            rootCertPool,
-			InsecureSkipVerify: true,
-		})
-	}
-}
-
-func getTLSKeyFromAddr(addr string) string {
-	splits := strings.Split(addr, "&")
-	for _, split := range splits {
-		if strings.Contains(split, "tls=") {
-			return strings.Replace(split, "tls=", "", -1)
-		}
-	}
-	return ""
+	return config
 }

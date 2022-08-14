@@ -5,14 +5,17 @@ import (
 	"time"
 
 	"github.com/huandu/xstrings"
+	"gorm.io/gorm"
 )
 
-// Model 表内嵌字段
+//type Model = gorm.Model
+
+// Model 表内嵌字段，嵌入到其他表结构体时添加 `gorm:"embedded"`
 type Model struct {
-	ID        uint64     `gorm:"primary_key" json:"id"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `sql:"index" json:"-"`
+	ID        uint64         `gorm:"column:id;AUTO_INCREMENT;primary_key" json:"id"`
+	CreatedAt time.Time      `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt time.Time      `gorm:"column:updated_at" json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index" json:"-"`
 }
 
 // KV map类型

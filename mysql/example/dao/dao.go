@@ -1,15 +1,15 @@
 package dao
 
-import (
-	"github.com/zhufuyi/pkg/mysql"
-)
+import "gorm.io/gorm"
 
-// Dao dao
+// Dao 对象
 type Dao struct {
-	db *mysql.DB
+	db *gorm.DB
 }
 
-// New 实例化
-func New(db *mysql.DB) *Dao {
-	return &Dao{db: db}
+// NewDao 新建dao示例
+func NewDao(db *gorm.DB) *Dao {
+	return &Dao{
+		db: db,
+	}
 }

@@ -1,0 +1,28 @@
+# 服务名称
+serverName: "userExample"
+# 监听地址
+serverPort: 28080
+# 运行模式，dev:开发环境，prod:生产环境
+runMode: "dev"
+
+# 超时，单位为秒
+readTimeout: 3
+writeTimeout: 3
+
+# 是否开启性能分析功能，true:开启，false:关闭
+isEnableProfile: false
+
+# mysql配置
+mysqlURL: "root:123456@(192.168.3.37:3306)/account?charset=utf8mb4&parseTime=true"
+
+
+log:
+  level: "debug" # 输出日志级别 debug, info, warn, error，默认是debug
+  format: "console" # 输出格式，console或json，默认是console
+  #isSave: true # false:输出到终端，true:输出到文件，默认是false
+  #logFileConfig: # isSave=true时有效
+  #  filename: "example.log" # 文件名称，默认值out.log
+  #  maxSize: 1 # 最大文件大小(MB)，默认值10MB
+  #  maxBackups: 5 # 保留旧文件的最大个数，默认值100个
+  #  maxAge: 2 # 保留旧文件的最大天数，默认值30天
+  #  isCompression: true # 是否压缩/归档旧文件，默认值false

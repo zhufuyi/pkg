@@ -2,37 +2,23 @@ package mysql
 
 import (
 	"time"
-
-	"go.uber.org/zap"
 )
 
 var (
-	defaultIsLog     = false                // 输出日志
-	defaultLogger, _ = zap.NewDevelopment() // 默认日志输出
+	defaultIsLog                       = false // 是否输出日志
+	defaultSlowThreshold time.Duration = 0     // 如果大于0，只打印时间大于阈值的日志，优先级比isLog高
 
 	defaultMaxIdleConns    = 3               // 空闲连接数
 	defaultMaxOpenConns    = 30              // 最大连接数
 	defaultConnMaxLifetime = 5 * time.Minute // 5分钟后断开多余的空闲连接
-
-	defaultTLSKey         = "custom" // 连接地址字段tls值
-	defaultCAFile         = ""       // ca证书
-	defaultClientKeyFile  = ""       // 客户端key
-	defaultClientCertFile = ""       // 客户端cert
-
-	defaultTables []interface{}
 )
 
 type options struct {
-	IsLog           bool
-	log             *zap.Logger
+	isLog           bool
+	slowThreshold   time.Duration
 	maxIdleConns    int
 	maxOpenConns    int
 	connMaxLifetime time.Duration
-	tlsKey          string
-	caFile          string
-	clientKeyFile   string
-	clientCertFile  string
-	tables          []interface{}
 }
 
 type Option func(*options)
@@ -45,26 +31,25 @@ func (o *options) apply(opts ...Option) {
 
 func defaultOptions() *options {
 	return &options{
-		IsLog:           defaultIsLog,
-		log:             defaultLogger,
+		isLog:           defaultIsLog,
+		slowThreshold:   defaultSlowThreshold,
 		maxIdleConns:    defaultMaxIdleConns,
 		maxOpenConns:    defaultMaxOpenConns,
 		connMaxLifetime: defaultConnMaxLifetime,
-		tlsKey:          defaultTLSKey,
-		caFile:          defaultCAFile,
-		clientKeyFile:   defaultClientKeyFile,
-		clientCertFile:  defaultClientCertFile,
-		tables:          nil,
 	}
 }
 
 // WithLog set log sql
-func WithLog(log *zap.Logger) Option {
+func WithLog() Option {
 	return func(o *options) {
-		o.IsLog = true
-		if log != nil {
-			o.log = log
-		}
+		o.isLog = true
+	}
+}
+
+// WithSlowThreshold Set sql values greater than the threshold
+func WithSlowThreshold(d time.Duration) Option {
+	return func(o *options) {
+		o.slowThreshold = d
 	}
 }
 
@@ -86,40 +71,5 @@ func WithMaxOpenConns(size int) Option {
 func WithConnMaxLifetime(t time.Duration) Option {
 	return func(o *options) {
 		o.connMaxLifetime = t
-	}
-}
-
-// WithTLSKey set tls key
-func WithTLSKey(key string) Option {
-	return func(o *options) {
-		o.tlsKey = key
-	}
-}
-
-// WithCAFile set ca file
-func WithCAFile(file string) Option {
-	return func(o *options) {
-		o.caFile = file
-	}
-}
-
-// WithClientKeyFile set client key file
-func WithClientKeyFile(file string) Option {
-	return func(o *options) {
-		o.clientKeyFile = file
-	}
-}
-
-// WithClientCertFile set client cert file
-func WithClientCertFile(file string) Option {
-	return func(o *options) {
-		o.clientCertFile = file
-	}
-}
-
-// WithTable set Auto Migrate tables
-func WithTable(tables ...interface{}) Option {
-	return func(o *options) {
-		o.tables = tables
 	}
 }
