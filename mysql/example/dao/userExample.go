@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zhufuyi/pkg/mysql"
 	"github.com/zhufuyi/pkg/mysql/example/model"
+	"github.com/zhufuyi/pkg/mysql/query"
 )
 
 var _ UserExampleDao = (*userExampleDao)(nil)
@@ -16,7 +16,7 @@ type UserExampleDao interface {
 	DeleteByID(ctx context.Context, id uint64) error
 	UpdateByID(ctx context.Context, table *model.UserExample) error
 	GetByID(ctx context.Context, id uint64) (*model.UserExample, error)
-	GetByColumns(ctx context.Context, columns []*mysql.Column, page int, pageSize int, sort string) ([]model.UserExample, int64, error)
+	GetByColumns(ctx context.Context, params *query.Params) ([]model.UserExample, int64, error)
 }
 
 type userExampleDao struct {
@@ -49,8 +49,7 @@ func (d *userExampleDao) UpdateByID(ctx context.Context, table *model.UserExampl
 		return errors.New("id cannot be less than 0")
 	}
 
-	update := mysql.KV{}
-
+	update := map[string]interface{}{}
 	if table.Name != "" {
 		update["name"] = table.Name
 	}
@@ -62,6 +61,9 @@ func (d *userExampleDao) UpdateByID(ctx context.Context, table *model.UserExampl
 	}
 	if table.Phone != "" {
 		update["phone"] = table.Phone
+	}
+	if table.Avatar != "" {
+		update["avatar"] = table.Avatar
 	}
 	if table.Age > 0 {
 		update["age"] = table.Age
@@ -99,12 +101,12 @@ func (d *userExampleDao) GetByID(ctx context.Context, id uint64) (*model.UserExa
 //		},
 //		{
 //			Name:    "age",
+//			Exp: ">",
 //			Value:   20,
-//			ExpType: mysql.Gt,
 //		},
 //	}
-func (d *userExampleDao) GetByColumns(ctx context.Context, columns []*mysql.Column, page int, pageSize int, sort string) ([]model.UserExample, int64, error) {
-	query, args, err := mysql.GetQueryConditions(columns)
+func (d *userExampleDao) GetByColumns(ctx context.Context, params *query.Params) ([]model.UserExample, int64, error) {
+	query, args, err := params.ConvertToGormConditions()
 	if err != nil {
 		return nil, 0, err
 	}
@@ -114,13 +116,13 @@ func (d *userExampleDao) GetByColumns(ctx context.Context, columns []*mysql.Colu
 	if err != nil {
 		return nil, 0, err
 	}
+	if total == 0 {
+		return nil, total, nil
+	}
 
 	tables := []model.UserExample{}
-	if total == 0 {
-		return tables, total, nil
-	}
-	pageSet := mysql.NewPage(page, pageSize, sort)
-	err = d.db.WithContext(ctx).Order(pageSet.Sort()).Limit(pageSet.Size()).Offset(pageSet.Offset()).Where(query, args...).Find(&tables).Error
+	order, limit, offset := params.ConvertToPage()
+	err = d.db.WithContext(ctx).Order(order).Limit(limit).Offset(offset).Where(query, args...).Find(&tables).Error
 	if err != nil {
 		return nil, 0, err
 	}

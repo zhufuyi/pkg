@@ -38,17 +38,14 @@ func Init(dns string, opts ...Option) (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("gorm.Open error, err: %v", err)
 	}
-	db.Set("gorm:table_options", "CHARSET=utf8mb4")
+	db.Set("gorm:table_options", "CHARSET=utf8mb4") // 创建表时自动追加表后缀
 
-	// Initialize otel plugin with options
-	plugin := otelgorm.NewPlugin(
-	// include any options here
-	)
-
-	// set trace
-	err = db.Use(plugin)
-	if err != nil {
-		return nil, fmt.Errorf("using gorm opentelemetry, err: %v", err)
+	if o.enableTrace {
+		tracePlugin := otelgorm.NewPlugin()
+		err = db.Use(tracePlugin)
+		if err != nil {
+			return nil, fmt.Errorf("using gorm opentelemetry, err: %v", err)
+		}
 	}
 
 	return db, nil
@@ -58,7 +55,7 @@ func Init(dns string, opts ...Option) (*gorm.DB, error) {
 func gormConfig(o *options) *gorm.Config {
 	config := &gorm.Config{
 		// 禁止外键约束, 生产环境不建议使用外键约束
-		DisableForeignKeyConstraintWhenMigrating: true,
+		DisableForeignKeyConstraintWhenMigrating: o.disableForeignKey,
 		// 去掉表名复数
 		NamingStrategy: schema.NamingStrategy{SingularTable: true},
 	}

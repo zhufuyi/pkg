@@ -4,19 +4,20 @@ import (
 	"sync"
 
 	"github.com/zhufuyi/pkg/mysql"
-	"github.com/zhufuyi/pkg/mysql/example/config"
 	"gorm.io/gorm"
 )
 
 var (
 	db   *gorm.DB
 	Once sync.Once
+	dsn  string
 )
 
 // InitMysql 连接mysql
-func InitMysql() {
+func InitMysql(addr string) {
+	dsn = addr
 	var err error
-	db, err = mysql.Init(config.Get().MysqlURL, mysql.WithLog())
+	db, err = mysql.Init(addr, mysql.WithLog())
 	if err != nil {
 		panic("config.Get() error: " + err.Error())
 	}
@@ -26,7 +27,7 @@ func InitMysql() {
 func GetDB() *gorm.DB {
 	if db == nil {
 		Once.Do(func() {
-			InitMysql()
+			InitMysql(dsn)
 		})
 	}
 

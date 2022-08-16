@@ -1,4 +1,4 @@
-package mysql
+package query
 
 import "strings"
 
@@ -47,11 +47,13 @@ func DefaultPage(page int) *Page {
 	return &Page{
 		page: page,
 		size: 20,
-		sort: "id desc",
+		sort: "id DESC",
 	}
 }
 
-// NewPage 自定义page，从第0页开始，参数columnNames多列名称排序用逗号分隔
+// NewPage 自定义page，从第0页开始，
+// 参数columnNames表示排序字段，如果为空表示id降序，如果有多个列名，用逗号分隔，
+// 每一个列名称前面有'-'号，表示降序，否则升序
 func NewPage(page int, size int, columnNames string) *Page {
 	if page < 0 {
 		page = 0
@@ -75,16 +77,16 @@ func NewPage(page int, size int, columnNames string) *Page {
 func getSort(columnNames string) string {
 	columnNames = strings.Replace(columnNames, " ", "", -1)
 	if columnNames == "" {
-		return "id desc"
+		return "id DESC"
 	}
 
 	names := strings.Split(columnNames, ",")
 	strs := make([]string, 0, len(names))
 	for _, name := range names {
 		if name[0] == '-' && len(name) > 1 {
-			strs = append(strs, name[1:]+" desc")
+			strs = append(strs, name[1:]+" DESC")
 		} else {
-			strs = append(strs, name+" asc")
+			strs = append(strs, name+" ASC")
 		}
 	}
 

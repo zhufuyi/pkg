@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"context"
+
+	"github.com/zhufuyi/pkg/mysql/query"
 	"gorm.io/gorm"
 )
 
@@ -53,9 +55,8 @@ func GetByID(ctx context.Context, db *gorm.DB, table interface{}, id interface{}
 
 // List multiple records, starting from page 0
 // the param of 'tables' must be slice, eg: []StructName
-func List(ctx context.Context, db *gorm.DB, tables interface{}, page *Page, query interface{}, args ...interface{}) error {
+func List(ctx context.Context, db *gorm.DB, tables interface{}, page *query.Page, query interface{}, args ...interface{}) error {
 	return db.WithContext(ctx).Order(page.Sort()).Limit(page.Size()).Offset(page.Offset()).Where(query, args...).Find(tables).Error
-
 }
 
 // Count number of records

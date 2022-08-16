@@ -1,4 +1,4 @@
-package mysql
+package query
 
 import (
 	"reflect"
@@ -6,9 +6,19 @@ import (
 	"testing"
 )
 
-func TestGetQueryConditions(t *testing.T) {
+func TestParams_ConvertToPage(t *testing.T) {
+	p := &Params{
+		Page: 1,
+		Size: 50,
+		Sort: "age,-name",
+	}
+	order, limit, offset := p.ConvertToPage()
+	t.Logf("order=%s, limit=%d, offset=%d", order, limit, offset)
+}
+
+func TestParams_ConvertToGormConditions(t *testing.T) {
 	type args struct {
-		columns []*Column
+		columns []Column
 	}
 	tests := []struct {
 		name    string
@@ -21,7 +31,7 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "1 column eq",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
 						Name:  "name",
 						Value: "关羽",
@@ -35,11 +45,12 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "1 column neq",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "name",
-						Value:   "关羽",
-						ExpType: "neq",
+						Name:  "name",
+						Value: "关羽",
+						//Exp:   "neq",
+						Exp: "!=",
 					},
 				},
 			},
@@ -50,11 +61,12 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "1 column gt",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Gt,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Gt,
+						Exp: ">",
 					},
 				},
 			},
@@ -65,11 +77,12 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "1 column gte",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Gte,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Gte,
+						Exp: ">=",
 					},
 				},
 			},
@@ -80,11 +93,12 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "1 column lt",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Lt,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Lt,
+						Exp: "<",
 					},
 				},
 			},
@@ -95,11 +109,12 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "1 column lte",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Lte,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Lte,
+						Exp: "<=",
 					},
 				},
 			},
@@ -110,11 +125,11 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "1 column like",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "name",
-						Value:   "刘",
-						ExpType: Like,
+						Name:  "name",
+						Value: "刘",
+						Exp:   Like,
 					},
 				},
 			},
@@ -127,7 +142,7 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns eq and",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
 						Name:  "name",
 						Value: "关羽",
@@ -145,16 +160,18 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns neq and",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "name",
-						Value:   "关羽",
-						ExpType: Neq,
+						Name:  "name",
+						Value: "关羽",
+						//Exp:   Neq,
+						Exp: "!=",
 					},
 					{
-						Name:    "name",
-						Value:   "刘备",
-						ExpType: Neq,
+						Name:  "name",
+						Value: "刘备",
+						//Exp:   Neq,
+						Exp: "!=",
 					},
 				},
 			},
@@ -165,15 +182,16 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns gt and",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
 						Name:  "gender",
 						Value: "男",
 					},
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Gt,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Gt,
+						Exp: ">",
 					},
 				},
 			},
@@ -184,15 +202,16 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns gte and",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
 						Name:  "gender",
 						Value: "男",
 					},
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Gte,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Gte,
+						Exp: ">=",
 					},
 				},
 			},
@@ -203,15 +222,16 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns lt and",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
 						Name:  "gender",
 						Value: "女",
 					},
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Lt,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Lt,
+						Exp: "<",
 					},
 				},
 			},
@@ -222,15 +242,16 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns lte and",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
 						Name:  "gender",
 						Value: "女",
 					},
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Lte,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Lte,
+						Exp: "<=",
 					},
 				},
 			},
@@ -241,16 +262,18 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns range and",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "age",
-						Value:   10,
-						ExpType: Gte,
+						Name:  "age",
+						Value: 10,
+						//Exp:   Gte,
+						Exp: ">=",
 					},
 					{
-						Name:    "age",
-						Value:   20,
-						ExpType: Lte,
+						Name:  "age",
+						Value: 20,
+						//Exp:   Lte,
+						Exp: "<=",
 					},
 				},
 			},
@@ -261,11 +284,12 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns eq or",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:      "name",
-						Value:     "刘备",
-						LogicType: OR,
+						Name:  "name",
+						Value: "刘备",
+						//Logic: OR,
+						Logic: "||",
 					},
 					{
 						Name:  "gender",
@@ -280,16 +304,18 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "2 columns neq or",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:      "name",
-						Value:     "刘备",
-						LogicType: OR,
+						Name:  "name",
+						Value: "刘备",
+						//Logic: OR,
+						Logic: "||",
 					},
 					{
-						Name:    "gender",
-						Value:   "男",
-						ExpType: Neq,
+						Name:  "gender",
+						Value: "男",
+						//Exp:   Neq,
+						Exp: "!=",
 					},
 				},
 			},
@@ -302,7 +328,7 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "3 columns eq and",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
 						Name:  "name",
 						Value: "刘备",
@@ -326,11 +352,11 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "exp type err",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:    "gender",
-						Value:   "男",
-						ExpType: "xxxxxx",
+						Name:  "gender",
+						Value: "男",
+						Exp:   "xxxxxx",
 					},
 				},
 			},
@@ -341,11 +367,11 @@ func TestGetQueryConditions(t *testing.T) {
 		{
 			name: "logic type err",
 			args: args{
-				columns: []*Column{
+				columns: []Column{
 					{
-						Name:      "gender",
-						Value:     "男",
-						LogicType: "xxxxxx",
+						Name:  "gender",
+						Value: "男",
+						Logic: "xxxxxx",
 					},
 				},
 			},
@@ -364,17 +390,20 @@ func TestGetQueryConditions(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		params := &Params{
+			Columns: tt.args.columns,
+		}
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := GetQueryConditions(tt.args.columns)
+			got, got1, err := params.ConvertToGormConditions()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetQueryConditions() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ConvertToGormConditions() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("GetQueryConditions() got = %v, want %v", got, tt.want)
+				t.Errorf("ConvertToGormConditions() got = %v, want %v", got, tt.want)
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("GetQueryConditions() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("ConvertToGormConditions() got1 = %v, want %v", got1, tt.want1)
 			}
 
 			got = strings.Replace(got, "?", "%v", -1)

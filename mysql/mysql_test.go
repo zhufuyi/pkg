@@ -21,8 +21,9 @@ func TestInit(t *testing.T) {
 func TestInitNoTLS(t *testing.T) {
 	db, err := Init(
 		dsn,
-		//WithLog(),
-		WithSlowThreshold(time.Millisecond*10), // 打印超过10毫秒的日志
+		//WithLog(), // 打印所有日志
+		WithSlowThreshold(time.Millisecond*100), // 只打印执行时间超过100毫秒的日志
+		WithEnableTrace(),                       // 开启链路跟踪
 		WithMaxIdleConns(5),
 		WithMaxOpenConns(50),
 		WithConnMaxLifetime(time.Minute*3),

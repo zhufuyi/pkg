@@ -3,8 +3,10 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/zhufuyi/pkg/mysql/query"
 	"gorm.io/gorm"
 )
 
@@ -98,7 +100,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	page := NewPage(0, 10, "-name")
+	page := query.NewPage(0, 10, "-name")
 	tables := []userExample{}
 	err := List(ctx, db, &tables, page, "")
 	if err != nil {
@@ -111,6 +113,8 @@ func TestList(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
+	t.Log(strings.ReplaceAll(strings.ToUpper("collector.http-server.host-port"), ".", "_"))
+	return
 	count, err := Count(ctx, db, table, "id > ?", 10)
 	if err != nil {
 		t.Error(err)

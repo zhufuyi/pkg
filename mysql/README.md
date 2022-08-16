@@ -15,7 +15,7 @@
 ### 初始化连接示例
 
 ```go
-    var dsn = "root:123456@(192.168.1.2:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
+    var dsn = "root:123456@(192.168.1.6:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
 
     // (1) 使用默认设置连接数据库
     db, err := mysql.Init(dsn)
@@ -23,8 +23,9 @@
     // (2) 自定义设置连接数据库
 	db, err := Init(
 		dsn,
-		//WithLog(),
-		WithSlowThreshold(time.Millisecond*10), // 打印超过10毫秒的日志
+		//WithLog(), // 打印所有日志
+		WithSlowThreshold(time.Millisecond*100), // 只打印执行时间超过100毫秒的日志
+		WithEnableTrace(),                       // 开启链路跟踪
 		WithMaxIdleConns(5),
 		WithMaxOpenConns(50),
 		WithConnMaxLifetime(time.Minute*3),

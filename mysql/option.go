@@ -4,24 +4,20 @@ import (
 	"time"
 )
 
-var (
-	defaultIsLog                       = false // 是否输出日志
-	defaultSlowThreshold time.Duration = 0     // 如果大于0，只打印时间大于阈值的日志，优先级比isLog高
-
-	defaultMaxIdleConns    = 3               // 空闲连接数
-	defaultMaxOpenConns    = 30              // 最大连接数
-	defaultConnMaxLifetime = 5 * time.Minute // 5分钟后断开多余的空闲连接
-)
+// Option set fields
+type Option func(*options)
 
 type options struct {
-	isLog           bool
-	slowThreshold   time.Duration
+	isLog         bool
+	slowThreshold time.Duration
+
 	maxIdleConns    int
 	maxOpenConns    int
 	connMaxLifetime time.Duration
-}
 
-type Option func(*options)
+	disableForeignKey bool
+	enableTrace       bool
+}
 
 func (o *options) apply(opts ...Option) {
 	for _, opt := range opts {
@@ -29,13 +25,18 @@ func (o *options) apply(opts ...Option) {
 	}
 }
 
+// 默认设置
 func defaultOptions() *options {
 	return &options{
-		isLog:           defaultIsLog,
-		slowThreshold:   defaultSlowThreshold,
-		maxIdleConns:    defaultMaxIdleConns,
-		maxOpenConns:    defaultMaxOpenConns,
-		connMaxLifetime: defaultConnMaxLifetime,
+		isLog:         false,            // 是否输出日志，默认关闭
+		slowThreshold: time.Duration(0), // 如果大于0，只打印时间大于阈值的日志，优先级比isLog高
+
+		maxIdleConns:    3,               // 空闲连接数
+		maxOpenConns:    30,              // 最大连接数
+		connMaxLifetime: 5 * time.Minute, // 5分钟后断开多余的空闲连接
+
+		disableForeignKey: true,  // 禁止使用外键，生产环境建议设置为true，默认开启
+		enableTrace:       false, // 是否开启链路跟踪，默认关闭
 	}
 }
 
@@ -71,5 +72,19 @@ func WithMaxOpenConns(size int) Option {
 func WithConnMaxLifetime(t time.Duration) Option {
 	return func(o *options) {
 		o.connMaxLifetime = t
+	}
+}
+
+// WithEnableForeignKey use foreign keys
+func WithEnableForeignKey() Option {
+	return func(o *options) {
+		o.disableForeignKey = false
+	}
+}
+
+// WithEnableTrace use trace
+func WithEnableTrace() Option {
+	return func(o *options) {
+		o.enableTrace = true
 	}
 }
