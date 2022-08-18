@@ -42,3 +42,4 @@ pkg是经过封装，使用更方便的第三方库。
 - [nats 客户端](nats)
 - [redis 客户端](redis)
 - [snowflake id生成器](snowflake)
+- [tracer 链路跟踪](tracer)

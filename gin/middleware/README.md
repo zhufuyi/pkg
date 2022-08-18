@@ -83,3 +83,11 @@ gin中间件插件。
     r := gin.Default()
     r.GET("/user/:id", middleware.JWT(), userFun) // 需要鉴权
 ```
+<br>
+
+### 链路跟踪
+
+```go
+    r := gin.Default()
+    r.Use(middleware.Tracing("your-service-name"))
+```

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/zhufuyi/pkg/grpc/tracer/otgrpc"
 )
@@ -23,12 +24,6 @@ func GinCtx(c *gin.Context) context.Context {
 // GinMiddleware gin的链路跟踪中间件
 func GinMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//closer, err := InitJaeger("tracing_demo", "192.168.3.36:6831")
-		//if err != nil {
-		//	panic(err)
-		//}
-		//defer closer.Close()
-
 		startSpan := opentracing.StartSpan(c.Request.URL.Path)
 		defer startSpan.Finish()
 

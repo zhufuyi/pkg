@@ -3,7 +3,6 @@ package mysql
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/zhufuyi/pkg/mysql/query"
@@ -113,8 +112,6 @@ func TestList(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	t.Log(strings.ReplaceAll(strings.ToUpper("collector.http-server.host-port"), ".", "_"))
-	return
 	count, err := Count(ctx, db, table, "id > ?", 10)
 	if err != nil {
 		t.Error(err)

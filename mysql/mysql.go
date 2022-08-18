@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	otelgorm "github.com/kostyay/gorm-opentelemetry"
+	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	mysqlDriver "gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -41,8 +41,7 @@ func Init(dns string, opts ...Option) (*gorm.DB, error) {
 	db.Set("gorm:table_options", "CHARSET=utf8mb4") // 创建表时自动追加表后缀
 
 	if o.enableTrace {
-		tracePlugin := otelgorm.NewPlugin()
-		err = db.Use(tracePlugin)
+		err = db.Use(otelgorm.NewPlugin())
 		if err != nil {
 			return nil, fmt.Errorf("using gorm opentelemetry, err: %v", err)
 		}

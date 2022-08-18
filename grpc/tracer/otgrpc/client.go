@@ -28,10 +28,10 @@ const (
 //
 // For example:
 //
-//     conn, err := grpc.Dial(
-//         address,
-//         ...,  // (existing DialOptions)
-//         grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(tracer)))
+//	conn, err := grpc.Dial(
+//	    address,
+//	    ...,  // (existing DialOptions)
+//	    grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(tracer)))
 //
 // All gRPC client spans will inject the OpenTracing SpanContext into the gRPC
 // metadata; they will also look in the context.Context for an active
@@ -45,7 +45,7 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 		var err error
 		var parentCtx opentracing.SpanContext
 
-		// 不适用整个gin context，尽可能少传递字段
+		// 不使用整个gin context，尽可能少传递字段
 		//ginContext, ok := ctx.Value("ginContext").(*gin.Context) // 优先使用ginContext
 		//if ok {
 		//	if ginTracer, ok := ginContext.Get("tracer"); ok {
@@ -106,10 +106,10 @@ func OpenTracingClientInterceptor(tracer opentracing.Tracer, optFuncs ...Option)
 //
 // For example:
 //
-//     conn, err := grpc.Dial(
-//         address,
-//         ...,  // (existing DialOptions)
-//         grpc.WithStreamInterceptor(otgrpc.OpenTracingStreamClientInterceptor(tracer)))
+//	conn, err := grpc.Dial(
+//	    address,
+//	    ...,  // (existing DialOptions)
+//	    grpc.WithStreamInterceptor(otgrpc.OpenTracingStreamClientInterceptor(tracer)))
 //
 // All gRPC client spans will inject the OpenTracing SpanContext into the gRPC
 // metadata; they will also look in the context.Context for an active
