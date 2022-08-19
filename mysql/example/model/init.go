@@ -8,6 +8,11 @@ import (
 )
 
 var (
+	// ErrNotFound 空记录
+	ErrNotFound = gorm.ErrRecordNotFound
+)
+
+var (
 	db   *gorm.DB
 	Once sync.Once
 	dsn  string

@@ -16,11 +16,6 @@ import (
 // DB gorm.DB 别名
 type DB = gorm.DB
 
-var (
-	// ErrNotFound 空记录
-	ErrNotFound = gorm.ErrRecordNotFound
-)
-
 // Init 初始化mysql
 func Init(dns string, opts ...Option) (*gorm.DB, error) {
 	o := defaultOptions()

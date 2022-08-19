@@ -1,6 +1,6 @@
 ## mysql客户端
 
-在[gorm](gorm.io/gorm)基础上封装库，例如日志，分页查询等。
+在[gorm](gorm.io/gorm)基础上封装的库，添加了链路跟踪，分页查询等功能。
 
 <br>
 

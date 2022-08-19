@@ -29,3 +29,9 @@ func initTrace() {
 	// tracer.Init(exporter, resource, 0.5) // 采集一半
 }
 ```
+
+<br>
+
+documents https://opentelemetry.io/docs/instrumentation/go/
+
+support OpenTelemetry in other libraries https://opentelemetry.io/registry/?language=go&component=instrumentation
