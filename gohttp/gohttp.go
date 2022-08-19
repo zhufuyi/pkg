@@ -2,6 +2,7 @@ package gohttp
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -10,8 +11,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	jsoniter "github.com/json-iterator/go"
 )
 
 const defaultTimeout = 10 * time.Second
@@ -220,7 +219,7 @@ func (req *Request) push() (*Response, error) {
 	var buf = new(bytes.Buffer)
 
 	if req.bodyJSON != nil {
-		body, err := jsoniter.Marshal(req.bodyJSON)
+		body, err := json.Marshal(req.bodyJSON)
 		if err != nil {
 			req.err = err
 			return nil, req.err
@@ -315,7 +314,7 @@ func (resp *Response) BindJSON(v interface{}) error {
 	if err != nil {
 		return err
 	}
-	return jsoniter.Unmarshal(body, v)
+	return json.Unmarshal(body, v)
 }
 
 // -------------------------------------------------------------------------------------------------

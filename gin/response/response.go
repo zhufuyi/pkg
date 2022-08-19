@@ -1,11 +1,11 @@
 package response
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/json-iterator/go"
 	"github.com/zhufuyi/pkg/gin/errcode"
 )
 
@@ -44,7 +44,7 @@ func writeContentType(w http.ResponseWriter, value []string) {
 func writeJSON(c *gin.Context, code int, res interface{}) {
 	c.Writer.WriteHeader(code)
 	writeContentType(c.Writer, jsonContentType)
-	err := jsoniter.NewEncoder(c.Writer).Encode(res)
+	err := json.NewEncoder(c.Writer).Encode(res)
 	if err != nil {
 		fmt.Printf("json encode error, err = %s", err.Error())
 	}
