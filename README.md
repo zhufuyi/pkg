@@ -1,6 +1,6 @@
 # pkg
 
-pkg是经过封装，使用更方便的第三方库。
+开发过程中常使用pkg库。
 
 ## 安装
 
@@ -11,8 +11,10 @@ pkg是经过封装，使用更方便的第三方库。
 ## pkg列表
 
 - [awss3 aws s3客户端](awss3)
+- [cache 内存和redis缓存](cache)
 - [dingtalk 钉钉机器人客户端](dingtalk)
 - [email 发邮件客户端](email)
+- [encoding json或proto编解码](encoding)
 - [gin 相关](gin)
   - [validator gin请求参数校验](gin/validator)
   - [response gin返回数据封装](gin/render)
@@ -33,6 +35,7 @@ pkg是经过封装，使用更方便的第三方库。
 - [gocrypto 加密解密](gocrypto)
 - [gofile 文件处理](gofile)
 - [gohttp http客户端](gohttp)
+- [goredis redis客户端](goredis)
 - [jwt 鉴权](jwt)
 - [krand 随机数和字符串生成器](krand)
 - [logger 日志](logger)
