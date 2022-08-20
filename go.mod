@@ -143,6 +143,6 @@ require (
 
 replace (
 	github.com/cactus/go-statsd-client/statsd => github.com/cactus/go-statsd-client/statsd v0.0.0-20200423205355-cb0885a1018c
-	go.opentelemetry.io/otel v1.8.0 => go.opentelemetry.io/otel v1.9.0
+	go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.9.0
 	gopkg.in/yaml.v2 => gopkg.in/yaml.v3 v3.0.0
 )

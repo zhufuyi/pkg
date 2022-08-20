@@ -18,3 +18,7 @@
 		panic("goredis.Init error: " + err.Error())
 	}
 ```
+
+<br>
+
+官方文档 https://redis.uptrace.dev/guide/
