@@ -5,7 +5,7 @@ import (
 	sdkTrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
-// Option set fields
+// JaegerOption set fields
 type JaegerOption func(*jaegerOptions)
 
 type jaegerOptions struct {
@@ -58,7 +58,7 @@ func NewJaegerExporter(url string, opts ...JaegerOption) (sdkTrace.SpanExporter,
 	return jaeger.New(endpointOption)
 }
 
-// NewJaegerAgentExporter use jaeger agent as exporter
+// NewJaegerAgentExporter use jaeger agent as exporter, e.g. host=localhost port=6831
 func NewJaegerAgentExporter(host string, port string) (sdkTrace.SpanExporter, error) {
 	return jaeger.New(
 		jaeger.WithAgentEndpoint(

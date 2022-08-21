@@ -148,3 +148,63 @@ func main() {
     // ......
 }
 ```
+
+<br>
+
+#### tracing
+
+```go
+// 初始化trace
+func InitTrace(serviceName string) {
+	exporter, err := tracer.NewJaegerAgentExporter("192.168.3.37", "6831")
+	if err != nil {
+		panic(err)
+	}
+
+	resource := tracer.NewResource(
+		tracer.WithServiceName(serviceName),
+		tracer.WithEnvironment("dev"),
+		tracer.WithServiceVersion("demo"),
+	)
+
+	tracer.Init(exporter, resource) // 默认采集全部
+}
+
+// 在客户端设置链路跟踪
+func getDialOptions() []grpc.DialOption {
+	var options []grpc.DialOption
+
+	// 禁用tls加密
+	options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	// tracing跟踪
+	options = append(options, grpc.WithUnaryInterceptor(
+		middleware.UnaryClientTracing(),
+	))
+
+	return options
+}
+
+// 在服务端设置链路跟踪
+func getServerOptions() []grpc.ServerOption {
+	var options []grpc.ServerOption
+
+	// 链路跟踪拦截器
+	options = append(options, grpc.UnaryInterceptor(
+		middleware.UnaryServerTracing(),
+	))
+
+	return options
+}
+
+// 如果有需要，可以在程序创建一个span
+func SpanDemo(serviceName string, spanName string, ctx context.Context) {
+	_, span := otel.Tracer(serviceName).Start(
+		ctx, spanName,
+		trace.WithAttributes(attribute.String(spanName, time.Now().String())), // 自定义属性
+	)
+	defer span.End()
+
+	// ......
+}
+```

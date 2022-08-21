@@ -88,6 +88,37 @@ gin中间件插件。
 ### 链路跟踪
 
 ```go
+// 初始化trace
+func InitTrace(serviceName string) {
+	exporter, err := tracer.NewJaegerAgentExporter("192.168.3.37", "6831")
+	if err != nil {
+		panic(err)
+	}
+
+	resource := tracer.NewResource(
+		tracer.WithServiceName(serviceName),
+		tracer.WithEnvironment("dev"),
+		tracer.WithServiceVersion("demo"),
+	)
+
+	tracer.Init(exporter, resource) // 默认采集全部
+}
+
+func NewRouter(
     r := gin.Default()
     r.Use(middleware.Tracing("your-service-name"))
+
+    // ......
+)
+
+// 如果有需要，可以在程序创建一个span
+func SpanDemo(serviceName string, spanName string, ctx context.Context) {
+	_, span := otel.Tracer(serviceName).Start(
+		ctx, spanName,
+		trace.WithAttributes(attribute.String(spanName, time.Now().String())), // 自定义属性
+	)
+	defer span.End()
+
+	// ......
+}
 ```

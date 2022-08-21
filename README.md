@@ -29,7 +29,7 @@
   - [loadbalance 负载均衡](grpc/loadbalance)
   - [metrics grpc指标](grpc/metrics)
   - [tracer 链路跟踪](grpc/tracer)
-  - [middleware 一些grpc中间件jwt、logging、recovery、retry、timeout](grpc/middleware)
+  - [middleware 一些grpc中间件jwt、logging、recovery、retry、tracing、timeout](grpc/middleware)
 - [gobash bash命令](gobash)
 - [gocron 定时任务](gocron)
 - [gocrypto 加密解密](gocrypto)

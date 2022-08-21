@@ -14,10 +14,12 @@
 
 ```go
 func initTrace() {
-	exporter, err := tracer.NewJaegerExporter("http://localhost:14268/api/traces")
-	if err != nil {
-		panic(err)
-	}
+    // exporter := tracer.NewConsoleExporter() // 输出到终端
+
+    // exporter, f, err := tracer.NewFileExporter("trace.json") // 输出到文件
+
+	// exporter, err := tracer.NewJaegerExporter("http://localhost:14268/api/traces") // 输出到jaeger，使用collector http
+	exporter, err := tracer.NewJaegerAgentExporter("192.168.3.37", "6831") // 输出到jaeger，使用agent udp
 
 	resource := tracer.NewResource(
 		tracer.WithServiceName("your-service-name"),
