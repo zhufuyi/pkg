@@ -14,7 +14,7 @@ gin中间件插件。
 
 ### 日志中间件
 
-可以设置打印最大长度、添加请求id字段、忽略打印path、自定义zap log
+可以设置打印最大长度、添加请求id字段、忽略打印path、自定义[zap](go.uber.org/zap) log
 
 ```go
     r := gin.Default()
@@ -47,9 +47,9 @@ gin中间件插件。
 
 <br>
 
-### qps限制
+### qps限流
 
-#### 路径维度的qps限制
+#### path维度的qps限流
 
 ```go
     r := gin.Default()
@@ -57,21 +57,21 @@ gin中间件插件。
     // path, 默认qps=500, burst=1000
     r.Use(ratelimiter.QPS())
 
-    // path, 自定义qps=20, burst=100
+    // path, 自定义qps=50, burst=100
     r.Use(ratelimiter.QPS(
-        ratelimiter.WithQPS(20),
+        ratelimiter.WithQPS(50),
         ratelimiter.WithBurst(100),
     ))
 ```
 
-#### ip维度的qps限制
+#### ip维度的qps限流
 
 ```go
-    // ip, 自定义qps=10, burst=100
+    // ip, 自定义qps=40, burst=80
     r.Use(ratelimiter.QPS(
         ratelimiter.WithIP(),
-        ratelimiter.WithQPS(10),
-        ratelimiter.WithBurst(100),
+        ratelimiter.WithQPS(40),
+        ratelimiter.WithBurst(80),
     ))
 ```
 
@@ -121,4 +121,19 @@ func SpanDemo(serviceName string, spanName string, ctx context.Context) {
 
 	// ......
 }
+```
+
+<br>
+
+### 监控指标
+
+```go
+	r := gin.Default()
+
+	r.Use(metrics.Metrics(r,
+		//metrics.WithMetricsPath("/demo/metrics"), // default is /metrics
+		metrics.WithIgnoreStatusCodes(http.StatusNotFound), // ignore status codes
+		//metrics.WithIgnoreRequestMethods(http.MethodHead),  // ignore request methods
+		//metrics.WithIgnoreRequestPaths("/ping", "/health"), // ignore request paths
+	))
 ```
