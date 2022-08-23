@@ -22,23 +22,22 @@ func init() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 
-	// e.g. (1) path, qps=500, burst=1000
-	/*
-		r.Use(QPS())
-	*/
-	// e.g. (2) path, qps=20, burst=100
+	// e.g. (1) path limit, qps=500, burst=1000
+	// r.Use(QPS())
+
+	// e.g. (2) path limit, qps=50, burst=100
 	r.Use(QPS(
-		WithQPS(20),
+		WithPath(),
+		WithQPS(50),
 		WithBurst(100),
 	))
-	// e.g. (3) ip, qps=10, burst=100
-	/*
-		r.Use(QPS(
-			WithIP(),
-			WithQPS(10),
-			WithBurst(100),
-		))
-	*/
+
+	// e.g. (3) ip limit, qps=20, burst=40
+	//	r.Use(QPS(
+	//		WithIP(),
+	//		WithQPS(20),
+	//		WithBurst(40),
+	//	))
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, "pong "+c.ClientIP())
@@ -54,6 +53,25 @@ func init() {
 			panic(err)
 		}
 	}()
+}
+
+func TestLimiter_QPS(t *testing.T) {
+	success, failure := 0, 0
+	start := time.Now()
+	for i := 0; i < 1000; i++ {
+		err := get(requestAddr + "/hello")
+		if err != nil {
+			failure++
+			if failure%10 == 0 {
+				fmt.Printf("%d  %v\n", i, err)
+			}
+		} else {
+			success++
+		}
+		time.Sleep(time.Millisecond) // 间隔1毫秒
+	}
+	time := time.Now().Sub(start).Seconds()
+	t.Logf("time=%.3fs,  success=%d, failure=%d, qps=%.1f", time, success, failure, float64(success)/time)
 }
 
 func TestRateLimiter(t *testing.T) {

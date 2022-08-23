@@ -68,3 +68,27 @@ func (l *Limiter) GetQPSLimiterStatus(path string) (limit rate.Limit, burst int)
 
 	return 0, 0
 }
+
+// QPS set limit qps parameters
+func QPS(opts ...Option) gin.HandlerFunc {
+	o := defaultOptions()
+	o.apply(opts...)
+	l = NewLimiter()
+
+	return func(c *gin.Context) {
+		var path string
+		if !o.isIP {
+			path = c.FullPath()
+		} else {
+			path = c.ClientIP()
+		}
+
+		l.qpsLimiter.LoadOrStore(path, rate.NewLimiter(o.qps, o.burst))
+		if !l.allow(path) {
+			c.Abort()
+			c.JSON(http.StatusTooManyRequests, http.StatusText(http.StatusTooManyRequests))
+			return
+		}
+		c.Next()
+	}
+}
