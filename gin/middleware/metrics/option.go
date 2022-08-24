@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-// Option set fields
+// Option set the metrics options.
 type Option func(*options)
 
 type options struct {

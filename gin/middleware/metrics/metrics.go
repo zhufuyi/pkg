@@ -62,9 +62,9 @@ func initPrometheus() {
 	go recordUptime()
 }
 
-// recordUptime increases service uptime per second.
+// recordUptime increases service uptime per 30 second.
 func recordUptime() {
-	for range time.Tick(time.Second) {
+	for range time.Tick(time.Second * 30) {
 		uptime.WithLabelValues().Inc()
 	}
 }

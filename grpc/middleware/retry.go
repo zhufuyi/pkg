@@ -36,7 +36,7 @@ func (o *options) apply(opts ...Option) {
 	}
 }
 
-// Option retry option function
+// Option set the retry options.
 type Option func(*options)
 
 // WithRetryTimes 设置重试次数，最大10次

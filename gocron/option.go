@@ -18,6 +18,7 @@ func (o *options) apply(opts ...Option) {
 	}
 }
 
+// Option set the cron options.
 type Option func(*options)
 
 // WithLog 设置日志

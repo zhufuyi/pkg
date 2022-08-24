@@ -15,7 +15,7 @@ var (
 	defaultIsIP = false
 )
 
-// Option logger middleware options
+// Option set the rate limits options.
 type Option func(*options)
 
 func defaultOptions() *options {
@@ -39,9 +39,9 @@ func (o *options) apply(opts ...Option) {
 }
 
 // WithQPS set the qps value
-func WithQPS(qps rate.Limit) Option {
+func WithQPS(qps int) Option {
 	return func(o *options) {
-		o.qps = qps
+		o.qps = rate.Limit(qps)
 	}
 }
 

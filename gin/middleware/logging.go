@@ -44,7 +44,7 @@ type options struct {
 	requestIDName string
 }
 
-// Option logger middleware options
+// Option set the gin logger options.
 type Option func(*options)
 
 func (o *options) apply(opts ...Option) {

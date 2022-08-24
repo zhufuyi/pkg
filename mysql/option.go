@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Option set fields
+// Option set the mysql options.
 type Option func(*options)
 
 type options struct {

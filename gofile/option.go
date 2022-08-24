@@ -21,6 +21,7 @@ func defaultOptions() *options {
 	}
 }
 
+// Option set the file options.
 type Option func(*options)
 
 func (o *options) apply(opts ...Option) {

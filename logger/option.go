@@ -38,6 +38,7 @@ func (o *options) apply(opts ...Option) {
 	}
 }
 
+// Option set the logger options.
 type Option func(*options)
 
 // WithLevel 输出日志级别

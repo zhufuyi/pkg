@@ -1,6 +1,6 @@
 package goredis
 
-// Option set fields
+// Option set the redis options.
 type Option func(*options)
 
 type options struct {
