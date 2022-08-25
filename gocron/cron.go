@@ -94,7 +94,10 @@ func GetRunningTasks() []string {
 // DeleteTask 删除任务
 func DeleteTask(name string) {
 	if id, ok := nameID.Load(name); ok {
-		entryID := id.(cron.EntryID)
+		entryID, isOk := id.(cron.EntryID)
+		if !isOk {
+			return
+		}
 		c.Remove(entryID) // 从定时器中删除
 		nameID.Delete(name)
 		idName.Delete(entryID)

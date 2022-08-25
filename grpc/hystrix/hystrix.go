@@ -12,6 +12,7 @@ import (
 
 // https://github.com/soyacen/grpc-middleware/tree/main/hystrix
 
+// UnaryClientInterceptor set the hystrix of unary client interceptor
 func UnaryClientInterceptor(commandName string, opts ...Option) grpc.UnaryClientInterceptor {
 	o := defaultOptions()
 	o.apply(opts...)

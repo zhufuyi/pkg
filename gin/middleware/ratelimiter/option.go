@@ -12,7 +12,7 @@ var (
 	defaultBurst = 1000
 
 	// default is path limit, fault:path limit, true:ip limit
-	defaultIsIP = false
+	defaultIsIP = false //nolint
 )
 
 // Option set the rate limits options.

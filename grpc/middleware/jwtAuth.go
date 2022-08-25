@@ -3,8 +3,9 @@ package middleware
 import (
 	"context"
 
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/zhufuyi/pkg/jwt"
+
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -44,7 +45,7 @@ func JwtVerify(ctx context.Context) (context.Context, error) {
 		return nil, status.Errorf(codes.Unauthenticated, "%v", err)
 	}
 
-	newCtx := context.WithValue(ctx, "tokenInfo", cc) // 后面方法可以通过ctx.Value("tokenInfo").(*jwt.CustomClaims)
+	newCtx := context.WithValue(ctx, "tokenInfo", cc) //nolint 后面方法可以通过ctx.Value("tokenInfo").(*jwt.CustomClaims)
 
 	return newCtx, nil
 }

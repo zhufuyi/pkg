@@ -162,7 +162,7 @@ func (r *Register) UpdateHandler() http.HandlerFunc {
 		weight, err := strconv.Atoi(wi)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(err.Error())) //nolint
 			return
 		}
 
@@ -178,14 +178,15 @@ func (r *Register) UpdateHandler() http.HandlerFunc {
 
 		if err := update(); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte(err.Error())) //nolint
 			return
 		}
-		w.Write([]byte("update server weight success"))
+		w.Write([]byte("update server weight success")) //nolint
 	})
 }
 
-func (r *Register) GetServerInfo() (server, error) {
+// getServerInfo get server info
+func (r *Register) getServerInfo() (server, error) { //nolint
 	resp, err := r.cli.Get(context.Background(), buildRegPath(r.srvInfo))
 	if err != nil {
 		return r.srvInfo, err

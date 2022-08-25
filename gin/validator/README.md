@@ -18,9 +18,10 @@ package main
 import (
     "net/http"
 
+    "github.com/zhufuyi/pkg/gin/validator"
+
     "github.com/gin-gonic/gin"
     "github.com/gin-gonic/gin/binding"
-    "github.com/zhufuyi/pkg/gin/validator"
 )
 
 func main() {

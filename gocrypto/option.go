@@ -23,6 +23,7 @@ type aesOptions struct {
 	mode   string // there are four operating modes in total, ECB CBC CFB CTR
 }
 
+// AesOption set the aes options.
 type AesOption func(*aesOptions)
 
 func (o *aesOptions) apply(opts ...AesOption) {
@@ -80,6 +81,7 @@ type desOptions struct {
 	mode   string // there are four operating modes in total, ECB CBC CFB CTR
 }
 
+// DesOption set the des options.
 type DesOption func(*desOptions)
 
 func (o *desOptions) apply(opts ...DesOption) {
@@ -137,6 +139,7 @@ type rsaOptions struct {
 	hashType crypto.Hash // 签名和验签用的哈希类型
 }
 
+// RsaOption set the rsa options.
 type RsaOption func(*rsaOptions)
 
 func (o *rsaOptions) apply(opts ...RsaOption) {

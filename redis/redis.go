@@ -1,11 +1,13 @@
+// nolint
 package redis
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/gomodule/redigo/redis"
 	"github.com/zhufuyi/pkg/logger"
+
+	"github.com/gomodule/redigo/redis"
 )
 
 // 当前应用允许最大连接数，最大不能超过redis极限连接数
@@ -170,7 +172,7 @@ func NewRedisPool(server, password string) error {
 					return nil, err
 				}
 
-				c.Do("select", 0)
+				_, _ = c.Do("select", 0)
 				return c, err
 			},
 
@@ -200,7 +202,7 @@ func NewRedisPoolWithNoAuth(server string) error {
 					return nil, err
 				}
 
-				c.Do("select", 0)
+				_, _ = c.Do("select", 0)
 				return c, err
 			},
 

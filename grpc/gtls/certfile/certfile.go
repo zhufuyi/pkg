@@ -8,7 +8,7 @@ import (
 var basepath string
 
 func init() {
-	_, currentFile, _, _ := runtime.Caller(0)
+	_, currentFile, _, _ := runtime.Caller(0) //nolint
 	basepath = filepath.Dir(currentFile)
 }
 
@@ -22,7 +22,7 @@ func Path(rel string) string {
 }
 
 /*
-useage:
+usage:
 
 improt "github.com/zhufuyi/pkg/grpc/gtls/certfile"
 

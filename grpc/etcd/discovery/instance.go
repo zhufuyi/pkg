@@ -27,7 +27,8 @@ func buildRegPath(info server) string {
 	return fmt.Sprintf("%s%s", buildPrefix(info), info.Addr)
 }
 
-func ParseValue(value []byte) (server, error) {
+// parseValue json parse
+func parseValue(value []byte) (server, error) {
 	info := server{}
 	if err := json.Unmarshal(value, &info); err != nil {
 		return info, err
@@ -66,6 +67,6 @@ func remove(s []resolver.Address, addr resolver.Address) ([]resolver.Address, bo
 	return nil, false
 }
 
-func buildResolverUrl(serverName string) string {
+func buildResolverUrl(serverName string) string { //nolint
 	return schema + ":///" + serverName
 }

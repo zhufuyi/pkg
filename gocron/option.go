@@ -1,6 +1,8 @@
 package gocron
 
-import "go.uber.org/zap"
+import (
+	"go.uber.org/zap"
+)
 
 type options struct {
 	zapLog *zap.Logger

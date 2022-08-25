@@ -2,23 +2,24 @@ package tracer
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
+
+	"github.com/zhufuyi/pkg/grpc/tracer/otgrpc"
 
 	"github.com/gin-gonic/gin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/zhufuyi/pkg/grpc/tracer/otgrpc"
 )
 
 // GinCtx 把gin的context转换为标准的context
 func GinCtx(c *gin.Context) context.Context {
 	tracerVal, _ := c.Get(otgrpc.GinTracerKey)
-	ctx := context.WithValue(context.Background(), otgrpc.GinTracerKey, tracerVal)
+	ctx := context.WithValue(context.Background(), otgrpc.GinTracerKey, tracerVal) //nolint
 
 	parentSpanVal, _ := c.Get(otgrpc.GinParentSpanKey)
-	return context.WithValue(ctx, otgrpc.GinParentSpanKey, parentSpanVal)
+	return context.WithValue(ctx, otgrpc.GinParentSpanKey, parentSpanVal) //nolint
 }
 
 // GinMiddleware gin的链路跟踪中间件
@@ -52,7 +53,7 @@ func Get(ctx context.Context, url string) ([]byte, error) {
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint
 
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }

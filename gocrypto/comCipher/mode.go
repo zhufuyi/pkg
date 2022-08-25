@@ -1,3 +1,4 @@
+// nolint
 package comCipher
 
 import "crypto/cipher"
@@ -54,13 +55,13 @@ func (cbc *cbcCipherModel) Cipher(block cipher.Block, iv []byte) Cipher {
 	return NewBlockCipher(cbc.padding, encrypter, decrypter)
 }
 
-type cfbCipherModel cipherMode
+type cfbCipherModel cipherMode //nolint
 
 func NewCFBMode() CipherMode {
 	return &ofbCipherModel{}
 }
 
-func (cfb *cfbCipherModel) Cipher(block cipher.Block, iv []byte) Cipher {
+func (cfb *cfbCipherModel) Cipher(block cipher.Block, iv []byte) Cipher { //nolint
 	encrypter := cipher.NewCFBEncrypter(block, iv)
 	decrypter := cipher.NewCFBDecrypter(block, iv)
 	return NewStreamCipher(encrypter, decrypter)

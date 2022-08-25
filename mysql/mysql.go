@@ -13,9 +13,6 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-// DB gorm.DB 别名
-type DB = gorm.DB
-
 // Init 初始化mysql
 func Init(dns string, opts ...Option) (*gorm.DB, error) {
 	o := defaultOptions()
@@ -25,9 +22,9 @@ func Init(dns string, opts ...Option) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxIdleConns(o.maxIdleConns)       // 空闲连接数
-	sqlDB.SetMaxOpenConns(o.maxOpenConns)       // 最大连接数
-	sqlDB.SetConnMaxLifetime(o.connMaxLifetime) // 断开多余的空闲连接事件
+	sqlDB.SetMaxIdleConns(o.maxIdleConns)       // 设置空闲连接池中连接的最大数量
+	sqlDB.SetMaxOpenConns(o.maxOpenConns)       // 设置打开数据库连接的最大数量
+	sqlDB.SetConnMaxLifetime(o.connMaxLifetime) // 设置了连接可复用的最大时间
 
 	db, err := gorm.Open(mysqlDriver.New(mysqlDriver.Config{Conn: sqlDB}), gormConfig(o))
 	if err != nil {

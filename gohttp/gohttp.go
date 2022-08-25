@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -132,31 +131,31 @@ func (req *Request) CustomRequest(f func(req *http.Request, data *bytes.Buffer))
 
 // GET 发送GET请求
 func (req *Request) GET() (*Response, error) {
-	req.method = "GET"
+	req.method = http.MethodGet
 	return req.pull()
 }
 
 // DELETE 发送DELETE请求
 func (req *Request) DELETE() (*Response, error) {
-	req.method = "DELETE"
+	req.method = http.MethodDelete
 	return req.pull()
 }
 
 // POST 发送POST请求
 func (req *Request) POST() (*Response, error) {
-	req.method = "POST"
+	req.method = http.MethodPost
 	return req.push()
 }
 
 // PUT 发送PUT请求
 func (req *Request) PUT() (*Response, error) {
-	req.method = "PUT"
+	req.method = http.MethodPut
 	return req.push()
 }
 
 // PATCH 发送PATCH请求
 func (req *Request) PATCH() (*Response, error) {
-	req.method = "PATCH"
+	req.method = http.MethodPatch
 	return req.push()
 }
 
@@ -165,7 +164,7 @@ func (req *Request) Do(method string, data interface{}) (*Response, error) {
 	req.method = method
 
 	switch method {
-	case "GET", "DELETE":
+	case http.MethodGet, http.MethodDelete:
 		if data != nil {
 			if params, ok := data.(map[string]interface{}); ok {
 				req.SetParams(params)
@@ -177,7 +176,7 @@ func (req *Request) Do(method string, data interface{}) (*Response, error) {
 
 		return req.pull()
 
-	case "POST", "PUT", "PATCH":
+	case http.MethodPost, http.MethodPut, http.MethodPatch:
 		if data != nil {
 			req.SetJSONBody(data)
 		}
@@ -216,7 +215,7 @@ func (req *Request) pull() (*Response, error) {
 }
 
 func (req *Request) push() (*Response, error) {
-	var buf = new(bytes.Buffer)
+	var buf *bytes.Buffer
 
 	if req.bodyJSON != nil {
 		body, err := json.Marshal(req.bodyJSON)
@@ -296,12 +295,12 @@ func (resp *Response) ReadBody() ([]byte, error) {
 		return []byte{}, errors.New("nil")
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return []byte{}, err
 	}
 
-	resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	resp.Body = io.NopCloser(bytes.NewBuffer(body))
 	return body, nil
 }
 
@@ -393,7 +392,7 @@ func do(method string, result interface{}, url string, body interface{}, params 
 	if err != nil {
 		return requestErr(err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint
 
 	if resp.StatusCode != 200 {
 		return notOKErr(resp)
@@ -423,7 +422,7 @@ func gDo(method string, result interface{}, url string, params KV) error {
 	if err != nil {
 		return requestErr(err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint
 
 	if resp.StatusCode != 200 {
 		return notOKErr(resp)
@@ -444,4 +443,5 @@ type StdResult struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
+// KV string:interface{}
 type KV map[string]interface{}

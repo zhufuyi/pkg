@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/zhufuyi/pkg/mysql"
+
 	"gorm.io/gorm"
 )
 
@@ -14,7 +15,7 @@ var (
 
 var (
 	db   *gorm.DB
-	Once sync.Once
+	once sync.Once
 	dsn  string
 )
 
@@ -31,10 +32,25 @@ func InitMysql(addr string) {
 // GetDB 返回db对象
 func GetDB() *gorm.DB {
 	if db == nil {
-		Once.Do(func() {
+		once.Do(func() {
 			InitMysql(dsn)
 		})
 	}
 
 	return db
+}
+
+// CloseDB 关闭连接
+func CloseDB() error {
+	if db != nil {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return err
+		}
+		if sqlDB != nil {
+			return sqlDB.Close()
+		}
+	}
+
+	return nil
 }

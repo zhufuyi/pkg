@@ -1,10 +1,10 @@
 package nsub
 
 import (
-	"strings"
 	"context"
-	"time"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/nats-io/nats.go"
 )

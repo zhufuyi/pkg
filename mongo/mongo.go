@@ -6,9 +6,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/zhufuyi/pkg/logger"
+
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/zhufuyi/pkg/logger"
 )
 
 var (
@@ -59,9 +60,10 @@ func GetSession() Sessioner {
 }
 
 // InitializeMongodb 初始化mongodb，如果不指定数据库，默认数据库名为test
-// 		形式一：localhost 或 localhost:27017
-// 		形式二：mongodb://localhost:27017/database_name 或 mongodb://localhost1:port,localhost2:port/database_name
-// 		形式三：mongodb://user:password@localhost:27017/database_name 或 mongodb://user:password@localhost1:port,localhost2:port/database_name
+//
+//	形式一：localhost 或 localhost:27017
+//	形式二：mongodb://localhost:27017/database_name 或 mongodb://localhost1:port,localhost2:port/database_name
+//	形式三：mongodb://user:password@localhost:27017/database_name 或 mongodb://user:password@localhost1:port,localhost2:port/database_name
 func InitializeMongodb(url string) error {
 	var err error
 	session, err = mgo.Dial(url)
@@ -130,7 +132,7 @@ func (d *DefaultSession) Close() {
 	d.newSession.Close()
 }
 
-// Close 关闭连接
+// Run 执行
 func (d *DefaultSession) Run(cmd interface{}, result interface{}) error {
 	return d.newSession.Run(cmd, result)
 }

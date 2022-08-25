@@ -107,7 +107,7 @@ func (a *AwsS3) UploadFromFile(localFile string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer f.Close() //nolint
 
 	uploader := s3manager.NewUploader(a.Session)
 	uploadInput := &s3manager.UploadInput{
@@ -149,7 +149,7 @@ func (a *AwsS3) DownloadToFile(awsFile string, localFile string) (int64, error) 
 	if err != nil {
 		return 0, err
 	}
-	defer f.Close()
+	defer f.Close() //nolint
 
 	downloader := s3manager.NewDownloader(a.Session)
 	input := &s3.GetObjectInput{
@@ -276,7 +276,7 @@ func getCredentialsValues(credentialsFile string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	defer f.Close()
+	defer f.Close() //nolint
 
 	rd := bufio.NewReader(f)
 	for {

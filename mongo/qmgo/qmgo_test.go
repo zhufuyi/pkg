@@ -8,8 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0kubun/pp"
 	"github.com/zhufuyi/pkg/krand"
+
+	"github.com/k0kubun/pp"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

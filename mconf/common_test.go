@@ -25,10 +25,10 @@ func TestGetMatchArgs(t *testing.T) {
 
 func TestAddOrReplaceArgs(t *testing.T) {
 	args := [][]string{
-		[]string{
+		{
 			"-c",
 		},
-		[]string{
+		{
 			"--requirepass=123456",
 			"--port=6379",
 			"-host=127.0.0.1",

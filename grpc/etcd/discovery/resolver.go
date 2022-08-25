@@ -52,7 +52,8 @@ func (r *Resolver) Scheme() string {
 func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	r.cc = cc
 
-	r.keyPrifix = buildPrefix(server{Name: target.Endpoint, Version: target.Authority})
+	//r.keyPrifix = buildPrefix(server{Name: target.Endpoint, Version: target.Authority})
+	r.keyPrifix = buildPrefix(server{Name: target.URL.Path, Version: target.URL.Host})
 	if _, err := r.start(); err != nil {
 		return nil, err
 	}
@@ -119,14 +120,14 @@ func (r *Resolver) update(events []*clientv3.Event) {
 
 		switch ev.Type {
 		case mvccpb.PUT:
-			info, err = ParseValue(ev.Kv.Value)
+			info, err = parseValue(ev.Kv.Value)
 			if err != nil {
 				continue
 			}
 			addr := resolver.Address{Addr: info.Addr, Metadata: info.Weight}
 			if !exist(r.srvAddrsList, addr) {
 				r.srvAddrsList = append(r.srvAddrsList, addr)
-				err := r.cc.UpdateState(resolver.State{Addresses: r.srvAddrsList})
+				err = r.cc.UpdateState(resolver.State{Addresses: r.srvAddrsList})
 				if err != nil {
 					r.logger.Error("UpdateState error", zap.Error(err), zap.Any("addr", addr))
 				}
@@ -141,7 +142,7 @@ func (r *Resolver) update(events []*clientv3.Event) {
 			addr := resolver.Address{Addr: info.Addr}
 			if s, ok := remove(r.srvAddrsList, addr); ok {
 				r.srvAddrsList = s
-				err := r.cc.UpdateState(resolver.State{Addresses: r.srvAddrsList})
+				err = r.cc.UpdateState(resolver.State{Addresses: r.srvAddrsList})
 				if err != nil {
 					r.logger.Error("UpdateState error", zap.Error(err), zap.Any("addr", addr))
 				}
@@ -161,10 +162,11 @@ func (r *Resolver) sync() error {
 	}
 
 	r.srvAddrsList = []resolver.Address{}
+	var info server
 	for _, v := range res.Kvs {
-		info, err := ParseValue(v.Value)
+		info, err = parseValue(v.Value)
 		if err != nil {
-			r.logger.Error("ParseValue error", zap.Error(err), zap.String("value", string(v.Value)))
+			r.logger.Error("parseValue error", zap.Error(err), zap.String("value", string(v.Value)))
 			continue
 		}
 		addr := resolver.Address{Addr: info.Addr, Metadata: info.Weight}

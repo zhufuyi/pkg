@@ -4,7 +4,7 @@ import "strings"
 
 var (
 	defaultLevel    = "debug" //  输出日志级别 debug, info, warn, error，默认是debug
-	defaultEncoding = "console"
+	defaultEncoding = formatConsole
 	defaultIsSave   = false // false:输出到终端，true:输出到文件，默认是false
 
 	// 保存文件相关默认设置
@@ -45,11 +45,11 @@ type Option func(*options)
 func WithLevel(levelName string) Option {
 	return func(o *options) {
 		levelName = strings.ToUpper(levelName)
-		switch strings.ToUpper(levelName) {
-		case "DEBUG", "INFO", "WARN", "ERROR":
+		switch levelName {
+		case levelDebug, levelInfo, levelWarn, levelError:
 			o.level = levelName
 		default:
-			o.level = "DEBUG"
+			o.level = levelDebug
 		}
 	}
 }
@@ -57,8 +57,8 @@ func WithLevel(levelName string) Option {
 // WithFormat 设置输出日志格式，console或json
 func WithFormat(format string) Option {
 	return func(o *options) {
-		if strings.ToLower(format) == "json" {
-			o.encoding = "json"
+		if strings.ToLower(format) == formatJSON {
+			o.encoding = formatJSON
 		}
 	}
 }
@@ -101,6 +101,7 @@ func (o *fileOptions) apply(opts ...FileOption) {
 	}
 }
 
+// FileOption set the file options.
 type FileOption func(*fileOptions)
 
 // WithFileName 自定义文件名称

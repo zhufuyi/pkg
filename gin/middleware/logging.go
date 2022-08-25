@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -23,8 +23,8 @@ var (
 
 	// Ignore route list
 	defaultIgnoreRoutes = map[string]struct{}{
-		"/ping": struct{}{},
-		"/pong": struct{}{},
+		"/ping": {},
+		"/pong": {},
 	}
 )
 
@@ -132,7 +132,7 @@ func Logging(opts ...Option) gin.HandlerFunc {
 
 		//  处理前打印输入信息
 		buf := bytes.Buffer{}
-		buf.ReadFrom(c.Request.Body)
+		_, _ = buf.ReadFrom(c.Request.Body)
 
 		fields := []zap.Field{
 			zap.String("method", c.Request.Method),
@@ -151,7 +151,7 @@ func Logging(opts ...Option) gin.HandlerFunc {
 		}
 		o.log.Info("<<<<", fields...)
 
-		c.Request.Body = ioutil.NopCloser(&buf)
+		c.Request.Body = io.NopCloser(&buf)
 
 		//  替换writer
 		newWriter := &bodyLogWriter{body: &bytes.Buffer{}, ResponseWriter: c.Writer}
@@ -165,7 +165,7 @@ func Logging(opts ...Option) gin.HandlerFunc {
 			zap.Int("code", c.Writer.Status()),
 			zap.String("method", c.Request.Method),
 			zap.String("url", c.Request.URL.Path),
-			zap.Int64("time_us", time.Now().Sub(start).Nanoseconds()/1000),
+			zap.Int64("time_us", time.Since(start).Nanoseconds()/1000),
 			zap.Int("size", newWriter.body.Len()),
 			zap.String("response", strings.TrimRight(getBodyData(newWriter.body, o.maxLength), "\n")),
 		}

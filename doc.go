@@ -1,4 +1,3 @@
-/*
-Some common golang packages.
-*/
+// Some common golang packages.
+
 package pkg

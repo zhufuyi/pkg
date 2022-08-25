@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/zhufuyi/pkg/gin/errcode"
 	"github.com/zhufuyi/pkg/gin/response"
 	"github.com/zhufuyi/pkg/jwt"
 	"github.com/zhufuyi/pkg/logger"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Auth 鉴权
@@ -26,7 +27,7 @@ func Auth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set("uid", claims.Uid)
+		c.Set("uid", claims.UID)
 
 		c.Next()
 	}
@@ -53,12 +54,12 @@ func AuthAdmin() gin.HandlerFunc {
 
 		// 判断是否为管理员
 		if claims.Role != "admin" {
-			logger.Error("prohibition of access", logger.String("uid", claims.Uid), logger.String("role", claims.Role))
+			logger.Error("prohibition of access", logger.String("uid", claims.UID), logger.String("role", claims.Role))
 			response.Error(c, errcode.Forbidden)
 			c.Abort()
 			return
 		}
-		c.Set("uid", claims.Uid)
+		c.Set("uid", claims.UID)
 
 		c.Next()
 	}

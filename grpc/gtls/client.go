@@ -3,7 +3,7 @@ package gtls
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 
 	"google.golang.org/grpc/credentials"
 )
@@ -18,7 +18,7 @@ func GetClientTLSCredentialsByCA(serverName string, caFile string, certFile stri
 
 	// 创建一个新的、空的 CertPool
 	certPool := x509.NewCertPool()
-	ca, err := ioutil.ReadFile(caFile)
+	ca, err := os.ReadFile(caFile)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func GetClientTLSCredentialsByCA(serverName string, caFile string, certFile stri
 	return c, err
 }
 
-// GetTLSCredentials TLS加密
+// GetClientTLSCredentials TLS加密
 func GetClientTLSCredentials(serverName string, certFile string) (credentials.TransportCredentials, error) {
 	c, err := credentials.NewClientTLSFromFile(certFile, serverName)
 	if err != nil {

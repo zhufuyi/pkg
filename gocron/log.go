@@ -1,8 +1,8 @@
 package gocron
 
 import (
-	"github.com/robfig/cron/v3"
 	"github.com/zhufuyi/pkg/logger"
+
 	"go.uber.org/zap"
 )
 
@@ -47,7 +47,7 @@ func parseKVs(kvs interface{}) []zap.Field {
 	}
 
 	for i := 0; i < l; i += 2 {
-		key := infos[i].(string)
+		key := infos[i].(string) //nolint
 		value := infos[i+1]
 
 		// 把id替换为任务名称

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os/exec"
 	"strings"
 )
@@ -46,12 +45,12 @@ func ExecCommand(command string) ([]byte, error) {
 		return nil, err
 	}
 
-	bytes, err := ioutil.ReadAll(stdout)
+	bytes, err := io.ReadAll(stdout)
 	if err != nil {
 		return nil, err
 	}
 
-	bytesErr, err := ioutil.ReadAll(stderr)
+	bytesErr, err := io.ReadAll(stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -131,8 +130,9 @@ func handleExec(cmd *exec.Cmd, result *Result) {
 
 	reader := bufio.NewReader(stdout)
 	// 实时读取每行内容
+	line := ""
 	for {
-		line, err := reader.ReadString('\n')
+		line, err = reader.ReadString('\n')
 		if err != nil {
 			// 判断是否已经读取完毕
 			if err.Error() == io.EOF.Error() {
@@ -146,7 +146,7 @@ func handleExec(cmd *exec.Cmd, result *Result) {
 	}
 
 	// 捕获错误日志
-	bytesErr, err := ioutil.ReadAll(stderr)
+	bytesErr, err := io.ReadAll(stderr)
 	if err != nil {
 		result.Err = fmt.Errorf("read stderr error, err = %s", err.Error())
 		return

@@ -15,8 +15,6 @@ import (
 
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/blake2s"
-	"golang.org/x/crypto/md4"
-	"golang.org/x/crypto/ripemd160"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -25,7 +23,7 @@ var hashkey = []byte("fVy7UjMkO9_pLqs3")
 // Md5 字符md5哈希
 func Md5(rawData []byte) string {
 	h := md5.New()
-	h.Write([]byte(rawData))
+	h.Write(rawData)
 	return hex.EncodeToString(h.Sum(nil))
 }
 
@@ -70,15 +68,15 @@ func md5Sha1(slices [][]byte) string {
 }
 
 // Hash 哈希
-func Hash(hashType crypto.Hash, rawData []byte) (string, error) {
+func Hash(hashType crypto.Hash, rawData []byte) (string, error) { //nolint
 	var (
 		err    error
 		hasher hash.Hash
 	)
 
 	switch hashType {
-	case crypto.MD4:
-		hasher = md4.New()
+	//case crypto.MD4:
+	//	hasher = md4.New()
 	case crypto.MD5:
 		hasher = md5.New()
 	case crypto.SHA1:
@@ -93,8 +91,8 @@ func Hash(hashType crypto.Hash, rawData []byte) (string, error) {
 		hasher = sha512.New()
 	case crypto.MD5SHA1:
 		return md5Sha1([][]byte{rawData}), nil
-	case crypto.RIPEMD160:
-		hasher = ripemd160.New()
+	//case crypto.RIPEMD160:
+	//	hasher = ripemd160.New()
 	case crypto.SHA3_224:
 		hasher = sha3.New224()
 	case crypto.SHA3_256:

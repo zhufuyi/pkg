@@ -7,6 +7,8 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+const errStr = "Only a struct or map can be marshaled to TOML"
+
 func init() {
 	registerReadParser([]string{"toml"}, []string{".toml"}, &TOMLParser{})
 	registerWriteParser([]string{"toml"}, []string{".toml"}, &TOMLParser{})
@@ -39,7 +41,7 @@ func (p *TOMLParser) ToBytes(value interface{}, options ...ReadWriteOption) ([]b
 		switch o.Key {
 		case OptionIndent:
 			if indent, ok := o.Value.(string); ok {
-				enc.Indent=indent
+				enc.Indent = indent
 			}
 		case OptionColourise:
 			if value, ok := o.Value.(bool); ok {
@@ -51,7 +53,7 @@ func (p *TOMLParser) ToBytes(value interface{}, options ...ReadWriteOption) ([]b
 	switch d := value.(type) {
 	case SingleDocument:
 		if err := enc.Encode(d.Document()); err != nil {
-			if err.Error() == "Only a struct or map can be marshaled to TOML" {
+			if err.Error() == errStr {
 				buf.Write([]byte(fmt.Sprintf("%v\n", d.Document())))
 			} else {
 				return nil, err
@@ -60,7 +62,7 @@ func (p *TOMLParser) ToBytes(value interface{}, options ...ReadWriteOption) ([]b
 	case MultiDocument:
 		for _, dd := range d.Documents() {
 			if err := enc.Encode(dd); err != nil {
-				if err.Error() == "Only a struct or map can be marshaled to TOML" {
+				if err.Error() == errStr {
 					buf.Write([]byte(fmt.Sprintf("%v\n", dd)))
 				} else {
 					return nil, err
@@ -69,7 +71,7 @@ func (p *TOMLParser) ToBytes(value interface{}, options ...ReadWriteOption) ([]b
 		}
 	default:
 		if err := enc.Encode(d); err != nil {
-			if err.Error() == "Only a struct or map can be marshaled to TOML" {
+			if err.Error() == errStr {
 				buf.Write([]byte(fmt.Sprintf("%v\n", d)))
 			} else {
 				return nil, err

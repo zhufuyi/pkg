@@ -13,7 +13,7 @@ var (
 	DefaultNotFoundExpireTime = time.Minute
 	// NotFoundPlaceholder 占位符
 	NotFoundPlaceholder = "*"
-	
+
 	// DefaultClient 生成一个缓存客户端，其中keyPrefix 一般为业务前缀
 	DefaultClient Cache
 

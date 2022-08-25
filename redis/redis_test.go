@@ -3,12 +3,12 @@ package redis
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
-	"testing"
-	"time"
 	"sync"
 	"sync/atomic"
-	"log"
+	"testing"
+	"time"
 
 	"github.com/k0kubun/pp"
 )

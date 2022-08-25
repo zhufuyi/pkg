@@ -40,8 +40,8 @@ var kasp = keepalive.ServerParameters{
 	MaxConnectionIdle:     defaultMaxConnectionIdle,     // If a client is idle for 15 seconds, send a GOAWAY
 	MaxConnectionAge:      defaultMaxConnectionAge,      // If any connection is alive for more than 30 seconds, send a GOAWAY
 	MaxConnectionAgeGrace: defaultMaxConnectionAgeGrace, // Allow 5 seconds for pending RPCs to complete before forcibly closing connections
-	Time:    20 * time.Second, // Ping the client if it is idle for 5 seconds to ensure the connection is still active
-	Timeout: 1 * time.Second,  // Wait 1 second for the ping ack before assuming the connection is dead
+	Time:                  20 * time.Second,             // Ping the client if it is idle for 5 seconds to ensure the connection is still active
+	Timeout:               1 * time.Second,              // Wait 1 second for the ping ack before assuming the connection is dead
 }
 
 // ServerKeepAlive 保持连接设置

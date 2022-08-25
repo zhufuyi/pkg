@@ -277,9 +277,9 @@ func FindYaml(in []byte, selector string) ([]byte, error) {
 	return Find(in, selector, YamlFormat, YamlFormat)
 }
 
-// FindJson 查询json文档字段值，select表示选择字段，输入输出都是json格式
-func FindJson(in []byte, selector string) ([]byte, error) {
-	return Find(in, selector, JsonFormat, JsonFormat)
+// FindJSON 查询json文档字段值，select表示选择字段，输入输出都是json格式
+func FindJSON(in []byte, selector string) ([]byte, error) {
+	return Find(in, selector, JSONFormat, JSONFormat)
 }
 
 // Count 计算查询字段值数量，inFormat输入数据解析格式yaml、json 、toml，outFormat输出数据解析格式yaml、json 、toml

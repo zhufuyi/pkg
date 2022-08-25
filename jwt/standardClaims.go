@@ -11,7 +11,7 @@ import (
 // GenerateTokenStandard 生成token
 func GenerateTokenStandard() (string, error) {
 	if opt == nil {
-		return "", initError
+		return "", errInit
 	}
 
 	claims := jwt.StandardClaims{
@@ -26,7 +26,7 @@ func GenerateTokenStandard() (string, error) {
 // VerifyTokenStandard 验证token
 func VerifyTokenStandard(tokenString string) error {
 	if opt == nil {
-		return initError
+		return errInit
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -41,17 +41,17 @@ func VerifyTokenStandard(tokenString string) error {
 	ve, ok := err.(*jwt.ValidationError)
 	if ok {
 		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			return formatErr
+			return errFormat
 		} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
-			return expiredErr
+			return errExpired
 		} else if ve.Errors&jwt.ValidationErrorUnverifiable != 0 {
-			return unverifiableErr
+			return errUnverifiable
 		} else if ve.Errors&jwt.ValidationErrorSignatureInvalid != 0 {
-			return signatureErr
+			return errSignature
 		} else {
 			return ve // 其他错误
 		}
 	}
 
-	return signatureErr
+	return errSignature
 }

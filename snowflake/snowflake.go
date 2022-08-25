@@ -1,5 +1,3 @@
-package snowflake
-
 // This package provides unique id in distribute system
 // the algorithm is inspired by Twitter's famous snowflake
 // its link is: https://github.com/twitter/snowflake/releases/tag/snowflake-2010
@@ -12,7 +10,7 @@ package snowflake
 
 // Copyright (C) 2016 by zheng-ji.info
 
-// 修改于 https://github.com/zheng-ji/goSnowFlake
+package snowflake
 
 import (
 	"errors"

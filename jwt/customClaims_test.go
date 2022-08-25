@@ -31,14 +31,14 @@ func TestVerifyTokenCustom(t *testing.T) {
 	// 无效token格式
 	token2 := "xxx.xxx.xxx"
 	v, err = VerifyToken(token2)
-	if !compareErr(err, formatErr) {
+	if !compareErr(err, errFormat) {
 		t.Fatal(err)
 	}
 
 	// 签名失败
 	token3 := token + "xxx"
 	v, err = VerifyToken(token3)
-	if !compareErr(err, signatureErr) {
+	if !compareErr(err, errSignature) {
 		t.Fatal(err)
 	}
 
@@ -49,7 +49,7 @@ func TestVerifyTokenCustom(t *testing.T) {
 	}
 	time.Sleep(time.Second * 2)
 	v, err = VerifyToken(token)
-	if !compareErr(err, expiredErr) {
+	if !compareErr(err, errExpired) {
 		t.Fatal(err)
 	}
 }

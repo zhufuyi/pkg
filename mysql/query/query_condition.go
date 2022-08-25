@@ -6,16 +6,28 @@ import (
 )
 
 const (
-	Eq   = "eq"
-	Neq  = "neq"
-	Gt   = "gt"
-	Gte  = "gte"
-	Lt   = "lt"
-	Lte  = "lte"
+	// Eq equal
+	Eq = "eq"
+	// Neq not equal
+	Neq = "neq"
+	// Gt greater than
+	Gt = "gt"
+	// Gte greater than or equal
+	Gte = "gte"
+	// Lt less than
+	Lt = "lt"
+	// Lte less than or equal
+	Lte = "lte"
+	// Like like
 	Like = "like"
+
+	// AND logic and
+	AND string = "and"
+	// OR logic or
+	OR string = "or"
 )
 
-var ExpMap = map[string]string{
+var expMap = map[string]string{
 	Eq:   " = ",
 	Neq:  " <> ",
 	Gt:   " > ",
@@ -31,11 +43,6 @@ var ExpMap = map[string]string{
 	"<":  " < ",
 	"<=": " <= ",
 }
-
-const (
-	AND string = "and"
-	OR  string = "or"
-)
 
 var logicMap = map[string]string{
 	AND: " AND ",
@@ -79,7 +86,7 @@ func (c *Column) convert() error {
 	if c.Exp == "" {
 		c.Exp = Eq
 	}
-	if v, ok := ExpMap[strings.ToLower(c.Exp)]; ok {
+	if v, ok := expMap[strings.ToLower(c.Exp)]; ok {
 		c.Exp = v
 		if c.Exp == " LIKE " {
 			c.Value = fmt.Sprintf("%%%v%%", c.Value)
@@ -147,7 +154,7 @@ func (p *Params) ConvertToGormConditions() (string, []interface{}, error) {
 				isUseIN = false
 				continue
 			}
-			if column.Exp != ExpMap[Eq] {
+			if column.Exp != expMap[Eq] {
 				isUseIN = false
 			}
 		}
@@ -161,7 +168,7 @@ func (p *Params) ConvertToGormConditions() (string, []interface{}, error) {
 	return str, args, nil
 }
 
-func getExpsAndLogics(keyLen int, paramSrc string) ([]string, []string) {
+func getExpsAndLogics(keyLen int, paramSrc string) ([]string, []string) { //nolint
 	exps, logics := []string{}, []string{}
 	param := strings.Replace(paramSrc, " ", "", -1)
 	sps := strings.SplitN(param, "?", 2)

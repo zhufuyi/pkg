@@ -1,8 +1,9 @@
 package module
 
 import (
-	"github.com/globalsign/mgo/bson"
 	"github.com/zhufuyi/pkg/mongo"
+
+	"github.com/globalsign/mgo/bson"
 )
 
 // DemoCollectionName 在mongo表名，约定首字母小写

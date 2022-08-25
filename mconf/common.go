@@ -9,9 +9,9 @@ import (
 const (
 	// YamlFormat yaml格式
 	YamlFormat = "yaml"
-	// YamlFormat json格式
-	JsonFormat = "json"
-	// YamlFormat toml格式
+	// JSONFormat json格式
+	JSONFormat = "json"
+	// TomlFormat toml格式
 	TomlFormat = "toml"
 
 	// NotFound 记录yaml未找到的key的统一值
@@ -110,7 +110,7 @@ func resourcesSizeMap2Slice(kvs map[string]string) ([]string, []string) {
 }
 
 // 参数字典转字符串
-func argsMap2Str(m map[string]string, sep string) string {
+func argsMap2Str(m map[string]string, sep string) string { //nolint
 	str := ""
 	for k, v := range m {
 		k = "-" + trimKey(k)
@@ -128,7 +128,7 @@ func argsMap2Str(m map[string]string, sep string) string {
 }
 
 // 把二维args转为一维度slice
-func args2sliceAndType(args [][]string) []string {
+func args2sliceAndType(args [][]string) []string { //nolint
 	var out []string
 	for _, arg := range args {
 		out = append(out, strings.Join(arg, " "))
@@ -138,7 +138,7 @@ func args2sliceAndType(args [][]string) []string {
 }
 
 // 字符串转map，a=1,b=2 --> {a:1,b:2}
-func str2Map(str string) map[string]string {
+func str2Map(str string) map[string]string { //nolint
 	str = strings.Trim(str, " ")
 	ss := strings.Split(str, ",")
 	out := map[string]string{}
@@ -153,7 +153,6 @@ func str2Map(str string) map[string]string {
 		} else {
 			out[strings.Trim(s, " ")] = ""
 		}
-
 	}
 
 	return out
@@ -169,7 +168,7 @@ type PutRecord struct {
 }
 
 // 添加或替换参数
-func addOrReplaceArgs(args [][]string, argsMap map[string]string) []*PutRecord {
+func addOrReplaceArgs(args [][]string, argsMap map[string]string) []*PutRecord { //nolint
 	records := []*PutRecord{}
 
 	addKVs := []string{}
@@ -212,7 +211,7 @@ func addOrReplaceArgs(args [][]string, argsMap map[string]string) []*PutRecord {
 }
 
 // 获取匹配的参数，如果匹配，返回替换后的kv值
-func getMatchArgs(s string, argsMap map[string]string) (*PutRecord, string) {
+func getMatchArgs(s string, argsMap map[string]string) (*PutRecord, string) { //nolint
 	for k, v := range argsMap {
 		kTmp := trimKey(k)
 		sep := "" // 原参数k和v之间的分割符，只支持=号和空格两种
@@ -263,7 +262,7 @@ func getMatchArgs(s string, argsMap map[string]string) (*PutRecord, string) {
 	return nil, ""
 }
 
-func trimKey(k string) string {
+func trimKey(k string) string { //nolint
 	kTmp := strings.Trim(k, " ")
 	for len(kTmp) > 0 {
 		if kTmp[0] != '-' {
@@ -274,7 +273,7 @@ func trimKey(k string) string {
 	return kTmp
 }
 
-func isExistKey(records []*PutRecord, k string) bool {
+func isExistKey(records []*PutRecord, k string) bool { //nolint
 	for _, record := range records {
 		if record.Key == k {
 			return true

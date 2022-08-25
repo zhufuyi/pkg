@@ -22,13 +22,13 @@ type traceConfig struct {
 	Propagators    propagation.TextMapPropagator
 }
 
-// traceOption specifies instrumentation configuration options.
-type traceOption func(*traceConfig)
+// TraceOption specifies instrumentation configuration options.
+type TraceOption func(*traceConfig)
 
 // WithPropagators specifies propagators to use for extracting
 // information from the HTTP requests. If none are specified, global
 // ones will be used.
-func WithPropagators(propagators propagation.TextMapPropagator) traceOption {
+func WithPropagators(propagators propagation.TextMapPropagator) TraceOption {
 	return func(cfg *traceConfig) {
 		cfg.Propagators = propagators
 	}
@@ -36,7 +36,7 @@ func WithPropagators(propagators propagation.TextMapPropagator) traceOption {
 
 // WithTracerProvider specifies a tracer provider to use for creating a tracer.
 // If none is specified, the global provider is used.
-func WithTracerProvider(provider oteltrace.TracerProvider) traceOption {
+func WithTracerProvider(provider oteltrace.TracerProvider) TraceOption {
 	return func(cfg *traceConfig) {
 		cfg.TracerProvider = provider
 	}
@@ -45,7 +45,7 @@ func WithTracerProvider(provider oteltrace.TracerProvider) traceOption {
 // Tracing returns middleware that will trace incoming requests.
 // The service parameter should describe the name of the (virtual)
 // server handling the request.
-func Tracing(serviceName string, opts ...traceOption) gin.HandlerFunc {
+func Tracing(serviceName string, opts ...TraceOption) gin.HandlerFunc {
 	cfg := traceConfig{}
 	for _, opt := range opts {
 		opt(&cfg)

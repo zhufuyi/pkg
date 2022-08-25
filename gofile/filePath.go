@@ -2,7 +2,6 @@ package gofile
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -12,11 +11,7 @@ import (
 // IsExists 判断文件或文件夹是否存在
 func IsExists(path string) bool {
 	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-
-	return false
+	return err == nil
 }
 
 // GetRunPath 获取程序执行的绝对路径
@@ -95,7 +90,8 @@ func ListDirsAndFiles(dirPath string) (map[string][]string, error) {
 
 // 带过滤条件通过迭代方式遍历文件
 func walkDirWithFilter(dirPath string, allFiles *[]string, filter filterFn) error {
-	files, err := ioutil.ReadDir(dirPath) //读取目录下文件
+	//files, err := ioutil.ReadDir(dirPath) //读取目录下文件
+	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}
@@ -103,7 +99,10 @@ func walkDirWithFilter(dirPath string, allFiles *[]string, filter filterFn) erro
 	for _, file := range files {
 		deepFile := dirPath + GetPathDelimiter() + file.Name()
 		if file.IsDir() {
-			walkDirWithFilter(deepFile, allFiles, filter)
+			err = walkDirWithFilter(deepFile, allFiles, filter)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 		if filter(deepFile) {
@@ -115,7 +114,8 @@ func walkDirWithFilter(dirPath string, allFiles *[]string, filter filterFn) erro
 }
 
 func walkDir2(dirPath string, allDirs *[]string, allFiles *[]string) error {
-	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
+	//files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
+	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,10 @@ func walkDir2(dirPath string, allDirs *[]string, allFiles *[]string) error {
 		deepFile := dirPath + GetPathDelimiter() + file.Name()
 		if file.IsDir() {
 			*allDirs = append(*allDirs, deepFile)
-			walkDir2(deepFile, allDirs, allFiles)
+			err = walkDir2(deepFile, allDirs, allFiles)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 		*allFiles = append(*allFiles, deepFile)
@@ -178,7 +181,8 @@ func matchContain(containName string) filterFn {
 
 // 通过迭代方式遍历文件
 func walkDir(dirPath string, allFiles *[]string) error {
-	files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
+	//files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
+	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
 	}
@@ -186,7 +190,10 @@ func walkDir(dirPath string, allFiles *[]string) error {
 	for _, file := range files {
 		deepFile := dirPath + GetPathDelimiter() + file.Name()
 		if file.IsDir() {
-			walkDir(deepFile, allFiles)
+			err = walkDir(deepFile, allFiles)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 		*allFiles = append(*allFiles, deepFile)

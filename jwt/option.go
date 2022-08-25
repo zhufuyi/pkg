@@ -86,9 +86,9 @@ var (
 )
 
 var (
-	formatErr       = errors.New("invalid token format")
-	expiredErr      = errors.New("token has expired")
-	unverifiableErr = errors.New("the token could not be verified due to a signing problem")
-	signatureErr    = errors.New("signature failure")
-	initError       = errors.New("not yet initialized jwt, usage 'jwt.Init()'")
+	errFormat       = errors.New("invalid token format")
+	errExpired      = errors.New("token has expired")
+	errUnverifiable = errors.New("the token could not be verified due to a signing problem")
+	errSignature    = errors.New("signature failure")
+	errInit         = errors.New("not yet initialized jwt, usage 'jwt.Init()'")
 )

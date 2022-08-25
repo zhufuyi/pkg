@@ -84,7 +84,6 @@ func WithSleepWindow(sleepWindow time.Duration) Option {
 func WithErrorPercentThreshold(errorPercentThreshold int) Option {
 	return func(c *options) {
 		c.errorPercentThreshold = errorPercentThreshold
-
 	}
 }
 

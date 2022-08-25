@@ -5,21 +5,19 @@ import (
 	"runtime"
 	"sync/atomic"
 
-	jaegerClient "github.com/uber/jaeger-client-go"
-
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	jaegerClient "github.com/uber/jaeger-client-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
 const (
-	// gin调用grpc使用的key
-	// 从gin传递的tracer key
+	// GinTracerKey 从gin传递的tracer key
 	GinTracerKey = "gin_tracer"
-	// 从gin传递的parent span key
+	// GinParentSpanKey 从gin传递的parent span key
 	GinParentSpanKey = "gin_parent_span"
 )
 

@@ -11,6 +11,16 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const (
+	formatConsole = "console"
+	formatJSON    = "json"
+
+	levelDebug = "DEBUG"
+	levelInfo  = "INFO"
+	levelWarn  = "WARN"
+	levelError = "ERROR"
+)
+
 var defaultLogger *zap.Logger
 
 func getLogger() *zap.Logger {
@@ -24,14 +34,17 @@ func getLogger() *zap.Logger {
 // 在终端打印json格式、debug级别日志示例：Init(WithFormat("json"))
 // 把日志输出到文件out.log，使用默认的切割日志相关参数，debug级别日志示例：Init(WithSave())
 // 把日志输出到指定文件，自定义设置日志文件切割日志参数，json格式，debug级别日志示例：
-// Init(WithFormat("json"), WithSave(
-//     true,
-//		WithFileName("my.log"),
-//		WithFileMaxSize(5),
-//		WithFileMaxBackups(5),
-//		WithFileMaxAge(10),
-//		WithFileIsCompression(true),
-//	))
+// Init(
+//
+//	  WithFormat("json"),
+//	  WithSave(true,
+//
+//			WithFileName("my.log"),
+//			WithFileMaxSize(5),
+//			WithFileMaxBackups(5),
+//			WithFileMaxAge(10),
+//			WithFileIsCompression(true),
+//		))
 func Init(opts ...Option) (*zap.Logger, error) {
 	o := defaultOptions()
 	o.apply(opts...)
@@ -78,7 +91,7 @@ func log2File(encoding string, levelName string, fo *fileOptions) *zap.Logger {
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder   // 修改时间编码器
 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder // 在日志文件中使用大写字母记录日志级别
 	var encoder zapcore.Encoder
-	if encoding == "console" { // console格式
+	if encoding == formatConsole { // console格式
 		encoder = zapcore.NewConsoleEncoder(encoderConfig)
 	} else { // json格式
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
@@ -97,30 +110,31 @@ func log2File(encoding string, levelName string, fo *fileOptions) *zap.Logger {
 	return zap.New(core, zap.AddCaller())
 }
 
-//  DEBUG(默认), INFO, WARN, ERROR
+// DEBUG(默认), INFO, WARN, ERROR
 func getLevelSize(levelName string) zapcore.Level {
 	levelName = strings.ToUpper(levelName)
-	switch strings.ToUpper(levelName) {
-	case "DEBUG":
+	switch levelName {
+	case levelDebug:
 		return zapcore.DebugLevel
-	case "INFO":
+	case levelInfo:
 		return zapcore.InfoLevel
-	case "WARN":
+	case levelWarn:
 		return zapcore.WarnLevel
-	case "ERROR":
+	case levelError:
 		return zapcore.ErrorLevel
 	}
 	return zapcore.DebugLevel
 }
 
 // InitLogger 初始化日志
+//
 //	isSave 是否输出到文件，true: 是，false:输出到控台
 //	filename 保存日志路径，例如："out.log"
 //	level  输出日志级别 DEBUG, INFO, WARN, ERROR
 //	encoding  输出格式 json:显示数据格式为json，console:显示数据格式为console(默认)
-// 		以console数据格式输出到控台，eg: InitLogger(false, "", "debug")
-// 		以json数据格式输出到控台，eg: InitLogger(false, "", "debug", "json")
-// 		以json数据格式输出到文件，eg: InitLogger(true, "out.log", "debug")
+//		以console数据格式输出到控台，eg: InitLogger(false, "", "debug")
+//		以json数据格式输出到控台，eg: InitLogger(false, "", "debug", "json")
+//		以json数据格式输出到文件，eg: InitLogger(true, "out.log", "debug")
 //
 // Deprecated: use Init() instead.
 func InitLogger(isSave bool, filename string, level string, encodingType ...string) error {
@@ -130,24 +144,18 @@ func InitLogger(isSave bool, filename string, level string, encodingType ...stri
 	}
 
 	// 日志输出等级
-	levelName := ""
-	switch strings.ToUpper(level) {
-	case "DEBUG":
-		levelName = "DEBUG"
-	case "INFO":
-		levelName = "INFO"
-	case "WARN":
-		levelName = "WARN"
-	case "ERROR":
-		levelName = "ERROR"
+	levelName := strings.ToUpper(level)
+	switch levelName {
+	case levelDebug, levelInfo, levelWarn, levelError:
 	default:
-		levelName = "DEBUG" // 默认
+		fmt.Printf("unknown levelName: %s, use default: %s\n", levelName, levelDebug)
+		levelName = levelDebug // 默认
 	}
 
 	var encoding string
 	var js string
 	if isSave { // 日志保存到文件
-		encoding = "json" // 当日志输出到文件时，只有json格式
+		encoding = formatJSON // 当日志输出到文件时，只有json格式
 		js = fmt.Sprintf(`{
       		"level": "%s",
       		"encoding": "%s",
@@ -155,10 +163,10 @@ func InitLogger(isSave bool, filename string, level string, encodingType ...stri
       		"errorOutputPaths": ["%s"]
       	}`, levelName, encoding, filename, filename)
 	} else { // 在控台输出日志
-		if len(encodingType) > 0 && encodingType[0] == "json" { // 控台模式下可以输出json格式，也可以输出console模式
-			encoding = "json"
+		if len(encodingType) > 0 && encodingType[0] == formatJSON { // 控台模式下可以输出json格式，也可以输出console模式
+			encoding = formatJSON
 		} else {
-			encoding = "console"
+			encoding = formatConsole
 		}
 
 		js = fmt.Sprintf(`{

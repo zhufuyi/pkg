@@ -72,7 +72,9 @@ func getRootNode(opts getRootNodeOpts) (*dasel.Node, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not open input file: %w", err)
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 		opts.Reader = f
 	}
 
@@ -241,11 +243,11 @@ func runGenericPutCommand(opts genericPutOptions) error {
 	}
 
 	if opts.Multi {
-		if err := rootNode.PutMultiple(opts.Selector, updateValue); err != nil {
+		if err = rootNode.PutMultiple(opts.Selector, updateValue); err != nil {
 			return fmt.Errorf("could not put multi value: %w", err)
 		}
 	} else {
-		if err := rootNode.Put(opts.Selector, updateValue); err != nil {
+		if err = rootNode.Put(opts.Selector, updateValue); err != nil {
 			return fmt.Errorf("could not put value: %w", err)
 		}
 	}
@@ -263,7 +265,7 @@ func runGenericPutCommand(opts genericPutOptions) error {
 		writeOptions = append(writeOptions, PrettyPrintOption(false))
 	}
 
-	if err := writeNodeToOutput(writeNodeToOutputOpts{
+	if err = writeNodeToOutput(writeNodeToOutputOpts{
 		Node:   rootNode,
 		Parser: writeParser,
 		File:   opts.File,
@@ -308,9 +310,9 @@ func PutYaml(in []byte, selector string, valueType string, value string) ([]byte
 	return Put(in, selector, valueType, value, YamlFormat, YamlFormat)
 }
 
-// PutYaml 修改或增加字段，针对json文档
-func PutJson(in []byte, selector string, valueType string, value string) ([]byte, error) {
-	return Put(in, selector, valueType, value, JsonFormat, JsonFormat)
+// PutJSON 修改或增加字段，针对json文档
+func PutJSON(in []byte, selector string, valueType string, value string) ([]byte, error) {
+	return Put(in, selector, valueType, value, JSONFormat, JSONFormat)
 }
 
 // ---------------------------------------------------------------------------------------
@@ -374,11 +376,11 @@ func runPutObjectCommand(opts putObjectOpts) error {
 	}
 
 	if opts.Multi {
-		if err := rootNode.PutMultiple(opts.Selector, updateValue); err != nil {
+		if err = rootNode.PutMultiple(opts.Selector, updateValue); err != nil {
 			return fmt.Errorf("could not put object multi value: %w", err)
 		}
 	} else {
-		if err := rootNode.Put(opts.Selector, updateValue); err != nil {
+		if err = rootNode.Put(opts.Selector, updateValue); err != nil {
 			return fmt.Errorf("could not put object value: %w", err)
 		}
 	}
@@ -409,7 +411,7 @@ func runPutObjectCommand(opts putObjectOpts) error {
 	return nil
 }
 
-// PutObjectYaml 修改或增加多个字段值，参数valueTypes是值的类型，kvs是值类型对应kv键值对，例如valueTypes=["int","string"],values=["a=1","b=hello"]
+// PutObject 修改或增加多个字段值，参数valueTypes是值的类型，kvs是值类型对应kv键值对，例如valueTypes=["int","string"],values=["a=1","b=hello"]
 // 参数inFormat输是入数据解析格式yaml、json 、toml，outFormat是输出数据解析格式yaml、json 、toml，输出格式可以和输入格式不一致
 func PutObject(in []byte, selector string, valueTypes []string, kvs []string, inFormat string, outFormat string) ([]byte, error) {
 	outputBuffer := bytes.NewBuffer([]byte{})
@@ -440,9 +442,9 @@ func PutObjectYaml(in []byte, selector string, valueTypes []string, kvs []string
 	return PutObject(in, selector, valueTypes, kvs, YamlFormat, YamlFormat)
 }
 
-// PutObjectJson 修改或增加多个字段值，针对json文档
-func PutObjectJson(in []byte, selector string, valueTypes []string, kvs []string) ([]byte, error) {
-	return PutObject(in, selector, valueTypes, kvs, JsonFormat, JsonFormat)
+// PutObjectJSON 修改或增加多个字段值，针对json文档
+func PutObjectJSON(in []byte, selector string, valueTypes []string, kvs []string) ([]byte, error) {
+	return PutObject(in, selector, valueTypes, kvs, JSONFormat, JSONFormat)
 }
 
 // ---------------------------------------------------------------------------------------
@@ -490,11 +492,11 @@ func runPutDocumentCommand(opts putDocumentOpts) error {
 	}
 
 	if opts.Multi {
-		if err := rootNode.PutMultiple(opts.Selector, documentValue); err != nil {
+		if err = rootNode.PutMultiple(opts.Selector, documentValue); err != nil {
 			return fmt.Errorf("could not put document multi value: %w", err)
 		}
 	} else {
-		if err := rootNode.Put(opts.Selector, documentValue); err != nil {
+		if err = rootNode.Put(opts.Selector, documentValue); err != nil {
 			return fmt.Errorf("could not put document value: %w", err)
 		}
 	}
@@ -537,7 +539,7 @@ func getPutDocumentParser(readParser ReadParser, documentParserFlag string) (Rea
 	return parser, nil
 }
 
-// PutDocumentYaml 修改或增加多个字段值，参数docs是yaml或json文档，例如`["foo","bar"]
+// PutDocument 修改或增加多个字段值，参数docs是yaml或json文档，例如`["foo","bar"]
 // 参数inFormat输是入数据解析格式yaml、json 、toml，outFormat是输出数据解析格式yaml、json 、toml，输出格式可以和输入格式不一致
 func PutDocument(in []byte, selector string, docs string, inFormat string, outFormat string) ([]byte, error) {
 	outputBuffer := bytes.NewBuffer([]byte{})
@@ -562,12 +564,12 @@ func PutDocument(in []byte, selector string, docs string, inFormat string, outFo
 	return output, nil
 }
 
-// PutObjectYaml 修改或增加文档，针对yaml文档
+// PutDocumentYaml 修改或增加文档，针对yaml文档
 func PutDocumentYaml(in []byte, selector string, docs string) ([]byte, error) {
 	return PutDocument(in, selector, docs, YamlFormat, YamlFormat)
 }
 
-// PutObjectJson 修改或增加文档，针对json文档
-func PutDocumentJson(in []byte, selector string, docs string) ([]byte, error) {
-	return PutDocument(in, selector, docs, JsonFormat, JsonFormat)
+// PutDocumentJSON 修改或增加文档，针对json文档
+func PutDocumentJSON(in []byte, selector string, docs string) ([]byte, error) {
+	return PutDocument(in, selector, docs, JSONFormat, JSONFormat)
 }

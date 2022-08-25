@@ -45,7 +45,6 @@ func DesDecryptHex(cipherStr string, opts ...DesOption) (string, error) {
 	cipherData, err := hex.DecodeString(cipherStr)
 	if err != nil {
 		return "", err
-
 	}
 
 	rawData, err := desDecrypt(o.mode, cipherData, o.desKey)

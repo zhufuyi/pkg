@@ -120,7 +120,7 @@ func runDeleteCommand(opts deleteOptions) error {
 	return nil
 }
 
-// DeleteYaml 删除字段，参数inFormat输是入数据解析格式yaml、json 、toml，outFormat是输出数据解析格式yaml、json 、toml，输出格式可以和输入格式不一致
+// Delete 删除字段，参数inFormat输是入数据解析格式yaml、json 、toml，outFormat是输出数据解析格式yaml、json 、toml，输出格式可以和输入格式不一致
 func Delete(in []byte, selector string, inFormat string, outFormat string) ([]byte, error) {
 	outputBuffer := bytes.NewBuffer([]byte{})
 
@@ -151,7 +151,7 @@ func DeleteYaml(in []byte, selector string) ([]byte, error) {
 	return Delete(in, selector, YamlFormat, YamlFormat)
 }
 
-// DeleteJson 删除字段，针对json文档
-func DeleteJson(in []byte, selector string) ([]byte, error) {
-	return Delete(in, selector, JsonFormat, JsonFormat)
+// DeleteJSON 删除字段，针对json文档
+func DeleteJSON(in []byte, selector string) ([]byte, error) {
+	return Delete(in, selector, JSONFormat, JSONFormat)
 }

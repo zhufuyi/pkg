@@ -85,15 +85,15 @@ func TestFindJson(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotData, err := FindJson(tt.args.in, tt.args.selector)
+			gotData, err := FindJSON(tt.args.in, tt.args.selector)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("FindJson() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("FindJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			got := []byte(Bytes2Str(gotData))
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FindJson() got %s, want %s", got, tt.want)
+				t.Errorf("FindJSON() got %s, want %s", got, tt.want)
 			}
 		})
 	}

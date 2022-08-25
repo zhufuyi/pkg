@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// nolint
 const (
 	// R_NUM 纯数字
 	R_NUM = 1

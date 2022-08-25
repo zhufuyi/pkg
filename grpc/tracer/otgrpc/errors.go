@@ -12,6 +12,7 @@ import (
 type Class string
 
 const (
+	// Unknown represents outcomes that unknown fault
 	Unknown Class = "0xx"
 	// Success represents outcomes that achieved the desired results.
 	Success Class = "2xx"

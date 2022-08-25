@@ -1,3 +1,4 @@
+// nolint
 package render
 
 import (
@@ -5,9 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/zhufuyi/pkg/gin/errcode"
 	"github.com/zhufuyi/pkg/gin/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 // JSONResponse 输出格式

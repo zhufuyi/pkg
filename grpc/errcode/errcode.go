@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	pb "github.com/zhufuyi/pkg/grpc/errcode/proto/rpcerrorpb"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+// Error 错误
 type Error struct {
 	code int
 	msg  string
@@ -15,6 +17,7 @@ type Error struct {
 
 var errorCodes = map[int]string{}
 
+// NewError 创建新错误信息
 func NewError(code int, msg string) *Error {
 	if _, ok := errorCodes[code]; ok {
 		panic(fmt.Sprintf("code %d 已经存在", code))
@@ -25,14 +28,17 @@ func NewError(code int, msg string) *Error {
 	return &Error{code: code, msg: msg}
 }
 
+// Code 错误码
 func (e *Error) Code() int {
 	return e.code
 }
 
+// Msg 错误信息
 func (e *Error) Msg() string {
 	return e.msg
 }
 
+// String 打印错误
 func (e *Error) String() string {
 	return fmt.Sprintf("code: %d, msg: %s", e.code, e.msg)
 }
@@ -67,10 +73,12 @@ func ToRPCCode(code int) codes.Code {
 
 // ----------------------------------------------------------------------------------
 
+// Status 状态
 type Status struct {
 	*status.Status
 }
 
+// FromError 把错误转换为status
 func FromError(err error) *Status {
 	s, _ := status.FromError(err)
 	return &Status{s}

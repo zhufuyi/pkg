@@ -14,7 +14,7 @@ const (
 	limitFrequency = 19 // 在统计时间范围内最多19次限制
 )
 
-//TokenSecret 钉钉机器人的信息
+// TokenSecret 钉钉机器人的信息
 type TokenSecret struct {
 	Name   string // 机器人名称
 	Token  string // token
@@ -125,16 +125,17 @@ func checkFrequency(timestamps *[limitFrequency]int, nowSecond int) (int, bool) 
 		if currentTimestamp == 0 {
 			timestamps[i] = nowSecond
 			return 0, false
-		} else { // 所有值都以填充情况，获取最小值对应的index
-			minIndex = i
-			if lastTimeVal > currentTimestamp {
-				break
-			} else {
-				if i == l-1 {
-					minIndex = 0
-				}
-				lastTimeVal = currentTimestamp
+		}
+
+		// 所有值都以填充情况，获取最小值对应的index
+		minIndex = i
+		if lastTimeVal > currentTimestamp {
+			break
+		} else {
+			if i == l-1 {
+				minIndex = 0
 			}
+			lastTimeVal = currentTimestamp
 		}
 	}
 

@@ -1,3 +1,4 @@
+// nolint
 package serverMetrics
 
 import (

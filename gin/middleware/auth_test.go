@@ -2,11 +2,12 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/zhufuyi/pkg/gin/response"
-	"github.com/zhufuyi/pkg/gohttp"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
+
+	"github.com/zhufuyi/pkg/gin/response"
+	"github.com/zhufuyi/pkg/gohttp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/zhufuyi/pkg/jwt"
@@ -73,7 +74,7 @@ func getUser(authorization string) (string, error) {
 	response, _ := client.Do(reqest)
 	defer response.Body.Close()
 
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return "", err
 	}

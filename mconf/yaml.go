@@ -80,7 +80,9 @@ func cleanupYamlMapValue(v interface{}) interface{} {
 func (p *YAMLParser) ToBytes(value interface{}, options ...ReadWriteOption) ([]byte, error) {
 	buffer := new(bytes.Buffer)
 	encoder := yaml.NewEncoder(buffer)
-	defer encoder.Close()
+	defer func() {
+		_ = encoder.Close()
+	}()
 
 	switch v := value.(type) {
 	case SingleDocument:

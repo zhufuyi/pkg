@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/zhufuyi/pkg/gin/errcode"
+
+	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -99,7 +100,7 @@ func do(method string, url string, body interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("%s method not supported", method)
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 func get(url string) ([]byte, error) {

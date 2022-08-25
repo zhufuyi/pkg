@@ -20,7 +20,7 @@ var (
 	skipLoggingMethods = map[string]struct{}{}
 )
 
-// AddSkipMethods 添加跳过认证方法，在服务初始化时设置
+// AddLoggingFields 添加跳过认证方法，在服务初始化时设置
 func AddLoggingFields(kvs map[string]interface{}) {
 	loggingFields = kvs
 }

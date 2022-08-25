@@ -10,7 +10,7 @@ import (
 
 // CustomClaims 自定义Claims
 type CustomClaims struct {
-	Uid  string `json:"uid"`
+	UID  string `json:"uid"`
 	Role string `json:"role"`
 	jwt.StandardClaims
 }
@@ -18,7 +18,7 @@ type CustomClaims struct {
 // GenerateToken 生成token
 func GenerateToken(uid string, role ...string) (string, error) {
 	if opt == nil {
-		return "", initError
+		return "", errInit
 	}
 
 	roleVal := ""
@@ -41,7 +41,7 @@ func GenerateToken(uid string, role ...string) (string, error) {
 // VerifyToken 验证token
 func VerifyToken(tokenString string) (*CustomClaims, error) {
 	if opt == nil {
-		return nil, initError
+		return nil, errInit
 	}
 
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -51,23 +51,23 @@ func VerifyToken(tokenString string) (*CustomClaims, error) {
 		ve, ok := err.(*jwt.ValidationError)
 		if ok {
 			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-				return nil, formatErr
+				return nil, errFormat
 			} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
-				return nil, expiredErr
+				return nil, errExpired
 			} else if ve.Errors&jwt.ValidationErrorUnverifiable != 0 {
-				return nil, unverifiableErr
+				return nil, errUnverifiable
 			} else if ve.Errors&jwt.ValidationErrorSignatureInvalid != 0 {
-				return nil, signatureErr
+				return nil, errSignature
 			} else {
 				return nil, ve
 			}
 		}
-		return nil, signatureErr
+		return nil, errSignature
 	}
 
 	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 		return claims, nil
 	}
 
-	return nil, signatureErr
+	return nil, errSignature
 }

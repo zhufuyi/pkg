@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
@@ -408,7 +407,7 @@ func do(method string, url string, body interface{}) ([]byte, error) {
 			return nil, err
 		}
 		defer resp.Body.Close()
-		return ioutil.ReadAll(resp.Body)
+		return io.ReadAll(resp.Body)
 
 	case http.MethodGet:
 		resp, err := http.Get(url)
@@ -416,7 +415,7 @@ func do(method string, url string, body interface{}) ([]byte, error) {
 			return nil, err
 		}
 		defer resp.Body.Close()
-		return ioutil.ReadAll(resp.Body)
+		return io.ReadAll(resp.Body)
 
 	default:
 		return nil, errors.New("unknown method")

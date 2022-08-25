@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/zhufuyi/pkg/gin/errcode"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Result 输出数据格式

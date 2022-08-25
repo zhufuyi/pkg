@@ -46,7 +46,6 @@ func AesDecryptHex(cipherStr string, opts ...AesOption) (string, error) {
 	cipherData, err := hex.DecodeString(cipherStr)
 	if err != nil {
 		return "", err
-
 	}
 
 	rawData, err := aesDecrypt(o.mode, cipherData, o.aesKey)

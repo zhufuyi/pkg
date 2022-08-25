@@ -6,8 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/qiniu/qmgo"
 	"github.com/zhufuyi/pkg/logger"
+
+	"github.com/qiniu/qmgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -57,9 +58,10 @@ func GetCli() Clienter {
 }
 
 // InitToGlobal 初始化mongodb，全局使用，只适用对单个mongodb操作，如果不指定数据库，默认数据库名为test
-// 		形式一：localhost 或 localhost:27017
-// 		形式二：mongodb://localhost:27017/database_name 或 mongodb://localhost1:port,localhost2:port/database_name
-// 		形式三：mongodb://user:password@localhost:27017/database_name 或 mongodb://user:password@localhost1:port,localhost2:port/database_name
+//
+//	形式一：localhost 或 localhost:27017
+//	形式二：mongodb://localhost:27017/database_name 或 mongodb://localhost1:port,localhost2:port/database_name
+//	形式三：mongodb://user:password@localhost:27017/database_name 或 mongodb://user:password@localhost1:port,localhost2:port/database_name
 func InitToGlobal(url string) error {
 	ctx := context.Background()
 	client, err := qmgo.NewClient(ctx, &qmgo.Config{Uri: url})
@@ -354,7 +356,7 @@ func (d *DefaultClient) DeleteAll(collection string, query bson.M) (int64, error
 	return updateResult.ModifiedCount, nil
 }
 
-// DeleteOneReal 删除一条记录，包括标记性删除的记录
+// DeleteOneCompletely 删除一条记录，包括标记性删除的记录
 func (d *DefaultClient) DeleteOneCompletely(collection string, query bson.M) error {
 	err := d.cli.Database(d.mdbName).Collection(collection).Remove(d.ctx, query)
 	if err != nil {
@@ -380,7 +382,7 @@ func (d *DefaultClient) DeleteOneCompletely(collection string, query bson.M) err
 	return nil
 }
 
-// DeleteAllReal 删除所有匹配的记录，包括标记性删除的记录
+// DeleteAllCompletely 删除所有匹配的记录，包括标记性删除的记录
 func (d *DefaultClient) DeleteAllCompletely(collection string, query bson.M) (int64, error) {
 	deleteResult, err := d.cli.Database(d.mdbName).Collection(collection).RemoveAll(d.ctx, query)
 	if err != nil {
@@ -465,7 +467,10 @@ func (d *DefaultClient) CountAll(collection string, query bson.M) (int64, error)
 
 // EnsureIndexes 设置普通索引
 func (d *DefaultClient) EnsureIndexes(collection string, indexes []string) error {
-	d.cli.Database(d.mdbName).Collection(collection).EnsureIndexes(d.ctx, []string{}, indexes)
+	err := d.cli.Database(d.mdbName).Collection(collection).EnsureIndexes(d.ctx, []string{}, indexes)
+	if err != nil {
+		return err
+	}
 
 	if d.printLog {
 		d.printLog = false
@@ -480,7 +485,10 @@ func (d *DefaultClient) EnsureIndexes(collection string, indexes []string) error
 
 // EnsureUniques 设置唯一索引
 func (d *DefaultClient) EnsureUniques(collection string, uniques []string) error {
-	d.cli.Database(d.mdbName).Collection(collection).EnsureIndexes(d.ctx, uniques, []string{})
+	err := d.cli.Database(d.mdbName).Collection(collection).EnsureIndexes(d.ctx, uniques, []string{})
+	if err != nil {
+		return err
+	}
 
 	if d.printLog {
 		d.printLog = false
@@ -524,11 +532,14 @@ func (d *DefaultClient) Aggregate(collection string, matchStage primitive.D, gro
 	return showsWithInfo, nil
 }
 
+// GetQmgoClient 获取client对象
 func (d *DefaultClient) GetQmgoClient(collection string) *qmgo.QmgoClient {
 	db := d.cli.Database(d.mdbName)
 	coll := db.Collection(collection)
 	cli := &qmgo.QmgoClient{
-		coll, db, d.cli,
+		Collection: coll,
+		Database:   db,
+		Client:     d.cli,
 	}
 
 	return cli
@@ -539,7 +550,9 @@ func (d *DefaultClient) Transaction(collection string, callback func(sessCtx con
 	db := d.cli.Database(d.mdbName)
 	coll := db.Collection(collection)
 	cli := &qmgo.QmgoClient{
-		coll, db, d.cli,
+		Collection: coll,
+		Database:   db,
+		Client:     d.cli,
 	}
 
 	return cli.DoTransaction(d.ctx, callback)

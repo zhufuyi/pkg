@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	// Morally a const:
-	gRPCComponentTag = opentracing.Tag{string(ext.Component), "gRPC"}
+	// Morally a const
+	gRPCComponentTag = opentracing.Tag{Key: string(ext.Component), Value: "gRPC"}
 )
 
 // metadataReaderWriter satisfies both the opentracing.TextMapReader and
