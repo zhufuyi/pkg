@@ -24,8 +24,9 @@ gin中间件插件。
 
     // 自定义打印日志
     r.Use(middleware.Logging(
-        middleware.WithMaxLen(400),
-        middleware.WithRequestID(),
+        middleware.WithMaxLen(400), // 打印body最大长度，超过则忽略
+		//WithRequestIDFromHeader(), // 支持自定义requestID名称
+		WithRequestIDFromContext(), // 支持自定义requestID名称
         //middleware.WithIgnoreRoutes("/hello"), // 忽略/hello
     ))
 

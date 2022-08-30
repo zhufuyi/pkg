@@ -2,11 +2,15 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/zhufuyi/pkg/gin/response"
-	"github.com/zhufuyi/pkg/gohttp"
 	"net"
 	"testing"
+
+	"github.com/zhufuyi/pkg/gin/response"
+	"github.com/zhufuyi/pkg/gohttp"
+	"github.com/zhufuyi/pkg/logger"
+	"github.com/zhufuyi/pkg/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 var requestAddr string
@@ -14,6 +18,7 @@ var requestAddr string
 func initServer1() {
 	addr := getAddr()
 	r := gin.Default()
+	r.Use(RequestID())
 
 	// 默认打印日志
 	//	r.Use(Logging())
@@ -21,7 +26,8 @@ func initServer1() {
 	// 自定义打印日志
 	r.Use(Logging(
 		WithMaxLen(400),
-		WithRequestID(),
+		//WithRequestIDFromHeader(),
+		WithRequestIDFromContext(),
 		//WithIgnoreRoutes("/hello"), // 忽略/hello
 	))
 
@@ -32,6 +38,7 @@ func initServer1() {
 	//))
 
 	helloFun := func(c *gin.Context) {
+		logger.Info("test request id", utils.FieldRequestIDFromContext(c))
 		response.Success(c, "hello world")
 	}
 

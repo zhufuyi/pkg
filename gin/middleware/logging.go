@@ -16,17 +16,22 @@ var (
 	defaultMaxLength = 300
 
 	// default zap log
-	defaultLogger, _ = zap.NewDevelopment() // 默认日志输出
+	defaultLogger, _ = zap.NewDevelopment()
 
 	// Default request id name
-	defaultRequestIDName = "X-Request-Id"
+	defaultRequestIDNameInHeader  = "X-Request-Id"
+	defaultRequestIDNameInContext = "request_id"
 
 	// Ignore route list
 	defaultIgnoreRoutes = map[string]struct{}{
-		"/ping": {},
-		"/pong": {},
+		"/ping":   {},
+		"/pong":   {},
+		"/health": {},
 	}
 )
+
+// Option set the gin logger options.
+type Option func(*options)
 
 func defaultOptions() *options {
 	return &options{
@@ -34,6 +39,7 @@ func defaultOptions() *options {
 		log:           defaultLogger,
 		ignoreRoutes:  defaultIgnoreRoutes,
 		requestIDName: "",
+		requestIDFrom: 0,
 	}
 }
 
@@ -42,10 +48,8 @@ type options struct {
 	log           *zap.Logger
 	ignoreRoutes  map[string]struct{}
 	requestIDName string
+	requestIDFrom int // 0: ignore, 1: from header, 2: from context
 }
-
-// Option set the gin logger options.
-type Option func(*options)
 
 func (o *options) apply(opts ...Option) {
 	for _, opt := range opts {
@@ -78,15 +82,30 @@ func WithIgnoreRoutes(routes ...string) Option {
 	}
 }
 
-// WithRequestID name is field in header, eg:X-Request-Id
-func WithRequestID(name ...string) Option {
+// WithRequestIDFromHeader name is field in header, default value is X-Request-Id
+func WithRequestIDFromHeader(name ...string) Option {
 	var requestIDName string
 	if len(name) > 0 && name[0] != "" {
 		requestIDName = name[0]
 	} else {
-		requestIDName = defaultRequestIDName
+		requestIDName = defaultRequestIDNameInHeader
 	}
 	return func(o *options) {
+		o.requestIDFrom = 1
+		o.requestIDName = requestIDName
+	}
+}
+
+// WithRequestIDFromContext name is field in context, default value is request_id
+func WithRequestIDFromContext(name ...string) Option {
+	var requestIDName string
+	if len(name) > 0 && name[0] != "" {
+		requestIDName = name[0]
+	} else {
+		requestIDName = defaultRequestIDNameInContext
+	}
+	return func(o *options) {
+		o.requestIDFrom = 2
 		o.requestIDName = requestIDName
 	}
 }
@@ -145,9 +164,16 @@ func Logging(opts ...Option) gin.HandlerFunc {
 			)
 		}
 		reqID := ""
-		if o.requestIDName != "" {
+		if o.requestIDFrom == 1 {
 			reqID = c.Request.Header.Get(o.requestIDName)
 			fields = append(fields, zap.String(o.requestIDName, reqID))
+		} else if o.requestIDFrom == 2 {
+			if v, isExist := c.Get(o.requestIDName); isExist {
+				if requestID, ok := v.(string); ok {
+					reqID = requestID
+					fields = append(fields, zap.String(o.requestIDName, reqID))
+				}
+			}
 		}
 		o.log.Info("<<<<", fields...)
 
