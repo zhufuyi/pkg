@@ -10,6 +10,7 @@
 
 ## pkg列表
 
+- [app 优雅的启动和停止服务](app)
 - [awss3 aws s3客户端](awss3)
 - [cache 内存和redis缓存](cache)
 - [dingtalk 钉钉机器人客户端](dingtalk)
