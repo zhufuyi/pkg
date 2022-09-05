@@ -19,5 +19,5 @@
     ErrLogin = errcode.NewError(20101, "用户名或密码错误")
 
     // 请求返回
-    render.Error(c, errcode.LoginErr)
+    response.Error(c, errcode.LoginErr)
 ```

@@ -16,6 +16,7 @@
 - [dingtalk 钉钉机器人客户端](dingtalk)
 - [email 发邮件客户端](email)
 - [encoding json或proto编解码](encoding)
+- [errcode http和grpc错误码](errcode)
 - [gin 相关](gin)
   - [validator gin请求参数校验](gin/validator)
   - [response gin返回数据封装](gin/response)

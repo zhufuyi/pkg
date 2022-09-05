@@ -12,17 +12,34 @@
 
 <br>
 
-## 使用示例
+### 安装
+
+> go get -u github.com/zhufuyi/pkg/errcode
+
+<br>
+
+### 使用示例
+
+### http错误码使用示例
 
 ```go
-    // 服务级别错误码
-    ErrLogin = errcode.NewError(20101, "用户名或密码错误")
+    // 定义错误码
+    var ErrLogin = errcode.NewError(20101, "用户名或密码错误")
 
     // 请求返回
-    func (s *xxxService) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateReply, error) {
-        // ......
-        if err != nil {
-            return nil, ErrLogin
-        }
-    }
+    response.Error(c, errcode.LoginErr)
+```
+
+<br>
+
+### grpc错误码使用示例
+
+```go
+    // 定义错误码
+    var ErrLogin = errcode.NewRPCErr(20101, "用户名或密码错误")
+
+    // 返回错误
+    // req *pb.CreateRequest
+    errcode.RPCErr(req, errcode.ErrLogin)
+    // errcode.RPCErr(req, errcode.ErrLogin, errcode.KV{"msg":err.Error()}) // 附带错误详情信息
 ```
