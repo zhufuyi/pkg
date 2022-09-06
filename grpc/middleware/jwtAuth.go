@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 
 	"github.com/zhufuyi/pkg/jwt"
 
@@ -15,27 +16,76 @@ import (
 
 var (
 	// auth Scheme
-	defaultAuthScheme = "Bearer"
+	authScheme = "Bearer"
+
+	// 鉴权信息在ctx中key名
+	authCtxClaimsName = "tokenInfo"
 
 	// 跳过认证方法集合
-	skipMethods = map[string]struct{}{}
+	authIgnoreMethods = map[string]struct{}{}
 )
 
-// GetAuthScheme 获取Scheme
-func GetAuthScheme() string {
-	return defaultAuthScheme
+// AuthOption 鉴权设置
+type AuthOption func(*AuthOptions)
+
+type AuthOptions struct {
+	authScheme    string
+	ctxClaimsName string
+	ignoreMethods map[string]struct{}
 }
 
-// AddSkipMethods 添加跳过认证方法，在服务初始化时设置
-func AddSkipMethods(routers ...string) {
-	for _, router := range routers {
-		skipMethods[router] = struct{}{}
+func defaultAuthOptions() *AuthOptions {
+	return &AuthOptions{
+		authScheme:    authScheme,
+		ctxClaimsName: authCtxClaimsName,
+		ignoreMethods: make(map[string]struct{}), // 忽略鉴权的方法
 	}
 }
 
-// JwtVerify 从context获取token验证是否合法
+func (o *AuthOptions) apply(opts ...AuthOption) {
+	for _, opt := range opts {
+		opt(o)
+	}
+}
+
+// WithAuthScheme 设置鉴权的信息前缀
+func WithAuthScheme(scheme string) AuthOption {
+	return func(o *AuthOptions) {
+		o.authScheme = scheme
+	}
+}
+
+// WithAuthClaimsName 设置鉴权的信息在ctx的key名称
+func WithAuthClaimsName(claimsName string) AuthOption {
+	return func(o *AuthOptions) {
+		o.ctxClaimsName = claimsName
+	}
+}
+
+// WithAuthIgnoreMethods 忽略鉴权的方法
+// fullMethodName格式: /packageName.serviceName/methodName，
+// 示例/userExample.v1.userExampleService/GetByID
+func WithAuthIgnoreMethods(fullMethodNames ...string) AuthOption {
+	return func(o *AuthOptions) {
+		for _, method := range fullMethodNames {
+			o.ignoreMethods[method] = struct{}{}
+		}
+	}
+}
+
+// GetAuthorization 根据token组合成鉴权信息
+func GetAuthorization(token string) string {
+	return authScheme + " " + token
+}
+
+// GetAuthCtxKey 获取Claims的名称
+func GetAuthCtxKey() string {
+	return authCtxClaimsName
+}
+
+// JwtVerify 从context获取authorization来验证是否合法，authorization组成格式：authScheme token
 func JwtVerify(ctx context.Context) (context.Context, error) {
-	token, err := grpc_auth.AuthFromMD(ctx, defaultAuthScheme)
+	token, err := grpc_auth.AuthFromMD(ctx, authScheme)
 	if err != nil {
 		return nil, err
 	}
@@ -45,24 +95,59 @@ func JwtVerify(ctx context.Context) (context.Context, error) {
 		return nil, status.Errorf(codes.Unauthenticated, "%v", err)
 	}
 
-	newCtx := context.WithValue(ctx, "tokenInfo", cc) //nolint 后面方法可以通过ctx.Value("tokenInfo").(*jwt.CustomClaims)
+	newCtx := context.WithValue(ctx, authCtxClaimsName, cc) //nolint 后面方法可以通过ctx.Value(middleware.GetAuthCtxKey()).(*jwt.CustomClaims)
 
 	return newCtx, nil
 }
 
-// UnaryServerJwtAuth jwt认证拦截器
-func UnaryServerJwtAuth() grpc.UnaryServerInterceptor {
-	return grpc_auth.UnaryServerInterceptor(JwtVerify)
+// UnaryServerJwtAuth jwt鉴权unary拦截器
+func UnaryServerJwtAuth(opts ...AuthOption) grpc.UnaryServerInterceptor {
+	o := defaultAuthOptions()
+	o.apply(opts...)
+	authScheme = o.authScheme
+	authCtxClaimsName = o.ctxClaimsName
+	authIgnoreMethods = o.ignoreMethods
+
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		var newCtx context.Context
+		var err error
+
+		if _, ok := authIgnoreMethods[info.FullMethod]; ok {
+			newCtx = ctx
+		} else {
+			newCtx, err = JwtVerify(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return handler(newCtx, req)
+	}
 }
 
-// SkipAuthMethod 跳过认证，嵌入服务
-type SkipAuthMethod struct{}
+// StreamServerJwtAuth jwt鉴权stream拦截器
+func StreamServerJwtAuth(opts ...AuthOption) grpc.StreamServerInterceptor {
+	o := defaultAuthOptions()
+	o.apply(opts...)
+	authScheme = o.authScheme
+	authCtxClaimsName = o.ctxClaimsName
+	authIgnoreMethods = o.ignoreMethods
 
-// AuthFuncOverride 重写认证方法
-func (s *SkipAuthMethod) AuthFuncOverride(ctx context.Context, fullMethodName string) (context.Context, error) {
-	if _, ok := skipMethods[fullMethodName]; ok {
-		return ctx, nil
+	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		var newCtx context.Context
+		var err error
+
+		if _, ok := authIgnoreMethods[info.FullMethod]; ok {
+			newCtx = stream.Context()
+		} else {
+			newCtx, err = JwtVerify(stream.Context())
+			if err != nil {
+				return err
+			}
+		}
+
+		wrapped := grpc_middleware.WrapServerStream(stream)
+		wrapped.WrappedContext = newCtx
+		return handler(srv, wrapped)
 	}
-
-	return JwtVerify(ctx)
 }

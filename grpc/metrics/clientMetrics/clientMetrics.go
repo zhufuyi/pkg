@@ -48,13 +48,13 @@ func Serve(addr string) {
 
 // ---------------------------------- client interceptor ----------------------------------
 
-// UnaryClientMetrics 一元rpc metrics
+// UnaryClientMetrics metrics unary拦截器
 func UnaryClientMetrics() grpc.UnaryClientInterceptor {
 	registerMetrics() // 在拦截器之前完成注册metrics，只执行一次
 	return grpcClientMetrics.UnaryClientInterceptor()
 }
 
-// StreamClientMetrics 流rpc metrics
+// StreamClientMetrics metrics stream拦截器
 func StreamClientMetrics() grpc.StreamClientInterceptor {
 	registerMetrics() // 在拦截器之前完成注册metrics，只执行一次
 	return grpcClientMetrics.StreamClientInterceptor()

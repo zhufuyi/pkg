@@ -11,37 +11,36 @@ import (
 // ---------------------------------- client interceptor ----------------------------------
 
 var (
-	defaultTimes    uint = 3                                                                       // 重试次数
-	defaultInterval      = time.Millisecond * 50                                                   // 重试间隔50毫秒
-	defaultErrCodes      = []codes.Code{codes.Internal, codes.DeadlineExceeded, codes.Unavailable} // 默认触发重试的错误码
+	// 默认触发重试的错误码
+	defaultErrCodes = []codes.Code{codes.Internal, codes.DeadlineExceeded, codes.Unavailable}
 )
 
-type options struct {
+// RetryOption set the retry retryOptions.
+type RetryOption func(*retryOptions)
+
+type retryOptions struct {
 	times    uint
 	interval time.Duration
 	errCodes []codes.Code
 }
 
-func defaultOptions() *options {
-	return &options{
-		times:    defaultTimes,
-		interval: defaultInterval,
-		errCodes: defaultErrCodes,
+func defaultRetryOptions() *retryOptions {
+	return &retryOptions{
+		times:    3,                     // 重试次数
+		interval: time.Millisecond * 50, // 重试间隔50毫秒
+		errCodes: defaultErrCodes,       // 默认触发重试的错误码
 	}
 }
 
-func (o *options) apply(opts ...Option) {
+func (o *retryOptions) apply(opts ...RetryOption) {
 	for _, opt := range opts {
 		opt(o)
 	}
 }
 
-// Option set the retry options.
-type Option func(*options)
-
 // WithRetryTimes 设置重试次数，最大10次
-func WithRetryTimes(n uint) Option {
-	return func(o *options) {
+func WithRetryTimes(n uint) RetryOption {
+	return func(o *retryOptions) {
 		if n > 10 {
 			n = 10
 		}
@@ -50,8 +49,8 @@ func WithRetryTimes(n uint) Option {
 }
 
 // WithRetryInterval 设置重试时间间隔，范围1毫秒到10秒
-func WithRetryInterval(t time.Duration) Option {
-	return func(o *options) {
+func WithRetryInterval(t time.Duration) RetryOption {
+	return func(o *retryOptions) {
 		if t < time.Millisecond {
 			t = time.Millisecond
 		} else if t > 10*time.Second {
@@ -62,7 +61,7 @@ func WithRetryInterval(t time.Duration) Option {
 }
 
 // WithRetryErrCodes 设置触发重试错误码
-func WithRetryErrCodes(errCodes ...codes.Code) Option {
+func WithRetryErrCodes(errCodes ...codes.Code) RetryOption {
 	for _, errCode := range errCodes {
 		switch errCode {
 		case codes.Internal, codes.DeadlineExceeded, codes.Unavailable:
@@ -70,16 +69,31 @@ func WithRetryErrCodes(errCodes ...codes.Code) Option {
 			defaultErrCodes = append(defaultErrCodes, errCode)
 		}
 	}
-	return func(o *options) {
+	return func(o *retryOptions) {
 		o.errCodes = defaultErrCodes
 	}
 }
 
-// UnaryClientRetry 重试
-func UnaryClientRetry(opts ...Option) grpc.UnaryClientInterceptor {
-	o := defaultOptions()
+// UnaryClientRetry 重试unary拦截器
+func UnaryClientRetry(opts ...RetryOption) grpc.UnaryClientInterceptor {
+	o := defaultRetryOptions()
 	o.apply(opts...)
+
 	return grpc_retry.UnaryClientInterceptor(
+		grpc_retry.WithMax(o.times), // 设置重试次数
+		grpc_retry.WithBackoff(func(attempt uint) time.Duration { // 设置重试间隔
+			return o.interval
+		}),
+		grpc_retry.WithCodes(o.errCodes...), // 设置重试错误码
+	)
+}
+
+// StreamClientRetry 重试stream拦截器
+func StreamClientRetry(opts ...RetryOption) grpc.StreamClientInterceptor {
+	o := defaultRetryOptions()
+	o.apply(opts...)
+
+	return grpc_retry.StreamClientInterceptor(
 		grpc_retry.WithMax(o.times), // 设置重试次数
 		grpc_retry.WithBackoff(func(attempt uint) time.Duration { // 设置重试间隔
 			return o.interval

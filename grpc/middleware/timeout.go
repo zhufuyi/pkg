@@ -9,18 +9,24 @@ import (
 
 // ---------------------------------- client interceptor ----------------------------------
 
+var timeoutVal = time.Second * 3 // 默认超时时间
+
 // 默认超时
 func defaultContextTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
 	var cancel context.CancelFunc
 	if _, ok := ctx.Deadline(); !ok {
-		ctx, cancel = context.WithTimeout(ctx, 5*time.Second)
+		ctx, cancel = context.WithTimeout(ctx, timeoutVal)
 	}
 
 	return ctx, cancel
 }
 
-// ContextTimeout 一元调用超时中间件
-func ContextTimeout() grpc.UnaryClientInterceptor {
+// UnaryTimeout 超时unary拦截器
+func UnaryTimeout(d time.Duration) grpc.UnaryClientInterceptor {
+	if d > time.Millisecond {
+		timeoutVal = d
+	}
+
 	return func(ctx context.Context, method string, req, resp interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		ctx, cancel := defaultContextTimeout(ctx)
 		if cancel != nil {
@@ -30,8 +36,12 @@ func ContextTimeout() grpc.UnaryClientInterceptor {
 	}
 }
 
-// StreamContextTimeout 流式调用超时中间件
-func StreamContextTimeout() grpc.StreamClientInterceptor {
+// StreamTimeout 超时stream拦截器
+func StreamTimeout(d time.Duration) grpc.StreamClientInterceptor {
+	if d > time.Millisecond {
+		timeoutVal = d
+	}
+
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 		ctx, cancel := defaultContextTimeout(ctx)
 		if cancel != nil {

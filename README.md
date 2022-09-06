@@ -25,7 +25,7 @@
   - [ratelimiter 限流](gin/middleware/ratelimiter)
   - [middleware gin中间件](gin/middleware)
 - [grpc 相关](grpc)
-  - [errcode grpc错误码](grpc/errcode)
+  - [benchmark 压测](grpc/benchmark)
   - [etcd grpc服务注册与发现](grpc/etcd/discovery)
   - [gtls TLS加密传输](grpc/gtls)
   - [hystrix 熔断](grpc/hystrix)

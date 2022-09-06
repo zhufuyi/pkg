@@ -5,27 +5,45 @@
 #### jwt
 
 ```go
+// grpc server
+
 func getServerOptions() []grpc.ServerOption {
 	var options []grpc.ServerOption
 
 	// token鉴权
-	options = append(options, grpc.UnaryInterceptor(middleware.UnaryServerJwtAuth()))
+	options = append(options, grpc.UnaryInterceptor(
+	    middleware.UnaryServerJwtAuth(
+	        // middleware.WithAuthClaimsName("tokenInfo"), // 设置附加到ctx的鉴权信息名称，默认是tokenInfo
+	        middleware.WithAuthIgnoreMethods( // 添加忽略token验证的方法
+	            "/proto.Account/Register",
+	        ),
+	    ),
+	))
 
 	return options
 }
 
-func main() {
-	fmt.Println("start rpc server", grpcAddr)
-	middleware.AddSkipMethods("/proto.Account/Register") // 添加忽略token验证的方法，从pb文件的fullMethodName
+// 生成鉴权信息authorization
+func (a *Account) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterReply, error) {
+    // ......
+	token, err := jwt.GenerateToken(uid)
+	// handle err
+	authorization = middleware.GetAuthorization(token) // 加上前缀
+    // ......
+}
 
-	listen, err := net.Listen("tcp", grpcAddr)
+// 客户端调用方法时必须把鉴权信息通过context传递进来，key名称必须是authorization
+func getUser(client pb.AccountClient, req *pb.RegisterReply) error {
+	md := metadata.Pairs("authorization", req.Authorization)
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+
+	resp, err := client.GetUser(ctx, &pb.GetUserRequest{Id: req.Id})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	server := grpc.NewServer(getServerOptions()...)
-
-    // ......
+	fmt.Println("get user success", resp)
+	return nil
 }
 ```
 
@@ -40,23 +58,16 @@ func getServerOptions() []grpc.ServerOption {
 	var options []grpc.ServerOption
 
 	// 日志设置，默认打印客户端断开连接信息，示例 https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/logging/zap
-	//middleware.AddLoggingFields(map[string]interface{}{"hello": "world"}) // 添加打印自定义字段
-	//middleware.AddSkipLoggingMethods("/proto.Greeter/SayHello") // 跳过打印调用的方法
 	options = append(options, grpc_middleware.WithUnaryServerChain(
 		middleware.UnaryServerCtxTags(),
-		middleware.UnaryServerZapLogging(logger),
+		middleware.UnaryServerZapLogging(
+			logger.Get(), // zap
+			// middleware.WithLogFields(map[string]interface{}{"serverName": "userExample"}), // 附加打印字段
+			middleware.WithLogIgnoreMethods("/proto.userExampleService/GetByID"), // 忽略指定方法打印，可以指定多个
+		),
 	))
 
 	return options
-}
-
-func main() {
-	logger, _ = zap.NewProduction()
-
-	// 创建grpc server对象，拦截器可以在这里注入
-	server := grpc.NewServer(getServerOptions()...)
-
-	// ......
 }
 ```
 
@@ -74,15 +85,6 @@ func getServerOptions() []grpc.ServerOption {
 	options = append(options, recoveryOption)
 
 	return options
-}
-
-func main() {
-	logger, _ = zap.NewProduction()
-
-	// 创建grpc server对象，拦截器可以在这里注入
-	server := grpc.NewServer(getServerOptions()...)
-
-	// ......
 }
 ```
 
@@ -111,13 +113,6 @@ func getDialOptions() []grpc.DialOption {
 
 	return options
 }
-
-func main() {
-	conn, _ := grpc.Dial("127.0.0.1:8080", getDialOptions()...)
-	client := pb.NewGreeterClient(conn)
-
-	// ......
-}
 ```
 
 <br>
@@ -134,18 +129,12 @@ func getDialOptions() []grpc.DialOption {
 	// 超时拦截器
 	option := grpc.WithUnaryInterceptor(
 		grpc_middleware.ChainUnaryClient(
-			middleware.ContextTimeout(),
+			middleware.ContextTimeout(time.Second), // //设置超时
 		),
 	)
 	options = append(options, option)
 
 	return options
-}
-
-func main() {
-	conn, _ := grpc.Dial("127.0.0.1:8080", getDialOptions()...)
-
-    // ......
 }
 ```
 

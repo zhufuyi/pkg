@@ -1,10 +1,10 @@
 package middleware
 
 import (
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"time"
 
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
@@ -12,28 +12,56 @@ import (
 
 // ---------------------------------- server interceptor ----------------------------------
 
-var (
-	// 自定义打印kv
-	loggingFields = map[string]interface{}{}
+var ignoreLogMethods = map[string]struct{}{} // 忽略打印的方法
 
-	// 跳过打印日志的调用方法
-	skipLoggingMethods = map[string]struct{}{}
-)
+// LogOption 日志设置
+type LogOption func(*logOptions)
 
-// AddLoggingFields 添加跳过认证方法，在服务初始化时设置
-func AddLoggingFields(kvs map[string]interface{}) {
-	loggingFields = kvs
+type logOptions struct {
+	fields        map[string]interface{}
+	ignoreMethods map[string]struct{}
 }
 
-// AddSkipLoggingMethods 添加跳过打印日志方法，在服务初始化时设置
-func AddSkipLoggingMethods(methodNames ...string) {
-	for _, name := range methodNames {
-		skipLoggingMethods[name] = struct{}{}
+func defaultLogOptions() *logOptions {
+	return &logOptions{
+		fields:        make(map[string]interface{}), // 自定义打印kv
+		ignoreMethods: make(map[string]struct{}),    // 忽略打印日志的方法
 	}
 }
 
-// UnaryServerZapLogging 日志打印拦截器
-func UnaryServerZapLogging(logger *zap.Logger) grpc.UnaryServerInterceptor {
+func (o *logOptions) apply(opts ...LogOption) {
+	for _, opt := range opts {
+		opt(o)
+	}
+}
+
+// WithLogFields 添加自定义打印字段
+func WithLogFields(kvs map[string]interface{}) LogOption {
+	return func(o *logOptions) {
+		if len(kvs) == 0 {
+			return
+		}
+		o.fields = kvs
+	}
+}
+
+// WithLogIgnoreMethods 忽略打印的方法
+// fullMethodName格式: /packageName.serviceName/methodName，
+// 示例/userExample.v1.userExampleService/GetByID
+func WithLogIgnoreMethods(fullMethodNames ...string) LogOption {
+	return func(o *logOptions) {
+		for _, method := range fullMethodNames {
+			o.ignoreMethods[method] = struct{}{}
+		}
+	}
+}
+
+// UnaryServerZapLogging 日志unary拦截器
+func UnaryServerZapLogging(logger *zap.Logger, opts ...LogOption) grpc.UnaryServerInterceptor {
+	o := defaultLogOptions()
+	o.apply(opts...)
+	ignoreLogMethods = o.ignoreMethods
+
 	if logger == nil {
 		logger, _ = zap.NewProduction()
 	}
@@ -47,17 +75,19 @@ func UnaryServerZapLogging(logger *zap.Logger) grpc.UnaryServerInterceptor {
 	}
 
 	// 自定义打印字段
-	for key, val := range loggingFields {
+	for key, val := range o.fields {
 		zapOptions = append(zapOptions, grpc_zap.WithDurationField(func(duration time.Duration) zapcore.Field {
 			return zap.Any(key, val)
 		}))
 	}
 
 	// 自定义跳过打印日志的调用方法
-	for method := range skipLoggingMethods {
+	if len(ignoreLogMethods) > 0 {
 		zapOptions = append(zapOptions, grpc_zap.WithDecider(func(fullMethodName string, err error) bool {
-			if err == nil && fullMethodName == method {
-				return false
+			if err == nil {
+				if _, ok := ignoreLogMethods[fullMethodName]; ok {
+					return false
+				}
 			}
 			return true
 		}))
@@ -66,7 +96,52 @@ func UnaryServerZapLogging(logger *zap.Logger) grpc.UnaryServerInterceptor {
 	return grpc_zap.UnaryServerInterceptor(logger, zapOptions...)
 }
 
-// UnaryServerCtxTags field extractor logging
+// UnaryServerCtxTags extractor field unary拦截器
 func UnaryServerCtxTags() grpc.UnaryServerInterceptor {
 	return grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor))
+}
+
+// StreamServerZapLogging 日志stream拦截器
+func StreamServerZapLogging(logger *zap.Logger, opts ...LogOption) grpc.StreamServerInterceptor {
+	o := defaultLogOptions()
+	o.apply(opts...)
+	ignoreLogMethods = o.ignoreMethods
+
+	if logger == nil {
+		logger, _ = zap.NewProduction()
+	}
+	grpc_zap.ReplaceGrpcLoggerV2(logger)
+
+	// 日志设置，默认打印客户端断开连接信息，示例 https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/logging/zap
+	zapOptions := []grpc_zap.Option{
+		grpc_zap.WithDurationField(func(duration time.Duration) zapcore.Field {
+			return zap.Int64("grpc.time_ns", duration.Nanoseconds()) // 默认打印耗时字段
+		}),
+	}
+
+	// 自定义打印字段
+	for key, val := range o.fields {
+		zapOptions = append(zapOptions, grpc_zap.WithDurationField(func(duration time.Duration) zapcore.Field {
+			return zap.Any(key, val)
+		}))
+	}
+
+	// 自定义跳过打印日志的调用方法
+	if len(ignoreLogMethods) > 0 {
+		zapOptions = append(zapOptions, grpc_zap.WithDecider(func(fullMethodName string, err error) bool {
+			if err == nil {
+				if _, ok := ignoreLogMethods[fullMethodName]; ok {
+					return false
+				}
+			}
+			return true
+		}))
+	}
+
+	return grpc_zap.StreamServerInterceptor(logger, zapOptions...)
+}
+
+// StreamServerCtxTags extractor field stream拦截器
+func StreamServerCtxTags() grpc.StreamServerInterceptor {
+	return grpc_ctxtags.StreamServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor))
 }
