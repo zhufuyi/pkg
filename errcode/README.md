@@ -36,10 +36,10 @@
 
 ```go
     // 定义错误码
-    var ErrLogin = errcode.NewRPCErr(20101, "用户名或密码错误")
+    var ErrLogin = NewRPCStatus(20101, "用户名或密码错误")
 
     // 返回错误
-    // req *pb.CreateRequest
-    errcode.RPCErr(req, errcode.ErrLogin)
-    // errcode.RPCErr(req, errcode.ErrLogin, errcode.KV{"msg":err.Error()}) // 附带错误详情信息
+    errcode.ErrLogin.Err()
+    // 返回附带错误详情信息
+    errcode.ErrLogin.Err(errcode.Any("err", err))
 ```

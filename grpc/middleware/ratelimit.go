@@ -14,16 +14,16 @@ import (
 type RateLimitOption func(*rateLimitOptions)
 
 type rateLimitOptions struct {
-	capacity       int32         // 允许请求最大峰值
-	qps            int64         // 允许请求速度
-	refillInterval time.Duration // 填充token速度，refillInterval=time.Second/qps
+	qps            int           // 允许请求速度
+	capacity       int           // 重新填充容量
+	refillInterval time.Duration // 填充token速度，refillInterval=time.Second/qps*capacity
 }
 
 func defaultRateLimitOptions() *rateLimitOptions {
 	return &rateLimitOptions{
-		capacity:       1000,
-		qps:            500,
-		refillInterval: time.Second / 500,
+		qps:            1000,
+		capacity:       50,
+		refillInterval: time.Second / 1000 * 50,
 	}
 }
 
@@ -33,18 +33,28 @@ func (o *rateLimitOptions) apply(opts ...RateLimitOption) {
 	}
 }
 
-// WithRateLimitCapacity 设置允许请求最大峰值
-func WithRateLimitCapacity(capacity int) RateLimitOption {
-	return func(o *rateLimitOptions) {
-		o.capacity = int32(capacity)
-	}
-}
-
 // WithRateLimitQPS 设置请求qps
-func WithRateLimitQPS(qps int64) RateLimitOption {
+func WithRateLimitQPS(qps int) RateLimitOption {
 	return func(o *rateLimitOptions) {
 		o.qps = qps
-		o.refillInterval = time.Second / time.Duration(o.qps)
+		if qps < 10 {
+			o.capacity = qps
+		} else if qps < 100 {
+			o.capacity = 10
+		} else if qps < 500 {
+			o.capacity = 40
+		} else if qps < 1000 {
+			o.capacity = 80
+		} else if qps < 2000 {
+			o.capacity = 100
+		} else if qps < 4000 {
+			o.capacity = 200
+		} else if qps < 10000 {
+			o.capacity = 400
+		} else {
+			o.capacity = 500
+		}
+		o.refillInterval = time.Second / time.Duration(o.qps) * time.Duration(o.capacity)
 	}
 }
 
@@ -65,7 +75,7 @@ func UnaryServerRateLimit(opts ...RateLimitOption) grpc.UnaryServerInterceptor {
 	o := defaultRateLimitOptions()
 	o.apply(opts...)
 
-	limiter := &myLimiter{equalizer.NewTokenBucket(o.capacity, o.refillInterval)}
+	limiter := &myLimiter{TB: equalizer.NewTokenBucket(int32(o.capacity), o.refillInterval)}
 	return ratelimit.UnaryServerInterceptor(limiter)
 }
 
@@ -74,6 +84,6 @@ func StreamServerRateLimit(opts ...RateLimitOption) grpc.StreamServerInterceptor
 	o := defaultRateLimitOptions()
 	o.apply(opts...)
 
-	limiter := &myLimiter{equalizer.NewTokenBucket(o.capacity, o.refillInterval)}
+	limiter := &myLimiter{equalizer.NewTokenBucket(int32(o.capacity), o.refillInterval)}
 	return ratelimit.StreamServerInterceptor(limiter)
 }

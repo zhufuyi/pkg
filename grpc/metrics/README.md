@@ -1,6 +1,6 @@
 ## metrics
 
-公开grpc的server和client端指标，可以使用prometheus继续采集这些指标。
+grpc的server和client端指标，可以使用prometheus继续采集这些指标。
 
 ### 使用示例
 
@@ -20,16 +20,17 @@ func UnaryServerLabels(ctx context.Context, req interface{}, info *grpc.UnarySer
 func getServerOptions() []grpc.ServerOption {
 	var options []grpc.ServerOption
 
-	serverMetrics.AddCounterMetrics(customizedCounterMetric) // 添加自定义指标
 	// metrics拦截器
 	option := grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 		//UnaryServerLabels,                  // 标签
-		serverMetrics.UnaryServerMetrics(), // 一元rpc的metrics拦截器
+		metrics.UnaryServerMetrics(
+			// metrics.WithCounterMetrics(customizedCounterMetric) // 添加自定义指标
+		), // 一元rpc的metrics拦截器
 	))
 	options = append(options, option)
 
 	option = grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-		serverMetrics.StreamServerMetrics(), // 流式rpc的metrics拦截器
+		metrics.StreamServerMetrics(), // 流式rpc的metrics拦截器
 	))
 	options = append(options, option)
 
@@ -51,7 +52,7 @@ func main() {
 	pb.RegisterGreeterServer(server, &GreeterServer{})
 
 	// 启动metrics服务器，默认采集grpc指标，开启、go指标
-	serverMetrics.Serve(":9092", server)
+	metrics.ServerHTTPService(":9092", server)
 	fmt.Println("start metrics server", ":9092")
 
 	err = server.Serve(list)
@@ -73,15 +74,15 @@ func getDialOptions() []grpc.DialOption {
 	options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// Metrics
-	options = append(options, grpc.WithUnaryInterceptor(clientMetrics.UnaryClientMetrics()))
-	options = append(options, grpc.WithStreamInterceptor(clientMetrics.StreamClientMetrics()))
+	options = append(options, grpc.WithUnaryInterceptor(metrics.UnaryClientMetrics()))
+	options = append(options, grpc.WithStreamInterceptor(metrics.StreamClientMetrics()))
 	return options
 }
 
 func main() {
 	conn, err := grpc.Dial("127.0.0.1:8080", getDialOptions()...)
 
-	clientMetrics.Serve(":9094")
+	metrics.ClientHTTPService(":9094")
 	fmt.Println("start metrics server", ":9094")
 
 	client := pb.NewGreeterClient(conn)
@@ -95,4 +96,5 @@ func main() {
 		}
 	}
 }
+
 ```

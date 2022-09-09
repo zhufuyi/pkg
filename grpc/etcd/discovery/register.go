@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Register for grpc server
+// Register addr to etcd
 type Register struct {
 	EtcdAddrs   []string
 	DialTimeout int
@@ -27,19 +27,18 @@ type Register struct {
 	logger  *zap.Logger
 }
 
-// RegisterRPCAddr Register the rpc service address to etcd
-func RegisterRPCAddr(serverName string, grpcAddr string, etcdAddrs []string, opts ...Option) *Register {
+// NewRegister Register the address to etcd
+func NewRegister(serverName string, addr string, etcdAddrs []string, opts ...Option) *Register {
 	o := defaultOptions()
 	o.apply(opts...)
 
-	if strings.Split(grpcAddr, ":")[0] == "" {
-		panic("invalid grpc address " + grpcAddr)
+	if strings.Split(addr, ":")[0] == "" {
+		panic("invalid address " + addr)
 	}
 
-	//etcdRegister := newRegister(etcdAddrs, o.etcdDialTimeoutSeconds, o.logger)
 	srvInfo := server{
 		Name:    serverName,
-		Addr:    grpcAddr,
+		Addr:    addr,
 		Version: o.version,
 		Weight:  o.weight,
 	}
@@ -88,7 +87,11 @@ func (r *Register) Stop() {
 		}
 	}()
 
-	r.closeCh <- struct{}{}
+	select {
+	case r.closeCh <- struct{}{}:
+	case <-time.After(time.Millisecond * 100):
+	}
+
 	time.Sleep(time.Millisecond * 100) // Allow a little time before exiting the service to give the goroutine a chance to unregister node
 	close(r.closeCh)
 }

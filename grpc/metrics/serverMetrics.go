@@ -1,5 +1,4 @@
-// nolint
-package serverMetrics
+package metrics
 
 import (
 	"net/http"
@@ -31,31 +30,54 @@ var (
 	customizedHistogramMetrics = []*prometheus.HistogramVec{}
 
 	// 执行一次
-	once sync.Once
+	srvOnce sync.Once
 )
 
-// AddCounterMetrics 添加Counter类型指标
-func AddCounterMetrics(metrics ...*prometheus.CounterVec) {
-	customizedCounterMetrics = append(customizedCounterMetrics, metrics...)
+// MetricsOption 设置metrics
+type MetricsOption func(*metricsOptions)
+
+type metricsOptions struct{}
+
+func defaultMetricsOptions() *metricsOptions {
+	return &metricsOptions{}
 }
 
-// AddSummaryMetrics 添加Summary类型指标
-func AddSummaryMetrics(metrics ...*prometheus.SummaryVec) {
-	customizedSummaryMetrics = append(customizedSummaryMetrics, metrics...)
+func (o *metricsOptions) apply(opts ...MetricsOption) {
+	for _, opt := range opts {
+		opt(o)
+	}
 }
 
-// AddGaugeMetrics 添加Gauge类型指标
-func AddGaugeMetrics(metrics ...*prometheus.GaugeVec) {
-	customizedGaugeMetrics = append(customizedGaugeMetrics, metrics...)
+// WithCounterMetrics 添加Counter类型指标
+func WithCounterMetrics(metrics ...*prometheus.CounterVec) MetricsOption {
+	return func(o *metricsOptions) {
+		customizedCounterMetrics = append(customizedCounterMetrics, metrics...)
+	}
 }
 
-// AddHistogramMetrics 添加Histogram类型指标
-func AddHistogramMetrics(metrics ...*prometheus.HistogramVec) {
-	customizedHistogramMetrics = append(customizedHistogramMetrics, metrics...)
+// WithSummaryMetrics 添加Summary类型指标
+func WithSummaryMetrics(metrics ...*prometheus.SummaryVec) MetricsOption {
+	return func(o *metricsOptions) {
+		customizedSummaryMetrics = append(customizedSummaryMetrics, metrics...)
+	}
 }
 
-func registerMetrics() {
-	once.Do(func() {
+// WithGaugeMetrics 添加Gauge类型指标
+func WithGaugeMetrics(metrics ...*prometheus.GaugeVec) MetricsOption {
+	return func(o *metricsOptions) {
+		customizedGaugeMetrics = append(customizedGaugeMetrics, metrics...)
+	}
+}
+
+// WithHistogramMetrics 添加Histogram类型指标
+func WithHistogramMetrics(metrics ...*prometheus.HistogramVec) MetricsOption {
+	return func(o *metricsOptions) {
+		customizedHistogramMetrics = append(customizedHistogramMetrics, metrics...)
+	}
+}
+
+func srvRegisterMetrics() {
+	srvOnce.Do(func() {
 		// 开启了对RPCs处理时间的记录
 		grpcServerMetrics.EnableHandlingTimeHistogram()
 
@@ -81,8 +103,8 @@ func registerMetrics() {
 	})
 }
 
-// Serve 初始化服务端的prometheus的exporter服务，使用 http://ip:port/metrics 获取数据
-func Serve(addr string, grpcServer *grpc.Server) {
+// ServerHTTPService 初始化服务端的prometheus的exporter服务，使用 http://ip:port/metrics 获取数据
+func ServerHTTPService(addr string, grpcServer *grpc.Server) *http.Server {
 	httpServer := &http.Server{
 		Addr:    addr,
 		Handler: promhttp.HandlerFor(srvReg, promhttp.HandlerOpts{}),
@@ -90,25 +112,31 @@ func Serve(addr string, grpcServer *grpc.Server) {
 
 	// 启动http服务
 	go func() {
-		if err := httpServer.ListenAndServe(); err != nil {
-			panic("Unable to start a http server.")
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			panic("listen and serve error: " + err.Error())
 		}
 	}()
 
 	// 所有gRPC方法初始化Metrics
 	grpcServerMetrics.InitializeMetrics(grpcServer)
+
+	return httpServer
 }
 
 // ---------------------------------- server interceptor ----------------------------------
 
 // UnaryServerMetrics metrics unary拦截器
-func UnaryServerMetrics() grpc.UnaryServerInterceptor {
-	registerMetrics() // 在拦截器之前完成注册metrics，只执行一次
+func UnaryServerMetrics(opts ...MetricsOption) grpc.UnaryServerInterceptor {
+	o := defaultMetricsOptions()
+	o.apply(opts...)
+	srvRegisterMetrics() // 在拦截器之前完成注册metrics，只执行一次
 	return grpcServerMetrics.UnaryServerInterceptor()
 }
 
 // StreamServerMetrics metrics stream拦截器
-func StreamServerMetrics() grpc.StreamServerInterceptor {
-	registerMetrics() // 在拦截器之前完成注册metrics，只执行一次
+func StreamServerMetrics(opts ...MetricsOption) grpc.StreamServerInterceptor {
+	o := defaultMetricsOptions()
+	o.apply(opts...)
+	srvRegisterMetrics() // 在拦截器之前完成注册metrics，只执行一次
 	return grpcServerMetrics.StreamServerInterceptor()
 }

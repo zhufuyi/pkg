@@ -5,12 +5,15 @@ import (
 )
 
 var (
-	defaultTTLSeconds             int64 = 10
+	defaultTTLSeconds             int64 = 10 // 单位(秒)
 	defaultVersion                      = ""
 	defaultWeight                 int64 = 0
 	defaultLogger                       = zap.NewExample()
-	defaultEtcdDialTimeoutSeconds       = 3
+	defaultEtcdDialTimeoutSeconds       = 3 // 单位(秒)
 )
+
+// Option represents the etcd options
+type Option func(*options)
 
 type options struct {
 	// register options
@@ -23,14 +26,21 @@ type options struct {
 	etcdDialTimeoutSeconds int
 }
 
+func defaultOptions() *options {
+	return &options{
+		ttlSeconds:             defaultTTLSeconds,
+		version:                defaultVersion,
+		weight:                 defaultWeight,
+		logger:                 defaultLogger,
+		etcdDialTimeoutSeconds: defaultEtcdDialTimeoutSeconds,
+	}
+}
+
 func (o *options) apply(opts ...Option) {
 	for _, opt := range opts {
 		opt(o)
 	}
 }
-
-// Option represents the etcd options
-type Option func(*options)
 
 // WithTTLSeconds sets timeout for requesting the etcd service in seconds
 func WithTTLSeconds(ttlSeconds int64) Option {
@@ -64,15 +74,5 @@ func WithWeight(weight int64) Option {
 func WithDialTimeout(dialTimeoutSeconds int) Option {
 	return func(o *options) {
 		o.etcdDialTimeoutSeconds = dialTimeoutSeconds
-	}
-}
-
-func defaultOptions() *options {
-	return &options{
-		ttlSeconds:             defaultTTLSeconds,
-		version:                defaultVersion,
-		weight:                 defaultWeight,
-		logger:                 defaultLogger,
-		etcdDialTimeoutSeconds: defaultEtcdDialTimeoutSeconds,
 	}
 }

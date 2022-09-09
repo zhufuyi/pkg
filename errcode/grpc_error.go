@@ -1,48 +1,60 @@
 package errcode
 
 import (
-	"github.com/golang/protobuf/proto"
+	"fmt"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // GRPCStatus grpc 状态
 type GRPCStatus struct {
-	status  *status.Status
-	details []proto.Message
+	status *status.Status
 }
 
-// NewRPCErr 新建一个rpc状态对象
-func NewRPCErr(code codes.Code, msg string) *GRPCStatus {
+// NewGRPCStatus 新建一个status
+func NewGRPCStatus(code codes.Code, msg string) *GRPCStatus {
 	return &GRPCStatus{
 		status: status.New(code, msg),
 	}
 }
 
-// Status 返回rpc状态
-func (g *GRPCStatus) Status(details ...proto.Message) *status.Status {
-	details = append(details, g.details...)
-	st, err := g.status.WithDetails(details...)
-	if err != nil {
-		return g.status
-	}
-	return st
+// Detail error details
+type Detail struct {
+	key string
+	val interface{}
 }
 
-// WithDetails 附加详情信息
-func (g *GRPCStatus) WithDetails(details ...proto.Message) *GRPCStatus {
-	g.details = details
-	return g
+// String detail key-value
+func (d Detail) String() string {
+	return fmt.Sprintf("%s: {%v}", d.key, d.val)
 }
 
-// NewDetails 创建detail
-func NewDetails(details map[string]interface{}) proto.Message {
-	detailStruct, err := structpb.NewStruct(details)
-	if err != nil {
-		return nil
+// Any type
+func Any(key string, val interface{}) Detail {
+	return Detail{
+		key: key,
+		val: val,
 	}
-	return detailStruct
+}
+
+// RPCErr rpc error
+func RPCErr(g *GRPCStatus, details ...Detail) error {
+	var dts []string
+	for _, detail := range details {
+		dts = append(dts, detail.String())
+	}
+
+	return status.Errorf(g.status.Code(), "%s details = %v", g.status.Message(), dts)
+}
+
+// Err return error
+func (g *GRPCStatus) Err(details ...Detail) error {
+	var dts []string
+	for _, detail := range details {
+		dts = append(dts, detail.String())
+	}
+	return status.Errorf(g.status.Code(), "%s details = %v", g.status.Message(), dts)
 }
 
 // ToRPCCode 转换为RPC识别的错误码，避免返回Unknown状态码

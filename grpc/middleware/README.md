@@ -197,3 +197,9 @@ func SpanDemo(serviceName string, spanName string, ctx context.Context) {
 	// ......
 }
 ```
+
+<br>
+
+#### metrics
+
+使用示例 [metrics](../metrics/README.md)。
