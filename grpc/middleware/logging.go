@@ -1,14 +1,26 @@
 package middleware
 
 import (
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"time"
 
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 )
+
+// ---------------------------------- client interceptor ----------------------------------
+
+// UnaryClientLog 客户端日志unary拦截器
+func UnaryClientLog(logger *zap.Logger, opts ...grpc_zap.Option) grpc.UnaryClientInterceptor {
+	return grpc_zap.UnaryClientInterceptor(logger, opts...)
+}
+
+// UnaryStreamLog 客户端日志stream拦截器
+func UnaryStreamLog(logger *zap.Logger, opts ...grpc_zap.Option) grpc.StreamClientInterceptor {
+	return grpc_zap.StreamClientInterceptor(logger, opts...)
+}
 
 // ---------------------------------- server interceptor ----------------------------------
 
@@ -56,8 +68,8 @@ func WithLogIgnoreMethods(fullMethodNames ...string) LogOption {
 	}
 }
 
-// UnaryServerZapLogging 日志unary拦截器
-func UnaryServerZapLogging(logger *zap.Logger, opts ...LogOption) grpc.UnaryServerInterceptor {
+// UnaryServerLog 服务端日志unary拦截器
+func UnaryServerLog(logger *zap.Logger, opts ...LogOption) grpc.UnaryServerInterceptor {
 	o := defaultLogOptions()
 	o.apply(opts...)
 	ignoreLogMethods = o.ignoreMethods
@@ -70,7 +82,7 @@ func UnaryServerZapLogging(logger *zap.Logger, opts ...LogOption) grpc.UnaryServ
 	// 日志设置，默认打印客户端断开连接信息，示例 https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/logging/zap
 	zapOptions := []grpc_zap.Option{
 		grpc_zap.WithDurationField(func(duration time.Duration) zapcore.Field {
-			return zap.Int64("grpc.time_ns", duration.Nanoseconds()) // 默认打印耗时字段
+			return zap.Int64("grpc.time_us", duration.Microseconds()) // 默认打印耗时字段
 		}),
 	}
 
@@ -101,8 +113,8 @@ func UnaryServerCtxTags() grpc.UnaryServerInterceptor {
 	return grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor))
 }
 
-// StreamServerZapLogging 日志stream拦截器
-func StreamServerZapLogging(logger *zap.Logger, opts ...LogOption) grpc.StreamServerInterceptor {
+// StreamServerLog 服务端日志stream拦截器
+func StreamServerLog(logger *zap.Logger, opts ...LogOption) grpc.StreamServerInterceptor {
 	o := defaultLogOptions()
 	o.apply(opts...)
 	ignoreLogMethods = o.ignoreMethods
@@ -115,7 +127,7 @@ func StreamServerZapLogging(logger *zap.Logger, opts ...LogOption) grpc.StreamSe
 	// 日志设置，默认打印客户端断开连接信息，示例 https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/logging/zap
 	zapOptions := []grpc_zap.Option{
 		grpc_zap.WithDurationField(func(duration time.Duration) zapcore.Field {
-			return zap.Int64("grpc.time_ns", duration.Nanoseconds()) // 默认打印耗时字段
+			return zap.Int64("grpc.time_us", duration.Microseconds()) // 默认打印耗时字段
 		}),
 	}
 

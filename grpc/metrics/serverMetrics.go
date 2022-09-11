@@ -103,8 +103,8 @@ func srvRegisterMetrics() {
 	})
 }
 
-// ServerHTTPService 初始化服务端的prometheus的exporter服务，使用 http://ip:port/metrics 获取数据
-func ServerHTTPService(addr string, grpcServer *grpc.Server) *http.Server {
+// GoHTTPService 初始化服务端的prometheus的exporter服务，使用 http://ip:port/metrics 获取数据
+func GoHTTPService(addr string, grpcServer *grpc.Server) *http.Server {
 	httpServer := &http.Server{
 		Addr:    addr,
 		Handler: promhttp.HandlerFor(srvReg, promhttp.HandlerOpts{}),

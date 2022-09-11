@@ -12,7 +12,7 @@ import (
 
 var (
 	// 默认触发重试的错误码
-	defaultErrCodes = []codes.Code{codes.Internal, codes.DeadlineExceeded, codes.Unavailable}
+	defaultErrCodes = []codes.Code{codes.Unavailable}
 )
 
 // RetryOption set the retry retryOptions.
@@ -26,9 +26,9 @@ type retryOptions struct {
 
 func defaultRetryOptions() *retryOptions {
 	return &retryOptions{
-		times:    3,                     // 重试次数
-		interval: time.Millisecond * 50, // 重试间隔50毫秒
-		errCodes: defaultErrCodes,       // 默认触发重试的错误码
+		times:    2,                      // 重试次数
+		interval: time.Millisecond * 100, // 重试间隔100毫秒
+		errCodes: defaultErrCodes,        // 默认触发重试的错误码
 	}
 }
 

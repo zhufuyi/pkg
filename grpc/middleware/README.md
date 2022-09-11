@@ -203,3 +203,10 @@ func SpanDemo(serviceName string, spanName string, ctx context.Context) {
 #### metrics
 
 使用示例 [metrics](../metrics/README.md)。
+
+<br>
+
+#### hystrix
+
+使用示例 [hystrix](../hystrix/README.md)。
+

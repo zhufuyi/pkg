@@ -54,6 +54,50 @@ func unaryClientInterceptor(commandName string, o *options) grpc.UnaryClientInte
 	}
 }
 
+// StreamClientInterceptor set the hystrix of stream client interceptor
+func StreamClientInterceptor(commandName string, opts ...Option) grpc.StreamClientInterceptor {
+	o := defaultOptions()
+	o.apply(opts...)
+
+	if o.statsD != nil {
+		c, err := plugins.InitializeStatsdCollector(o.statsD)
+		if err != nil {
+			panic(err)
+		}
+		metricCollector.Registry.Register(c.NewStatsdCollector)
+	}
+
+	hystrix.ConfigureCommand(commandName, hystrix.CommandConfig{
+		Timeout:                durationToInt(o.timeout, time.Millisecond),
+		MaxConcurrentRequests:  o.maxConcurrentRequests,
+		RequestVolumeThreshold: o.requestVolumeThreshold,
+		SleepWindow:            durationToInt(o.sleepWindow, time.Millisecond),
+		ErrorPercentThreshold:  o.errorPercentThreshold,
+	})
+
+	return streamClientInterceptor(commandName, o)
+}
+
+func streamClientInterceptor(commandName string, o *options) grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		var clientStream grpc.ClientStream
+		err := hystrix.DoC(ctx, commandName,
+			// 熔断开关
+			func(ctx context.Context) error {
+				var err error
+				clientStream, err = streamer(ctx, desc, cc, method, opts...)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+			// 降级处理
+			o.fallbackFunc,
+		)
+		return clientStream, err
+	}
+}
+
 func durationToInt(duration, unit time.Duration) int {
 	durationAsNumber := duration / unit
 	if int64(durationAsNumber) > int64(maxInt) {
@@ -61,3 +105,18 @@ func durationToInt(duration, unit time.Duration) int {
 	}
 	return int(durationAsNumber)
 }
+
+/*
+StreamClientInterceptor() func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		monitor := newClientReporter(m, clientStreamType(desc), method)
+		clientStream, err := streamer(ctx, desc, cc, method, opts...)
+		if err != nil {
+			st, _ := status.FromError(err)
+			monitor.Handled(st.Code())
+			return nil, err
+		}
+		return &monitoredClientStream{clientStream, monitor}, nil
+	}
+}
+*/

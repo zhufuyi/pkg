@@ -54,14 +54,14 @@ type blResolver struct {
 	addrsStore map[string][]string
 }
 
-func (r *blResolver) start() {
-	//addrStrs := r.addrsStore[r.target.Endpoint]
-	addrStrs := r.addrsStore[r.target.URL.Path]
+func (b *blResolver) start() {
+	//addrStrs := b.addrsStore[b.target.Endpoint]
+	addrStrs := b.addrsStore[b.target.URL.Path]
 	addrs := make([]resolver.Address, len(addrStrs))
 	for i, s := range addrStrs {
 		addrs[i] = resolver.Address{Addr: s}
 	}
-	_ = r.cc.UpdateState(resolver.State{Addresses: addrs})
+	_ = b.cc.UpdateState(resolver.State{Addresses: addrs})
 }
 
 // ResolveNow 当前解析生成器
