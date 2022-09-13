@@ -20,11 +20,3 @@ func Path(rel string) string {
 
 	return filepath.Join(basepath, rel)
 }
-
-/*
-usage:
-
-improt "github.com/zhufuyi/pkg/grpc/gtls/certfile"
-
-filepath=certfile.Path("one-way/server.crt")
-*/
