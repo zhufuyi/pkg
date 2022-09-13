@@ -38,7 +38,9 @@ func demo(){
 			IsCaseSensitive: true,  // abcde-->hello, Abcde-->Hello
 		},
 	}
-	r.SetIgnoreFiles(ignoreFiles...)   // 这是忽略替换文件
+	r.SetSubDirs(subPaths...)          // 只处理指定子目录，优先级最高
+	r.SetIgnoreDirs(ignoreDirs...)   // 指定子目录下忽略处理的目录
+	r.SetIgnoreFiles(ignoreFiles...)   // 指定子目录下忽略处理的文件
 	r.SetReplacementFields(fields)   // 设置替换文本
 	r.SetOutPath("", "test")             // 设置输出目录，如果为空，根据名称和时间生成文件输出文件夹
 	err = r.SaveFiles()                   // 保存替换后文件

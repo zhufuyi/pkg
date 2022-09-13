@@ -19,7 +19,10 @@ var _ Replacer = (*replacerInfo)(nil)
 type Replacer interface {
 	SetReplacementFields(fields []Field)
 	SetIgnoreFiles(filenames ...string)
-	SetOutPath(absPath string, name ...string) error
+	SetIgnoreSubDirs(dirs ...string)
+	SetSubDirs(subDirs ...string)
+	SetOutDir(absDir string, name ...string) error
+	GetBasePath() string
 	GetOutPath() string
 	SaveFiles() error
 	ReadFile(filename string) ([]byte, error)
@@ -32,6 +35,7 @@ type replacerInfo struct {
 	isActual          bool     // fs字段是否来源实际路径，如果为true，使用io操作文件，如果为false使用fs操作文件
 	files             []string // 模板文件列表
 	ignoreFiles       []string // 忽略替换的文件列表
+	ignoreDirs        []string // 忽略处理的子目录
 	replacementFields []Field  // 从模板文件转为新文件需要替换的字符
 	outPath           string   // 输出替换后文件存放目录路径
 }
@@ -97,13 +101,47 @@ func (t *replacerInfo) SetReplacementFields(fields []Field) {
 	t.replacementFields = newFields
 }
 
+// SetSubDirs 设置处理指定子目录，其他目录下文件忽略处理
+func (t *replacerInfo) SetSubDirs(subDirs ...string) {
+	if len(subDirs) == 0 {
+		return
+	}
+
+	var files []string
+	isExistFile := make(map[string]struct{})
+	for _, file := range t.files {
+		for _, dir := range subDirs {
+			if isSubPath(file, dir) {
+				// 避免重复文件
+				if _, ok := isExistFile[file]; ok {
+					continue
+				} else {
+					isExistFile[file] = struct{}{}
+				}
+				files = append(files, file)
+			}
+		}
+	}
+
+	if len(files) == 0 {
+		return
+	}
+
+	t.files = files
+}
+
 // SetIgnoreFiles 设置忽略处理的文件
 func (t *replacerInfo) SetIgnoreFiles(filenames ...string) {
 	t.ignoreFiles = append(t.ignoreFiles, filenames...)
 }
 
-// SetOutPath 设置输出目录路径，优先使用absPath绝对路径，如果absPath为空，自动在当前目录根据参数name和时间生成绝对路径
-func (t *replacerInfo) SetOutPath(absPath string, name ...string) error {
+// SetIgnoreSubDirs 设置忽略处理的子目录
+func (t *replacerInfo) SetIgnoreSubDirs(dirs ...string) {
+	t.ignoreDirs = append(t.ignoreDirs, dirs...)
+}
+
+// SetOutDir 设置输出目录，优先使用absPath绝对路径，如果absPath为空，自动在当前目录根据参数name和时间生成绝对路径
+func (t *replacerInfo) SetOutDir(absPath string, name ...string) error {
 	subPath := ""
 	if len(name) > 0 && name[0] != "" {
 		subPath = name[0]
@@ -126,6 +164,11 @@ func (t *replacerInfo) SetOutPath(absPath string, name ...string) error {
 // GetOutPath 获取输出目录路径
 func (t *replacerInfo) GetOutPath() string {
 	return t.outPath
+}
+
+// GetBasePath 获取基础目录路径
+func (t *replacerInfo) GetBasePath() string {
+	return t.path
 }
 
 // ReadFile 读取文件内容
@@ -155,7 +198,7 @@ func (t *replacerInfo) SaveFiles() error {
 	}
 
 	for _, file := range t.files {
-		if t.isIgnoreFile(file) {
+		if t.isInIgnoreDir(file) || t.isIgnoreFile(file) {
 			continue
 		}
 
@@ -203,6 +246,18 @@ func (t *replacerInfo) isIgnoreFile(file string) bool {
 	_, filename := filepath.Split(file)
 	for _, v := range t.ignoreFiles {
 		if filename == v {
+			isIgnore = true
+			break
+		}
+	}
+	return isIgnore
+}
+
+func (t *replacerInfo) isInIgnoreDir(file string) bool {
+	isIgnore := false
+	dir, _ := filepath.Split(file)
+	for _, v := range t.ignoreDirs {
+		if strings.Contains(dir, v) {
 			isIgnore = true
 			break
 		}
@@ -278,5 +333,13 @@ func isFirstAlphabet(str string) bool {
 		return true
 	}
 
+	return false
+}
+
+func isSubPath(filePath string, subPath string) bool {
+	dir, _ := filepath.Split(filePath)
+	if strings.Contains(dir, subPath) {
+		return true
+	}
 	return false
 }
