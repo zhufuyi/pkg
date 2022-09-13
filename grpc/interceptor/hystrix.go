@@ -1,8 +1,8 @@
-package middleware
+package interceptor
 
 import (
 	"projectExample/pkg/grpc/hystrix"
-	
+
 	"google.golang.org/grpc"
 )
 

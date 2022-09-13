@@ -42,7 +42,7 @@ func WithTracerProvider(provider oteltrace.TracerProvider) TraceOption {
 	}
 }
 
-// Tracing returns middleware that will trace incoming requests.
+// Tracing returns interceptor that will trace incoming requests.
 // The service parameter should describe the name of the (virtual)
 // server handling the request.
 func Tracing(serviceName string, opts ...TraceOption) gin.HandlerFunc {
@@ -85,7 +85,7 @@ func Tracing(serviceName string, opts ...TraceOption) gin.HandlerFunc {
 		// pass the span through the request context
 		c.Request = c.Request.WithContext(ctx)
 
-		// serve the request to the next middleware
+		// serve the request to the next interceptor
 		c.Next()
 
 		status := c.Writer.Status()

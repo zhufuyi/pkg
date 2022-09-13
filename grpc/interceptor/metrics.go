@@ -1,4 +1,4 @@
-package middleware
+package interceptor
 
 import (
 	"github.com/zhufuyi/pkg/grpc/metrics"

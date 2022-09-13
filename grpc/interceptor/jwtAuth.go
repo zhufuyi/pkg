@@ -1,4 +1,4 @@
-package middleware
+package interceptor
 
 import (
 	"context"
@@ -95,7 +95,7 @@ func JwtVerify(ctx context.Context) (context.Context, error) {
 		return nil, status.Errorf(codes.Unauthenticated, "%v", err)
 	}
 
-	newCtx := context.WithValue(ctx, authCtxClaimsName, cc) //nolint 后面方法可以通过ctx.Value(middleware.GetAuthCtxKey()).(*jwt.CustomClaims)
+	newCtx := context.WithValue(ctx, authCtxClaimsName, cc) //nolint 后面方法可以通过ctx.Value(interceptor.GetAuthCtxKey()).(*jwt.CustomClaims)
 
 	return newCtx, nil
 }

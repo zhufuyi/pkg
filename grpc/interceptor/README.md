@@ -1,4 +1,8 @@
-## middleware
+## interceptor
+
+常用grpc客户端和服务端的拦截器。
+
+<br>
 
 ### 使用示例
 

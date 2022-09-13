@@ -1,4 +1,4 @@
-package middleware
+package interceptor
 
 import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
