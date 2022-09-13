@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"projectExample/pkg/registry"
+	"github.com/zhufuyi/pkg/registry"
 
 	"github.com/hashicorp/consul/api"
 )

@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	"projectExample/pkg/registry"
+	"github.com/zhufuyi/pkg/registry"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )

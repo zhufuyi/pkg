@@ -4,7 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"projectExample/pkg/registry"
+	"github.com/zhufuyi/pkg/registry"
 )
 
 type serviceSet struct {

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"projectExample/pkg/discovery"
-	"projectExample/pkg/grpc/middleware"
+	"github.com/zhufuyi/pkg/discovery"
+	"github.com/zhufuyi/pkg/grpc/interceptor"
+	"github.com/zhufuyi/pkg/logger"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/zhufuyi/pkg/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -55,12 +55,12 @@ func dial(ctx context.Context, endpoint string, isSecure bool, opts ...Option) (
 
 	// 日志
 	if o.enableLog {
-		unaryClientInterceptors = append(unaryClientInterceptors, middleware.UnaryClientLog(logger.Get()))
+		unaryClientInterceptors = append(unaryClientInterceptors, interceptor.UnaryClientLog(logger.Get()))
 	}
 
 	// 指标 metrics
 	if o.enableMetrics {
-		unaryClientInterceptors = append(unaryClientInterceptors, middleware.UnaryClientMetrics())
+		unaryClientInterceptors = append(unaryClientInterceptors, interceptor.UnaryClientMetrics())
 	}
 
 	// 负载均衡器 load balance
@@ -70,12 +70,12 @@ func dial(ctx context.Context, endpoint string, isSecure bool, opts ...Option) (
 
 	// 熔断器 hystrix
 	if o.enableHystrix {
-		unaryClientInterceptors = append(unaryClientInterceptors, middleware.UnaryClientHystrix(o.hystrixName))
+		unaryClientInterceptors = append(unaryClientInterceptors, interceptor.UnaryClientHystrix(o.hystrixName))
 	}
 
 	// 重试 retry
 	if o.enableRetry {
-		unaryClientInterceptors = append(unaryClientInterceptors, middleware.UnaryClientRetry())
+		unaryClientInterceptors = append(unaryClientInterceptors, interceptor.UnaryClientRetry())
 	}
 
 	unaryClientInterceptors = append(unaryClientInterceptors, o.unaryInterceptors...)

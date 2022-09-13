@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"projectExample/pkg/registry"
-
 	"github.com/zhufuyi/pkg/logger"
+	"github.com/zhufuyi/pkg/registry"
+
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/resolver"
 )

@@ -3,7 +3,7 @@ package etcd
 import (
 	"encoding/json"
 
-	"projectExample/pkg/registry"
+	"github.com/zhufuyi/pkg/registry"
 )
 
 func marshal(si *registry.ServiceInstance) (string, error) {

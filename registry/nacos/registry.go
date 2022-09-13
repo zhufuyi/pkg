@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"projectExample/pkg/registry"
+	"github.com/zhufuyi/pkg/registry"
 
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"

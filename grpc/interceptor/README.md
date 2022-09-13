@@ -16,7 +16,7 @@ func getServerOptions() []grpc.ServerOption {
 
 	// token鉴权
 	options = append(options, grpc.UnaryInterceptor(
-	    middleware.UnaryServerJwtAuth(
+	    interceptor.UnaryServerJwtAuth(
 	        // middleware.WithAuthClaimsName("tokenInfo"), // 设置附加到ctx的鉴权信息名称，默认是tokenInfo
 	        middleware.WithAuthIgnoreMethods( // 添加忽略token验证的方法
 	            "/proto.Account/Register",
@@ -63,8 +63,8 @@ func getServerOptions() []grpc.ServerOption {
 
 	// 日志设置，默认打印客户端断开连接信息，示例 https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/logging/zap
 	options = append(options, grpc_middleware.WithUnaryServerChain(
-		middleware.UnaryServerCtxTags(),
-		middleware.UnaryServerZapLogging(
+		interceptor.UnaryServerCtxTags(),
+		interceptor.UnaryServerZapLogging(
 			logger.Get(), // zap
 			// middleware.WithLogFields(map[string]interface{}{"serverName": "userExample"}), // 附加打印字段
 			middleware.WithLogIgnoreMethods("/proto.userExampleService/GetByID"), // 忽略指定方法打印，可以指定多个
@@ -84,7 +84,7 @@ func getServerOptions() []grpc.ServerOption {
 	var options []grpc.ServerOption
 
 	recoveryOption := grpc_middleware.WithUnaryServerChain(
-		middleware.UnaryServerRecovery(),
+		interceptor.UnaryServerRecovery(),
 	)
 	options = append(options, recoveryOption)
 
@@ -106,7 +106,7 @@ func getDialOptions() []grpc.DialOption {
 	// 重试
 	option := grpc.WithUnaryInterceptor(
 		grpc_middleware.ChainUnaryClient(
-			middleware.UnaryClientRetry(
+			interceptor.UnaryClientRetry(
                 //middleware.WithRetryTimes(5), // 修改默认重试次数，默认3次
                 //middleware.WithRetryInterval(100*time.Millisecond), // 修改默认重试时间间隔，默认50毫秒
                 //middleware.WithRetryErrCodes(), // 添加触发重试错误码，默认codes.Internal, codes.DeadlineExceeded, codes.Unavailable
@@ -172,7 +172,7 @@ func getDialOptions() []grpc.DialOption {
 
 	// tracing跟踪
 	options = append(options, grpc.WithUnaryInterceptor(
-		middleware.UnaryClientTracing(),
+		interceptor.UnaryClientTracing(),
 	))
 
 	return options
@@ -184,7 +184,7 @@ func getServerOptions() []grpc.ServerOption {
 
 	// 链路跟踪拦截器
 	options = append(options, grpc.UnaryInterceptor(
-		middleware.UnaryServerTracing(),
+		interceptor.UnaryServerTracing(),
 	))
 
 	return options

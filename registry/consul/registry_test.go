@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
 
-	"projectExample/pkg/registry"
+	"github.com/zhufuyi/pkg/registry"
 )
 
 func tcpServer(t *testing.T, lis net.Listener) {

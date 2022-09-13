@@ -1,7 +1,7 @@
 package interceptor
 
 import (
-	"projectExample/pkg/grpc/hystrix"
+	"github.com/zhufuyi/pkg/grpc/hystrix"
 
 	"google.golang.org/grpc"
 )

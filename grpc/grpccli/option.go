@@ -1,10 +1,10 @@
 package grpccli
 
 import (
+	"github.com/zhufuyi/pkg/registry"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"projectExample/pkg/registry"
 	"time"
 )
 

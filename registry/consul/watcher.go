@@ -3,7 +3,7 @@ package consul
 import (
 	"context"
 
-	"projectExample/pkg/registry"
+	"github.com/zhufuyi/pkg/registry"
 )
 
 type watcher struct {
