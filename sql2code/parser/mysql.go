@@ -32,3 +32,4 @@ func GetCreateTableFromDB(dsn, tableName string) (string, error) {
 
 	return createSql, nil
 }
+

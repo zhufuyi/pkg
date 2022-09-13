@@ -45,7 +45,7 @@ type modelCodes struct {
 	StructCode []string
 }
 
-// ParseSql 根据sql生成不用用途代码
+// ParseSql 根据sql生成不同用途代码
 func ParseSql(sql string, options ...Option) (map[string]string, error) {
 	initTemplate()
 	opt := parseOption(options)

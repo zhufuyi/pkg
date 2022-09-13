@@ -35,8 +35,7 @@ import (
 {{- end}}
 {{range .StructCode}}
 {{.}}
-{{end}}
-`
+{{end}}`
 
 	updateFieldTmpl    *template.Template
 	updateFieldTmplRaw = `
@@ -44,8 +43,8 @@ import (
 	if table.{{.Name}} {{.ConditionZero}} {
 		update["{{.ColName}}"] = table.{{.Name}}
 	}
-{{- end}}
-`
+{{- end}}`
+
 	handlerCreateStructTmpl    *template.Template
 	handlerCreateStructTmplRaw = `
 // Create{{.TableName}}Request create params
@@ -56,6 +55,7 @@ type Create{{.TableName}}Request struct {
 {{- end}}
 }
 `
+
 	handlerUpdateStructTmpl    *template.Template
 	handlerUpdateStructTmplRaw = `
 // Update{{.TableName}}ByIDRequest update params
@@ -73,8 +73,7 @@ type Get{{.TableName}}ByIDRespond struct {
 {{- range .Fields}}
 	{{.Name}}  {{.GoType}} ` + "`" + `json:"{{.ColName}}"` + "`" + `{{if .Comment}} // {{.Comment}}{{end}}
 {{- end}}
-}
-`
+}`
 
 	modelJSONTmpl    *template.Template
 	modelJSONTmplRaw = `{

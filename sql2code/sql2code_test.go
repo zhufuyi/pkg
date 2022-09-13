@@ -1,6 +1,8 @@
 package sql2code
 
-import "testing"
+import (
+	"testing"
+)
 
 var sqlData = `
 create table user
@@ -81,12 +83,20 @@ func TestGenerate(t *testing.T) {
 			}},
 			wantErr: false,
 		},
+		//{
+		//	name: "sql from db",
+		//	args: args{args: &Args{
+		//		DBDsn:   "root:123456@(127.0.0.1:3306)/test",
+		//		DBTable: "user",
+		//	}},
+		//	wantErr: false,
+		//},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := Generate(tt.args.args)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GenerateOne() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Generate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			t.Log(got)

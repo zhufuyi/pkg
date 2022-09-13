@@ -32,6 +32,13 @@ type Args struct {
 	NullStyle      string
 }
 
+func (a *Args) checkValid() error {
+	if a.SQL == "" && a.DDLFile == "" && (a.DBDsn == "" && a.DBTable == "") {
+		return errors.New("you must specify sql or ddl file")
+	}
+	return nil
+}
+
 func getSql(args *Args) (string, error) {
 	if args.SQL != "" {
 		return args.SQL, nil
@@ -130,6 +137,10 @@ func GenerateOne(args *Args) (string, error) {
 
 // Generate 生成model, json, dao, handler不同用途代码
 func Generate(args *Args) (map[string]string, error) {
+	if err := args.checkValid(); err != nil {
+		return nil, err
+	}
+
 	sql, err := getSql(args)
 	if err != nil {
 		return nil, err
