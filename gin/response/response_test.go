@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/zhufuyi/pkg/gin/errcode"
+	"github.com/zhufuyi/pkg/errcode"
 
 	"github.com/gin-gonic/gin"
 )

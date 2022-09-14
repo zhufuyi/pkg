@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/zhufuyi/pkg/gin/errcode"
+	"github.com/zhufuyi/pkg/errcode"
 	"github.com/zhufuyi/pkg/gin/response"
 	"github.com/zhufuyi/pkg/jwt"
 	"github.com/zhufuyi/pkg/logger"

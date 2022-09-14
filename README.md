@@ -13,6 +13,7 @@
 - [app 优雅的启动和停止服务](app)
 - [awss3 aws s3客户端](awss3)
 - [cache 内存和redis缓存](cache)
+- [conf 解析yaml、json、toml配置文件](conf)
 - [dingtalk 钉钉机器人客户端](dingtalk)
 - [discovery 服务发现](discovery)
 - [email 发邮件客户端](email)
