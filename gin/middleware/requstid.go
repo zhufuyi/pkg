@@ -14,7 +14,7 @@ const (
 	HeaderXRequestIDKey = "X-Request-ID"
 )
 
-// RequestID is a interceptor that injects a 'X-Request-ID' into the context and request/response header of each request.
+// RequestID is an interceptor that injects a 'X-Request-ID' into the context and request/response header of each request.
 func RequestID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Check for incoming header, use it if exists
