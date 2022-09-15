@@ -45,8 +45,8 @@ type modelCodes struct {
 	StructCode []string
 }
 
-// ParseSql 根据sql生成不同用途代码
-func ParseSql(sql string, options ...Option) (map[string]string, error) {
+// ParseSQL 根据sql生成不同用途代码
+func ParseSQL(sql string, options ...Option) (map[string]string, error) {
 	initTemplate()
 	opt := parseOption(options)
 
@@ -62,7 +62,7 @@ func ParseSql(sql string, options ...Option) (map[string]string, error) {
 	tableNames := make([]string, 0, len(stmts))
 	for _, stmt := range stmts {
 		if ct, ok := stmt.(*ast.CreateTableStmt); ok {
-			code, err := makeCode(ct, opt)
+			code, err := makeCode(ct, opt) //nolint
 			if err != nil {
 				return nil, err
 			}
@@ -131,11 +131,11 @@ type tmplField struct {
 // ConditionZero type of condition 0
 func (t tmplField) ConditionZero() string {
 	switch t.GoType {
-	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32":
+	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32": //nolint
 		return `!= 0`
-	case "string":
+	case "string": //nolint
 		return `!= ""`
-	case "time.Time":
+	case "time.Time": //nolint
 		return `.IsZero() == false`
 	}
 
@@ -145,11 +145,11 @@ func (t tmplField) ConditionZero() string {
 // GoZero type of 0 逗号分隔
 func (t tmplField) GoZero() string {
 	switch t.GoType {
-	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32":
+	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32": //nolint
 		return `= 0`
-	case "string":
+	case "string": //nolint
 		return `= "string"`
-	case "time.Time":
+	case "time.Time": //nolint
 		return `= "0000-01-00T00:00:00.000+08:00"`
 	}
 
@@ -157,8 +157,8 @@ func (t tmplField) GoZero() string {
 }
 
 const (
-	__mysqlModel__ = "__mysqlModel__"
-	__type__       = "__type__"
+	__mysqlModel__ = "__mysqlModel__" //nolint
+	__type__       = "__type__"       //nolint
 )
 
 var replaceFields = map[string]string{
@@ -174,6 +174,7 @@ const (
 	columnMysqlModel = __mysqlModel__
 )
 
+// nolint
 var ignoreColumns = map[string]struct{}{
 	columnID:         struct{}{},
 	columnCreatedAt:  struct{}{},
@@ -201,6 +202,7 @@ type codeText struct {
 	handlerStruct string
 }
 
+// nolint
 func makeCode(stmt *ast.CreateTableStmt, opt options) (*codeText, error) {
 	importPath := make([]string, 0, 1)
 	data := tmplData{
@@ -295,8 +297,8 @@ func makeCode(stmt *ast.CreateTableStmt, opt options) (*codeText, error) {
 		}
 		tags = append(tags, "gorm", gormTag.String())
 
-		if opt.JsonTag {
-			if opt.JsonNamedType != 0 {
+		if opt.JSONTag {
+			if opt.JSONNamedType != 0 {
 				colName = xstrings.FirstRuneToLower(xstrings.ToCamelCase(colName)) // 使用驼峰类型json名称
 			}
 			tags = append(tags, "json", colName)
@@ -372,7 +374,7 @@ func getModelStructCode(data tmplData, importPaths []string, isEmbed bool) (stri
 		// 过滤time包
 		isOk := false
 		for _, field := range newFields {
-			if !strings.Contains(field.GoType, "time.Time") {
+			if !strings.Contains(field.GoType, "time.Time") { //nolint
 				isOk = true
 			}
 		}
@@ -557,13 +559,13 @@ func mysqlToGoType(colTp *types.FieldType, style NullStyle) (name string, path s
 			name = "sql.NullFloat64"
 		case mysql.TypeString, mysql.TypeVarchar, mysql.TypeVarString,
 			mysql.TypeBlob, mysql.TypeTinyBlob, mysql.TypeMediumBlob, mysql.TypeLongBlob:
-			name = "sql.NullString"
+			name = "sql.NullString" //nolint
 		case mysql.TypeTimestamp, mysql.TypeDatetime, mysql.TypeDate:
 			name = "sql.NullTime"
 		case mysql.TypeDecimal, mysql.TypeNewDecimal:
-			name = "sql.NullString"
+			name = "sql.NullString" //nolint
 		case mysql.TypeJSON:
-			name = "sql.NullString"
+			name = "sql.NullString" //nolint
 		default:
 			return "UnSupport", ""
 		}
@@ -579,7 +581,7 @@ func mysqlToGoType(colTp *types.FieldType, style NullStyle) (name string, path s
 			if mysql.HasUnsignedFlag(colTp.Flag) {
 				name = "uint64"
 			} else {
-				name = "int64"
+				name = "int64" //nolint
 			}
 		case mysql.TypeFloat, mysql.TypeDouble:
 			name = "float64"

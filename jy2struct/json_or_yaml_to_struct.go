@@ -13,9 +13,10 @@ import (
 	"strings"
 	"unicode"
 
-	"gopkg.in/yaml.v1"
+	"gopkg.in/yaml.v3"
 )
 
+// ForceFloats whether to force a change to float
 var ForceFloats bool
 
 // commonInitialisms is a set of common initialisms.
@@ -70,9 +71,11 @@ var intToWordMap = []string{
 	"nine",
 }
 
+// Parser parser function
 type Parser func(io.Reader) (interface{}, error)
 
-func ParseJson(input io.Reader) (interface{}, error) {
+// ParseJSON parse json to struct
+func ParseJSON(input io.Reader) (interface{}, error) {
 	var result interface{}
 	if err := json.NewDecoder(input).Decode(&result); err != nil {
 		return nil, err
@@ -80,6 +83,7 @@ func ParseJson(input io.Reader) (interface{}, error) {
 	return result, nil
 }
 
+// ParseYaml parse yaml to struct
 func ParseYaml(input io.Reader) (interface{}, error) {
 	var result interface{}
 	b, err := readFile(input)
@@ -127,7 +131,8 @@ func Generate(input io.Reader, parser Parser, structName, pkgName string, tags [
 		for k, v := range subStructMap {
 			src += fmt.Sprintf("\n\ntype %s %s\n\n", v, k)
 		}
-		formatted, err := format.Source([]byte(src))
+		var formatted []byte
+		formatted, err = format.Source([]byte(src))
 		if err != nil {
 			err = fmt.Errorf("error formatting: %s, was formatting\n%s", err, src)
 		}
@@ -292,6 +297,7 @@ func FmtFieldName(s string) string {
 	return s
 }
 
+// nolint
 func lintFieldName(name string) string {
 	// Fast path for simple cases: "_" and all lowercase.
 	if name == "_" {
@@ -365,7 +371,6 @@ func lintFieldName(name string) string {
 			// All the common initialisms are ASCII,
 			// so we can replace the bytes exactly.
 			copy(runes[w:], []rune(u))
-
 		} else if strings.ToLower(word) == word {
 			// already all lowercase, and not the first word, so uppercase the first character.
 			runes[w] = unicode.ToUpper(runes[w])

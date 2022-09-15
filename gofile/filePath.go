@@ -90,7 +90,6 @@ func ListDirsAndFiles(dirPath string) (map[string][]string, error) {
 
 // 带过滤条件通过迭代方式遍历文件
 func walkDirWithFilter(dirPath string, allFiles *[]string, filter filterFn) error {
-	//files, err := ioutil.ReadDir(dirPath) //读取目录下文件
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
@@ -114,7 +113,6 @@ func walkDirWithFilter(dirPath string, allFiles *[]string, filter filterFn) erro
 }
 
 func walkDir2(dirPath string, allDirs *[]string, allFiles *[]string) error {
-	//files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err
@@ -181,7 +179,6 @@ func matchContain(containName string) filterFn {
 
 // 通过迭代方式遍历文件
 func walkDir(dirPath string, allFiles *[]string) error {
-	//files, err := ioutil.ReadDir(dirPath) // 读取目录下文件
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
 		return err

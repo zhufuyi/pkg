@@ -41,7 +41,7 @@ type replacerInfo struct {
 }
 
 // New 根据指定路径创建replacer
-func New(path string) (*replacerInfo, error) {
+func New(path string) (Replacer, error) {
 	files, err := gofile.ListFiles(path)
 	if err != nil {
 		return nil, err
@@ -314,7 +314,7 @@ func walkDir(dirPath string, allFiles *[]string, fs embed.FS) error {
 	for _, file := range files {
 		deepFile := dirPath + "/" + file.Name()
 		if file.IsDir() {
-			walkDir(deepFile, allFiles, fs)
+			_ = walkDir(deepFile, allFiles, fs)
 			continue
 		}
 		*allFiles = append(*allFiles, deepFile)
@@ -338,8 +338,5 @@ func isFirstAlphabet(str string) bool {
 
 func isSubPath(filePath string, subPath string) bool {
 	dir, _ := filepath.Split(filePath)
-	if strings.Contains(dir, subPath) {
-		return true
-	}
-	return false
+	return strings.Contains(dir, subPath)
 }

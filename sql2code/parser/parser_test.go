@@ -17,7 +17,7 @@ func TestParseSql(t *testing.T) {
   num INT(11) DEFAULT 3 NULL,
   comment TEXT
   ) COMMENT="person info";`
-	codes, err := ParseSql(sql, WithTablePrefix("t_"), WithJsonTag(0))
+	codes, err := ParseSQL(sql, WithTablePrefix("t_"), WithJSONTag(0))
 	assert.Nil(t, err)
 	for k, v := range codes {
 		t.Log(k, v)
@@ -70,7 +70,7 @@ var testData = [][]string{
 func TestParseSqls(t *testing.T) {
 	for i, test := range testData {
 		msg := fmt.Sprintf("sql-%d", i)
-		codes, err := ParseSql(test[0], WithNoNullType())
+		codes, err := ParseSQL(test[0], WithNoNullType())
 		if !assert.NoError(t, err, msg) {
 			continue
 		}

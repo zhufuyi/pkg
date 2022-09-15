@@ -3,7 +3,7 @@ package jy2struct
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -24,7 +24,7 @@ type Args struct {
 func (j *Args) checkValid() error {
 	switch j.Format {
 	case "json":
-		j.parser = ParseJson
+		j.parser = ParseJSON
 		j.convertFloats = true
 	case "yaml":
 		j.parser = ParseYaml
@@ -60,7 +60,7 @@ func Covert(args *Args) (string, error) {
 		data = []byte(args.Data)
 	} else {
 		// 读取文件
-		data, err = ioutil.ReadFile(args.InputFile)
+		data, err = os.ReadFile(args.InputFile)
 		if err != nil {
 			return "", err
 		}

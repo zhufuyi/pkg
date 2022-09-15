@@ -97,7 +97,7 @@ func getRootNode(opts getRootNodeOpts) (*dasel.Node, error) {
 
 func parseValue(value string, valueType string) (interface{}, error) {
 	switch strings.ToLower(valueType) {
-	case "string", "str":
+	case "string", "str": //nolint
 		return value, nil
 	case "int", "integer":
 		val, err := strconv.ParseInt(value, 10, 64)
