@@ -12,8 +12,16 @@ type GRPCStatus struct {
 	status *status.Status
 }
 
+var statusCodes = map[codes.Code]string{}
+
 // NewGRPCStatus 新建一个status
 func NewGRPCStatus(code codes.Code, msg string) *GRPCStatus {
+	if v, ok := statusCodes[code]; ok {
+		panic(fmt.Sprintf("grpc status code = %d already exists, please replace with a new error code, old msg = %s", code, v))
+	} else {
+		statusCodes[code] = msg
+	}
+
 	return &GRPCStatus{
 		status: status.New(code, msg),
 	}

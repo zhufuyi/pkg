@@ -11,13 +11,13 @@ var (
 )
 
 type options struct {
-	fiter string
-	name  string
+	filter string
+	name   string
 }
 
 func defaultOptions() *options {
 	return &options{
-		fiter: defaultFilterType,
+		filter: defaultFilterType,
 	}
 }
 
@@ -33,7 +33,7 @@ func (o *options) apply(opts ...Option) {
 // WithSuffix 后缀匹配
 func WithSuffix(name string) Option {
 	return func(o *options) {
-		o.fiter = suffix
+		o.filter = suffix
 		o.name = name
 	}
 }
@@ -41,7 +41,7 @@ func WithSuffix(name string) Option {
 // WithPrefix 前缀匹配
 func WithPrefix(name string) Option {
 	return func(o *options) {
-		o.fiter = prefix
+		o.filter = prefix
 		o.name = name
 	}
 }
@@ -49,7 +49,7 @@ func WithPrefix(name string) Option {
 // WithContain 包含字符串
 func WithContain(name string) Option {
 	return func(o *options) {
-		o.fiter = contain
+		o.filter = contain
 		o.name = name
 	}
 }

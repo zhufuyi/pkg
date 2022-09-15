@@ -19,8 +19,8 @@ var errCodes = map[int]string{}
 
 // NewError 创建新错误信息
 func NewError(code int, msg string) *Error {
-	if _, ok := errCodes[code]; ok {
-		panic(fmt.Sprintf("错误码 %d 已经存在，请更换一个", code))
+	if v, ok := errCodes[code]; ok {
+		panic(fmt.Sprintf("http error code = %d already exists, please replace with a new error code, old msg = %s", code, v))
 	}
 	errCodes[code] = msg
 	return &Error{code: code, msg: msg}

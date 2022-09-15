@@ -54,7 +54,7 @@ func ListFiles(dirPath string, opts ...Option) ([]string, error) {
 	o := defaultOptions()
 	o.apply(opts...)
 
-	switch o.fiter {
+	switch o.filter {
 	case prefix:
 		return files, walkDirWithFilter(dirPath, &files, matchPrefix(o.name))
 	case suffix:
