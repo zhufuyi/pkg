@@ -1,5 +1,15 @@
 # pkg
 
+<div align=center>
+
+[![Go Report](https://goreportcard.com/badge/github.com/zhufuyi/pkg)](https://goreportcard.com/report/github.com/zhufuyi/pkg)
+[![codecov](https://codecov.io/gh/zhufuyi/pkg/branch/main/graph/badge.svg)](https://codecov.io/gh/zhufuyi/pkg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/zhufuyi/pkg.svg)](https://pkg.go.dev/github.com/zhufuyi/pkg)
+[![Go](https://github.com/zhufuyi/pkg/workflows/Go/badge.svg?branch=main)](https://github.com/zhufuyi/pkg/actions)
+[![License: MIT](https://img.shields.io/github/license/zhufuyi/pkg)](https://img.shields.io/github/license/zhufuyi/pkg)
+
+</div>
+
 常使用的pkg库。
 
 ## 安装
