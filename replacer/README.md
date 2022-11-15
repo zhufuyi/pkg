@@ -1,12 +1,6 @@
-## replace
+## replacer
 
 一个替换目录下文件内容库，支持本地目录下文件和通过embed嵌入目录文件替换。
-
-<br>
-
-### 安装
-
-> go get -u github.com/zhufuyi/pkg/replacer
 
 <br>
 
@@ -48,6 +42,6 @@ func demo(){
 		panic(err)
 	}
 
-	fmt.Printf("save files successfully, output = %s\n", replacer.GetOutPath())
+	fmt.Printf("save files successfully, out = %s\n", replacer.GetOutPath())
 }
 ```

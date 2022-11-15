@@ -1,6 +1,9 @@
 package jy2struct
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func TestCovert(t *testing.T) {
 	type args struct {
@@ -14,7 +17,7 @@ func TestCovert(t *testing.T) {
 		{
 			name: "json to struct from data",
 			args: args{args: &Args{
-				Data:   `{"name":"zhangsan","age":22}`,
+				Data:   `{"name":"foo","age":11}`,
 				Format: "json",
 			}},
 			wantErr: false,
@@ -22,11 +25,8 @@ func TestCovert(t *testing.T) {
 		{
 			name: "yaml to struct from data",
 			args: args{args: &Args{
-				Data: `
-name": zhangsan
-first_name: zhu
-age: 10
-`,
+				Data: `name: "foo"
+age: 10`,
 				Format: "yaml",
 			}},
 			wantErr: false,
@@ -37,6 +37,7 @@ age: 10
 				InputFile: "test.json",
 				Format:    "json",
 				SubStruct: true,
+				Tags:      "gorm",
 			}},
 			wantErr: false,
 		},
@@ -46,6 +47,14 @@ age: 10
 				InputFile: "test.yaml",
 				Format:    "yaml",
 				SubStruct: true,
+			}},
+			wantErr: false,
+		},
+		{
+			name: "json to slice from data",
+			args: args{args: &Args{
+				Data:   `[{"name":"foo","age":11},{"name":"foo2","age":22}]`,
+				Format: "json",
 			}},
 			wantErr: false,
 		},
@@ -60,4 +69,12 @@ age: 10
 			t.Log(got)
 		})
 	}
+
+	// test Covert error
+	arg := &Args{Format: "unknown"}
+	_, err := Covert(arg)
+	assert.Error(t, err)
+	arg = &Args{Format: "yaml", InputFile: "notfound.yaml"}
+	_, err = Covert(arg)
+	assert.Error(t, err)
 }

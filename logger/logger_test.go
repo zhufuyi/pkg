@@ -2,7 +2,9 @@ package logger
 
 import (
 	"fmt"
+	"os"
 	"testing"
+	"time"
 )
 
 func printInfo() {
@@ -11,9 +13,14 @@ func printInfo() {
 	}()
 
 	Debug("this is debug")
+	Debugf("this is debug %d", 2)
 	Info("this is info")
+	Infof("this is info %d", 2)
 	Warn("this is warn")
+	Warnf("this is warn %d", 2)
 	Error("this is error")
+	Errorf("this is error %d", 2)
+	WithFields(Int("key", 2)).Info("this is info")
 
 	type people struct {
 		Name string `json:"name"`
@@ -42,9 +49,9 @@ func TestInit(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "terminal json debug",
+			name: "terminal json info",
 			args: args{[]Option{
-				WithFormat("json"),
+				WithFormat("json"), WithLevel(levelInfo),
 			}},
 			wantErr: false,
 		},
@@ -56,17 +63,12 @@ func TestInit(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "file console debug",
-			args:    args{[]Option{WithSave(true)}},
-			wantErr: false,
-		},
-		{
 			name: "file json debug",
 			args: args{[]Option{
-				WithFormat("json"),
+				WithFormat("json"), WithLevel("unknown"),
 				WithSave(
 					true,
-					WithFileName("my.log"),
+					WithFileName(os.TempDir()+"/testLog/my.log"),
 					WithFileMaxSize(5),
 					WithFileMaxBackups(5),
 					WithFileMaxAge(10),
@@ -88,6 +90,9 @@ func TestInit(t *testing.T) {
 			printInfo()
 		})
 	}
+
+	time.Sleep(time.Second)
+	_ = os.RemoveAll("my.log")
 }
 
 func BenchmarkString(b *testing.B) {
@@ -106,4 +111,17 @@ func BenchmarkAny(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Info("benchmark type any", Any(fmt.Sprintf("object_%d", i), map[string]int{"张三": 11}))
 	}
+}
+
+func Test_getLevelSize(t *testing.T) {
+	_ = getLevelSize(levelDebug)
+	_ = getLevelSize(levelInfo)
+	_ = getLevelSize(levelWarn)
+	_ = getLevelSize(levelWarn)
+	_ = getLevelSize(levelError)
+	_ = getLevelSize("unknown")
+
+	defaultLogger = nil
+	_ = GetWithSkip(5)
+	_ = Get()
 }

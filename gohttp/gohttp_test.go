@@ -1,11 +1,17 @@
 package gohttp
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
-	"net"
+	"net/http"
 	"testing"
+	"time"
+
+	"github.com/zhufuyi/pkg/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 type myBody struct {
@@ -13,13 +19,10 @@ type myBody struct {
 	Email string `json:"email"`
 }
 
-var requestAddr string
+func runGoHTTPServer() string {
+	serverAddr, requestAddr := utils.GetLocalHTTPAddrPairs()
 
-func init() {
-	port, _ := getAvailablePort()
-	requestAddr = fmt.Sprintf("http://localhost:%d", port)
-	addr := fmt.Sprintf(":%d", port)
-
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	oKFun := func(c *gin.Context) {
 		uid := c.Query("uid")
@@ -73,34 +76,21 @@ func init() {
 	r.PATCH("/patch_err", errPFun)
 
 	go func() {
-		err := r.Run(addr)
+		err := r.Run(serverAddr)
 		if err != nil {
 			panic(err)
 		}
 	}()
-}
 
-// 获取可用端口
-func getAvailablePort() (int, error) {
-	address, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:0", "0.0.0.0"))
-	if err != nil {
-		return 0, err
-	}
-
-	listener, err := net.ListenTCP("tcp", address)
-	if err != nil {
-		return 0, err
-	}
-
-	port := listener.Addr().(*net.TCPAddr).Port
-	err = listener.Close()
-
-	return port, err
+	time.Sleep(time.Millisecond * 200)
+	return requestAddr
 }
 
 // ------------------------------------------------------------------------------------------
 
 func TestGetStandard(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	req := Request{}
 	req.SetURL(requestAddr + "/get")
 	req.SetHeaders(map[string]string{
@@ -125,6 +115,8 @@ func TestGetStandard(t *testing.T) {
 }
 
 func TestDeleteStandard(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	req := Request{}
 	req.SetURL(requestAddr + "/delete")
 	req.SetHeaders(map[string]string{
@@ -149,6 +141,8 @@ func TestDeleteStandard(t *testing.T) {
 }
 
 func TestPostStandard(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	req := Request{}
 	req.SetURL(requestAddr + "/post")
 	req.SetHeaders(map[string]string{
@@ -174,6 +168,8 @@ func TestPostStandard(t *testing.T) {
 }
 
 func TestPutStandard(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	req := Request{}
 	req.SetURL(requestAddr + "/put")
 	req.SetHeaders(map[string]string{
@@ -199,6 +195,8 @@ func TestPutStandard(t *testing.T) {
 }
 
 func TestPatchStandard(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	req := Request{}
 	req.SetURL(requestAddr + "/patch")
 	req.SetHeaders(map[string]string{
@@ -226,6 +224,8 @@ func TestPatchStandard(t *testing.T) {
 // ------------------------------------------------------------------------------------------
 
 func TestGet(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	type args struct {
 		result interface{}
 		url    string
@@ -295,6 +295,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	type args struct {
 		result interface{}
 		url    string
@@ -364,6 +366,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestPost(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	type args struct {
 		result interface{}
 		url    string
@@ -442,6 +446,8 @@ func TestPost(t *testing.T) {
 }
 
 func TestPut(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	type args struct {
 		result interface{}
 		url    string
@@ -520,6 +526,8 @@ func TestPut(t *testing.T) {
 }
 
 func TestPatch(t *testing.T) {
+	requestAddr := runGoHTTPServer()
+
 	type args struct {
 		result interface{}
 		url    string
@@ -595,4 +603,96 @@ func TestPatch(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRequest_Reset(t *testing.T) {
+	req := &Request{
+		method: http.MethodGet,
+	}
+	req.Reset()
+	assert.Equal(t, "", req.method)
+}
+
+func TestRequest_Do(t *testing.T) {
+	req := &Request{
+		method: http.MethodGet,
+		url:    "http://",
+	}
+
+	_, err := req.Do(http.MethodOptions, "")
+	assert.Error(t, err)
+
+	_, err = req.Do(http.MethodGet, map[string]interface{}{"foo": "bar"})
+	assert.Error(t, err)
+	_, err = req.Do(http.MethodDelete, "foo=bar")
+	assert.Error(t, err)
+
+	_, err = req.Do(http.MethodPost, &myBody{
+		Name:  "foo",
+		Email: "bar@gmail.com",
+	})
+	assert.Error(t, err)
+
+	_, err = req.Response()
+	assert.Error(t, err)
+
+	err = requestErr(err)
+	assert.Error(t, err)
+
+	err = jsonParseErr(err)
+	assert.Error(t, err)
+}
+
+func TestResponse_BodyString(t *testing.T) {
+	resp := &Response{
+		Response: nil,
+		err:      nil,
+	}
+
+	_, err := resp.BodyString()
+	assert.Error(t, err)
+
+	resp.err = errors.New("error test")
+	_, err = resp.BodyString()
+	assert.Error(t, err)
+
+	err = resp.Error()
+	assert.Error(t, err)
+}
+
+func TestError(t *testing.T) {
+	req := &Request{}
+	req.SetParam("foo", "bar")
+	req.SetParam("foo3", make(chan string))
+	req.SetParams(map[string]interface{}{"foo2": "bar2"})
+	req.SetBody("foo")
+	req.SetTimeout(time.Second * 10)
+	req.CustomRequest(func(req *http.Request, data *bytes.Buffer) {
+		fmt.Println("customRequest")
+	})
+	req.SetURL("http://127.0.0.1:0")
+
+	resp, err := req.pull()
+	assert.Error(t, err)
+
+	req.method = http.MethodPost
+	resp, err = req.push()
+	assert.Error(t, err)
+
+	_, err = resp.ReadBody()
+	assert.Error(t, err)
+
+	err = resp.BindJSON(nil)
+	assert.Error(t, err)
+
+	err = notOKErr(resp)
+	assert.Error(t, err)
+
+	err = do(http.MethodPost, nil, "", nil)
+	assert.Error(t, err)
+	err = do(http.MethodPost, &StdResult{}, "http://127.0.0.1:0", nil, KV{"foo": "bar"})
+	assert.Error(t, err)
+
+	err = gDo(http.MethodGet, nil, "http://127.0.0.1:0", nil)
+	assert.Error(t, err)
 }

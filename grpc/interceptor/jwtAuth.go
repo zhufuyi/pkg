@@ -2,10 +2,10 @@ package interceptor
 
 import (
 	"context"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 
 	"github.com/zhufuyi/pkg/jwt"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,9 +25,10 @@ var (
 	authIgnoreMethods = map[string]struct{}{}
 )
 
-// AuthOption 鉴权设置
+// AuthOption 设置鉴权字段
 type AuthOption func(*AuthOptions)
 
+// AuthOptions 鉴权设置
 type AuthOptions struct {
 	authScheme    string
 	ctxClaimsName string
@@ -64,7 +65,7 @@ func WithAuthClaimsName(claimsName string) AuthOption {
 
 // WithAuthIgnoreMethods 忽略鉴权的方法
 // fullMethodName格式: /packageName.serviceName/methodName，
-// 示例/userExample.v1.userExampleService/GetByID
+// 示例/api.userExample.v1.userExampleService/GetByID
 func WithAuthIgnoreMethods(fullMethodNames ...string) AuthOption {
 	return func(o *AuthOptions) {
 		for _, method := range fullMethodNames {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zhufuyi/pkg/discovery"
 	"github.com/zhufuyi/pkg/grpc/interceptor"
 	"github.com/zhufuyi/pkg/logger"
+	"github.com/zhufuyi/pkg/servicerd/discovery"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
@@ -15,14 +15,12 @@ import (
 
 // Dial 安全连接
 func Dial(ctx context.Context, endpoint string, opts ...Option) (*grpc.ClientConn, error) {
-	isSecure := true
-	return dial(ctx, endpoint, isSecure, opts...)
+	return dial(ctx, endpoint, true, opts...)
 }
 
 // DialInsecure 不安全连接
 func DialInsecure(ctx context.Context, endpoint string, opts ...Option) (*grpc.ClientConn, error) {
-	isSecure := false
-	return dial(ctx, endpoint, isSecure, opts...)
+	return dial(ctx, endpoint, false, opts...)
 }
 
 func dial(ctx context.Context, endpoint string, isSecure bool, opts ...Option) (*grpc.ClientConn, error) {
@@ -68,9 +66,9 @@ func dial(ctx context.Context, endpoint string, isSecure bool, opts ...Option) (
 		clientOptions = append(clientOptions, grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"round_robin":{}}]}`))
 	}
 
-	// 熔断器 hystrix
-	if o.enableHystrix {
-		unaryClientInterceptors = append(unaryClientInterceptors, interceptor.UnaryClientHystrix(o.hystrixName))
+	// 熔断器
+	if o.enableCircuitBreaker {
+		unaryClientInterceptors = append(unaryClientInterceptors, interceptor.UnaryClientCircuitBreaker())
 	}
 
 	// 重试 retry

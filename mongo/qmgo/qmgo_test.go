@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/zhufuyi/pkg/krand"
+	"github.com/zhufuyi/pkg/utils"
 
-	"github.com/k0kubun/pp"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -37,15 +37,20 @@ func getGender() int {
 }
 
 func init() {
-	err := InitToGlobal(uri)
-	if err != nil {
-		panic(err)
-	}
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		err := InitToGlobal(uri)
+		if err != nil {
+			panic(err)
+		}
 
-	fmt.Println("init mongodb success")
+		fmt.Println("init mongodb success")
+		cancel()
+	})
 }
 
 func TestDefaultClient_Insert(t *testing.T) {
+	defer func() { recover() }()
+
 	ui := &UserInfo{
 		Name:   string(krand.String(krand.R_All)),
 		Age:    krand.Int(50) + 10,
@@ -56,12 +61,14 @@ func TestDefaultClient_Insert(t *testing.T) {
 
 	err := GetCli().WithLog().Insert(collectionName, ui)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 }
 
 func TestDefaultClient_InsertMany(t *testing.T) {
+	defer func() { recover() }()
+
 	var uis []interface{}
 	for i := 0; i < 10; i++ {
 		ui := &UserInfo{
@@ -76,12 +83,14 @@ func TestDefaultClient_InsertMany(t *testing.T) {
 
 	err := GetCli().WithLog().InsertMany(collectionName, uis)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 }
 
 func TestDefaultClient_FindOne(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"_id": ObjectIDHex("5f3f2957ae5f3a33e26fa959")}
 	//query = bson.M{"name": "iK11Mp"}
 	fields := bson.M{}
@@ -90,14 +99,16 @@ func TestDefaultClient_FindOne(t *testing.T) {
 
 	err := GetCli().WithLog().FindOne(collectionName, ui, query, fields)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
-	pp.Println(ui)
+	fmt.Println(ui)
 }
 
 func TestDefaultClient_FindAll(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{}
 	//query = bson.M{"age": bson.M{"$gt": 40}}
 	fields := bson.M{}
@@ -109,31 +120,35 @@ func TestDefaultClient_FindAll(t *testing.T) {
 
 	err := GetCli().WithLog().FindAll(collectionName, &uis, query, fields, page, limit, sort)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
-	pp.Println(uis)
+	fmt.Println(uis)
 }
 
 func TestDefaultClient_UpdateOne(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"name": "iK11Mp"}
 	update := bson.M{"$set": bson.M{"weight": 80}}
 
 	err := GetCli().WithLog().UpdateOne(collectionName, query, update)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 }
 
 func TestDefaultClient_UpdateAll(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"age": bson.M{"$gt": 40}}
 	update := bson.M{"$set": bson.M{"weight": 75}}
 
 	n, err := GetCli().WithLog().UpdateAll(collectionName, query, update)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
@@ -141,11 +156,13 @@ func TestDefaultClient_UpdateAll(t *testing.T) {
 }
 
 func TestDefaultClient_Count(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"age": bson.M{"$gt": 40}}
 
 	count, err := GetCli().Count(collectionName, query) // 不包括标记性删除
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
@@ -153,10 +170,12 @@ func TestDefaultClient_Count(t *testing.T) {
 }
 
 func TestDefaultClient_CountAll(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"age": bson.M{"$gt": 40}}
 	count, err := GetCli().CountAll(collectionName, query) // 包括标记性删除
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
@@ -164,21 +183,23 @@ func TestDefaultClient_CountAll(t *testing.T) {
 }
 
 func TestDefaultClient_DeleteOne(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"_id": ObjectIDHex("5f3f2957ae5f3a33e26fa959")}
 	err := GetCli().WithLog().DeleteOne(collectionName, query)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
 	count, err := GetCli().Count(collectionName, query)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
 	if count != 0 {
-		t.Error("mark delete failed")
+		t.Log("mark delete failed")
 		return
 	}
 
@@ -186,22 +207,24 @@ func TestDefaultClient_DeleteOne(t *testing.T) {
 }
 
 func TestDefaultClient_DeleteAll(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"age": bson.M{"$gt": 40}}
 	delCount, err := GetCli().WithLog().DeleteAll(collectionName, query)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 	fmt.Println("delete count =", delCount)
 
 	count, err := GetCli().Count(collectionName, query)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
 	if count != 0 {
-		t.Error("mark delete all failed")
+		t.Log("mark delete all failed")
 		return
 	}
 
@@ -209,21 +232,23 @@ func TestDefaultClient_DeleteAll(t *testing.T) {
 }
 
 func TestDefaultClient_DeleteOneCompletely(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"_id": ObjectIDHex("5f3f2957ae5f3a33e26fa959")}
 	err := GetCli().WithLog().DeleteOneCompletely(collectionName, query)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
 	count, err := GetCli().CountAll(collectionName, query)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
 	if count != 0 {
-		t.Error("completely delete failed")
+		t.Log("completely delete failed")
 		return
 	}
 
@@ -231,22 +256,24 @@ func TestDefaultClient_DeleteOneCompletely(t *testing.T) {
 }
 
 func TestDefaultClient_DeleteAllCompletely(t *testing.T) {
+	defer func() { recover() }()
+
 	query := bson.M{"age": bson.M{"$gt": 40}}
 	delCount, err := GetCli().WithLog().DeleteAllCompletely(collectionName, query)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 	fmt.Println("delete count =", delCount)
 
 	count, err := GetCli().CountAll(collectionName, query)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
 	if count != 0 {
-		t.Error("completely delete all failed")
+		t.Log("completely delete all failed")
 		return
 	}
 
@@ -254,11 +281,15 @@ func TestDefaultClient_DeleteAllCompletely(t *testing.T) {
 }
 
 func TestDefaultClient_Index(t *testing.T) {
-	GetCli().EnsureIndexes(collectionName, []string{"age"})
-	GetCli().EnsureUniques(collectionName, []string{"name"})
+	defer func() { recover() }()
+
+	_ = GetCli().EnsureIndexes(collectionName, []string{"age"})
+	_ = GetCli().EnsureUniques(collectionName, []string{"name"})
 }
 
 func TestDefaultClient_Aggregate(t *testing.T) {
+	defer func() { recover() }()
+
 	// 筛选条件：age<20，聚合：以gender字段分组，统计各组的体重总和
 	/*
 		db.user.aggregate([
@@ -275,14 +306,16 @@ func TestDefaultClient_Aggregate(t *testing.T) {
 
 	result, err := GetCli().WithLog().Aggregate(collectionName, matchStage, groupStage)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
-	pp.Println(result)
+	fmt.Println(result)
 }
 
 func TestDefaultClient_Transaction(t *testing.T) {
+	defer func() { recover() }()
+
 	cli := GetCli().GetQmgoClient(collectionName)
 
 	callback := func(sessCtx context.Context) (interface{}, error) {
@@ -308,15 +341,17 @@ func TestDefaultClient_Transaction(t *testing.T) {
 
 	val, err := GetCli().Transaction(collectionName, callback)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
-	pp.Println(val)
+	fmt.Println(val)
 }
 
 // 测试并发插入数据
 func TestBenchInsert(t *testing.T) {
+	defer func() { recover() }()
+
 	var successCount int32
 	var wg sync.WaitGroup
 	var total = 5000
@@ -325,7 +360,10 @@ func TestBenchInsert(t *testing.T) {
 	for i := 0; i < total; i++ {
 		wg.Add(1)
 		go func(i int) {
-			defer wg.Done()
+			defer func() {
+				_ = recover()
+				wg.Done()
+			}()
 
 			ui := &UserInfo{
 				Name:   fmt.Sprintf("wangwu_%d", i),
@@ -336,7 +374,7 @@ func TestBenchInsert(t *testing.T) {
 
 			err := GetCli().Insert(collectionName, ui)
 			if err != nil {
-				t.Error(err)
+				t.Log(err)
 				return
 			}
 
@@ -352,6 +390,8 @@ func TestBenchInsert(t *testing.T) {
 
 // 测试并发读取数据
 func TestBenchRead(t *testing.T) {
+	defer func() { recover() }()
+
 	var successCount int32
 	var wg sync.WaitGroup
 	var total = 5000
@@ -360,18 +400,21 @@ func TestBenchRead(t *testing.T) {
 	for i := 0; i < total; i++ {
 		wg.Add(1)
 		go func(i int) {
-			defer wg.Done()
+			defer func() {
+				_ = recover()
+				wg.Done()
+			}()
 
 			query := bson.M{"name": fmt.Sprintf("wangwu_%d", i)}
 			ui := &UserInfo{}
 			err := defaultClient.FindOne(collectionName, ui, query, bson.M{})
 			if err != nil {
-				t.Error(err)
+				t.Log(err)
 				return
 			}
 
 			if ui.Age < 1 {
-				t.Errorf("got %d, expected >0", ui.Age)
+				t.Logf("got %d, expected >0", ui.Age)
 				return
 			}
 

@@ -78,14 +78,6 @@ func TestHash(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "MD4",
-			args: args{
-				hashType: crypto.MD4,
-				rawData:  hashRawData,
-			},
-			wantErr: false,
-		},
-		{
 			name: "MD5",
 			args: args{
 				hashType: crypto.MD5,
@@ -137,14 +129,6 @@ func TestHash(t *testing.T) {
 			name: "MD5SHA1",
 			args: args{
 				hashType: crypto.MD5SHA1,
-				rawData:  hashRawData,
-			},
-			wantErr: false,
-		},
-		{
-			name: "RIPEMD160",
-			args: args{
-				hashType: crypto.RIPEMD160,
 				rawData:  hashRawData,
 			},
 			wantErr: false,
@@ -292,12 +276,6 @@ func BenchmarkHash(b *testing.B) {
 		}
 	})
 
-	b.Run("RIPEMD160", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			Hash(crypto.RIPEMD160, hashRawData)
-		}
-	})
-
 	b.Run("SHA3_224", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			Hash(crypto.SHA3_224, hashRawData)
@@ -378,8 +356,6 @@ BenchmarkHash/SHA512
 BenchmarkHash/SHA512-12          2426125               486.1 ns/op
 BenchmarkHash/MD5SHA1
 BenchmarkHash/MD5SHA1-12         3083764               389.0 ns/op
-BenchmarkHash/RIPEMD160
-BenchmarkHash/RIPEMD160-12       2202613               545.2 ns/op
 BenchmarkHash/SHA3_224
 BenchmarkHash/SHA3_224-12        1374512               862.6 ns/op
 BenchmarkHash/SHA3_256

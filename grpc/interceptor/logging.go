@@ -17,8 +17,8 @@ func UnaryClientLog(logger *zap.Logger, opts ...grpc_zap.Option) grpc.UnaryClien
 	return grpc_zap.UnaryClientInterceptor(logger, opts...)
 }
 
-// UnaryStreamLog 客户端日志stream拦截器
-func UnaryStreamLog(logger *zap.Logger, opts ...grpc_zap.Option) grpc.StreamClientInterceptor {
+// StreamClientLog 客户端日志stream拦截器
+func StreamClientLog(logger *zap.Logger, opts ...grpc_zap.Option) grpc.StreamClientInterceptor {
 	return grpc_zap.StreamClientInterceptor(logger, opts...)
 }
 
@@ -59,7 +59,7 @@ func WithLogFields(kvs map[string]interface{}) LogOption {
 
 // WithLogIgnoreMethods 忽略打印的方法
 // fullMethodName格式: /packageName.serviceName/methodName，
-// 示例/userExample.v1.userExampleService/GetByID
+// 示例/api.userExample.v1.userExampleService/GetByID
 func WithLogIgnoreMethods(fullMethodNames ...string) LogOption {
 	return func(o *logOptions) {
 		for _, method := range fullMethodNames {

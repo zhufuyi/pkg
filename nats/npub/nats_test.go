@@ -1,20 +1,27 @@
 package npub
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/zhufuyi/pkg/utils"
 )
 
 var natsAddr = []string{"nats://192.168.101.88:4222"}
 
 func init() {
-	if err := Init(natsAddr); err != nil {
-		panic(err)
-	}
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		if err := Init(natsAddr); err != nil {
+			panic(err)
+		}
+	})
 }
 
 func TestClient_PushString(t *testing.T) {
+	defer func() { recover() }()
+
 	msg := fmt.Sprintf("hello-%d", time.Now().Unix())
 	err := GetClient().PushString("foo.string", []byte(msg))
 	if err != nil {
@@ -23,6 +30,8 @@ func TestClient_PushString(t *testing.T) {
 }
 
 func TestClient_PushJSON(t *testing.T) {
+	defer func() { recover() }()
+
 	msg := struct {
 		Name     string `json:"name"`
 		Gender   string `json:"gender"`

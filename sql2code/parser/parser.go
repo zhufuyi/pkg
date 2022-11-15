@@ -28,6 +28,10 @@ const (
 	CodeTypeDAO = "dao"
 	// CodeTypeHandler handler request and respond code
 	CodeTypeHandler = "handler"
+	// CodeTypeProto proto file code
+	CodeTypeProto = "proto"
+	// CodeTypeService grpc service code
+	CodeTypeService = "service"
 )
 
 // Codes 生成的代码
@@ -57,6 +61,8 @@ func ParseSQL(sql string, options ...Option) (map[string]string, error) {
 	modelStructCodes := make([]string, 0, len(stmts))
 	updateFieldsCodes := make([]string, 0, len(stmts))
 	handlerStructCodes := make([]string, 0, len(stmts))
+	protoFileCodes := make([]string, 0, len(stmts))
+	serviceStructCodes := make([]string, 0, len(stmts))
 	modelJSONCodes := make([]string, 0, len(stmts))
 	importPath := make(map[string]struct{})
 	tableNames := make([]string, 0, len(stmts))
@@ -69,6 +75,8 @@ func ParseSQL(sql string, options ...Option) (map[string]string, error) {
 			modelStructCodes = append(modelStructCodes, code.modelStruct)
 			updateFieldsCodes = append(updateFieldsCodes, code.updateFields)
 			handlerStructCodes = append(handlerStructCodes, code.handlerStruct)
+			protoFileCodes = append(protoFileCodes, code.protoFile)
+			serviceStructCodes = append(serviceStructCodes, code.serviceStruct)
 			modelJSONCodes = append(modelJSONCodes, code.modelJSON)
 			tableNames = append(tableNames, toCamel(ct.Table.Name.String()))
 			for _, s := range code.importPaths {
@@ -98,22 +106,17 @@ func ParseSQL(sql string, options ...Option) (map[string]string, error) {
 		CodeTypeJSON:    strings.Join(modelJSONCodes, "\n\n"),
 		CodeTypeDAO:     strings.Join(updateFieldsCodes, "\n\n"),
 		CodeTypeHandler: strings.Join(handlerStructCodes, "\n\n"),
+		CodeTypeProto:   strings.Join(protoFileCodes, "\n\n"),
+		CodeTypeService: strings.Join(serviceStructCodes, "\n\n"),
 		TableName:       strings.Join(tableNames, ", "),
 	}
 
 	return codesMap, nil
 }
 
-// ConfigureAcronym config acronym
-func ConfigureAcronym(words []string) {
-	acronym = make(map[string]struct{}, len(words))
-	for _, w := range words {
-		acronym[strings.ToUpper(w)] = struct{}{}
-	}
-}
-
 type tmplData struct {
 	TableName    string
+	TName        string
 	NameFunc     bool
 	RawTableName string
 	Fields       []tmplField
@@ -131,11 +134,12 @@ type tmplField struct {
 // ConditionZero type of condition 0
 func (t tmplField) ConditionZero() string {
 	switch t.GoType {
-	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32": //nolint
+	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32", //nolint
+		"sql.NullInt32", "sql.NullInt64", "sql.NullFloat64": //nolint
 		return `!= 0`
-	case "string": //nolint
+	case "string", "sql.NullString": //nolint
 		return `!= ""`
-	case "time.Time": //nolint
+	case "time.Time", "*time.Time", "sql.NullTime": //nolint
 		return `.IsZero() == false`
 	}
 
@@ -145,15 +149,45 @@ func (t tmplField) ConditionZero() string {
 // GoZero type of 0 逗号分隔
 func (t tmplField) GoZero() string {
 	switch t.GoType {
-	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32": //nolint
+	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32", //nolint
+		"sql.NullInt32", "sql.NullInt64", "sql.NullFloat64": //nolint
 		return `= 0`
-	case "string": //nolint
+	case "string", "sql.NullString": //nolint
 		return `= "string"`
-	case "time.Time": //nolint
+	case "time.Time", "*time.Time", "sql.NullTime": //nolint
 		return `= "0000-01-00T00:00:00.000+08:00"`
 	}
 
 	return `= ` + t.GoType
+}
+
+// GoTypeZero type of 0 逗号分隔
+func (t tmplField) GoTypeZero() string {
+	switch t.GoType {
+	case "int8", "int16", "int32", "int64", "int", "uint8", "uint16", "uint32", "uint64", "uint", "float64", "float32", //nolint
+		"sql.NullInt32", "sql.NullInt64", "sql.NullFloat64": //nolint
+		return `0`
+	case "string", "sql.NullString": //nolint
+		return `""`
+	case "time.Time", "*time.Time", "sql.NullTime": //nolint
+		return `0 /*time.Now().Second()*/`
+	}
+
+	return t.GoType
+}
+
+// AddOne counter
+func (t tmplField) AddOne(i int) int {
+	return i + 1
+}
+
+// AddOneWithTag counter and add id tag
+func (t tmplField) AddOneWithTag(i int) string {
+	if t.ColName == "id" {
+		return fmt.Sprintf(`%d [(tagger.tags) = "uri:\"id\"" ]`, i+1)
+	}
+
+	return fmt.Sprintf("%d", i+1)
 }
 
 const (
@@ -176,11 +210,11 @@ const (
 
 // nolint
 var ignoreColumns = map[string]struct{}{
-	columnID:         struct{}{},
-	columnCreatedAt:  struct{}{},
-	columnUpdatedAt:  struct{}{},
-	columnDeletedAt:  struct{}{},
-	columnMysqlModel: struct{}{},
+	columnID:         {},
+	columnCreatedAt:  {},
+	columnUpdatedAt:  {},
+	columnDeletedAt:  {},
+	columnMysqlModel: {},
 }
 
 func isIgnoreFields(colName string, falseColumn ...string) bool {
@@ -200,6 +234,8 @@ type codeText struct {
 	modelJSON     string
 	updateFields  string
 	handlerStruct string
+	protoFile     string
+	serviceStruct string
 }
 
 // nolint
@@ -220,11 +256,12 @@ func makeCode(stmt *ast.CreateTableStmt, opt options) (*codeText, error) {
 	}
 
 	data.TableName = toCamel(data.TableName)
+	data.TName = firstLetterToLow(data.TableName)
 
 	// find table comment
-	for _, opt := range stmt.Options {
-		if opt.Tp == ast.TableOptionComment {
-			data.Comment = opt.StrValue
+	for _, o := range stmt.Options {
+		if o.Tp == ast.TableOptionComment {
+			data.Comment = o.StrValue
 			break
 		}
 	}
@@ -340,13 +377,24 @@ func makeCode(stmt *ast.CreateTableStmt, opt options) (*codeText, error) {
 		return nil, err
 	}
 
-	//return modelStructCode, importPaths, nil
+	protoFileCode, err := getProtoFileCode(data)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceStructCode, err := getServiceStructCode(data)
+	if err != nil {
+		return nil, err
+	}
+
 	return &codeText{
 		importPaths:   importPaths,
 		modelStruct:   modelStructCode,
 		modelJSON:     modelJSONCode,
 		updateFields:  updateFieldsCode,
 		handlerStruct: handlerStructCode,
+		protoFile:     protoFileCode,
+		serviceStruct: serviceStructCode,
 	}, nil
 }
 
@@ -363,29 +411,37 @@ func getModelStructCode(data tmplData, importPaths []string, isEmbed bool) (stri
 			Tag:     `gorm:"embedded"`,
 			Comment: "embed id and time\n",
 		})
+
+		isHaveTimeType := false
 		for _, field := range data.Fields {
 			if isIgnoreFields(field.ColName) {
 				continue
 			}
 			newFields = append(newFields, field)
+			if strings.Contains(field.GoType, "time.Time") {
+				isHaveTimeType = true
+			}
 		}
 		data.Fields = newFields
 
-		// 过滤time包
-		isOk := false
-		for _, field := range newFields {
-			if !strings.Contains(field.GoType, "time.Time") { //nolint
-				isOk = true
+		// 过滤time包名
+		if isHaveTimeType {
+			newImportPaths = importPaths
+		} else {
+			for _, path := range importPaths {
+				if path == "time" {
+					continue
+				}
+				newImportPaths = append(newImportPaths, path)
 			}
-		}
-		for _, path := range importPaths {
-			if isOk && path == "time" {
-				continue
-			}
-			newImportPaths = append(newImportPaths, path)
 		}
 		newImportPaths = append(newImportPaths, "github.com/zhufuyi/pkg/mysql")
 	} else {
+		for i, field := range data.Fields {
+			if strings.Contains(field.GoType, "time.Time") {
+				data.Fields[i].GoType = "*time.Time"
+			}
+		}
 		newImportPaths = importPaths
 	}
 
@@ -428,9 +484,9 @@ func getUpdateFieldsCode(data tmplData, isEmbed bool) (string, error) {
 	var newFields = []tmplField{}
 	for _, field := range data.Fields {
 		falseColumns := []string{}
-		if !isEmbed {
-			falseColumns = append(falseColumns, columnCreatedAt, columnUpdatedAt, columnDeletedAt)
-		}
+		//if !isEmbed {
+		//falseColumns = append(falseColumns, columnCreatedAt, columnUpdatedAt, columnDeletedAt)
+		//}
 		if isIgnoreFields(field.ColName, falseColumns...) {
 			continue
 		}
@@ -453,17 +509,17 @@ func getUpdateFieldsCode(data tmplData, isEmbed bool) (string, error) {
 }
 
 func getHandlerStructCodes(data tmplData) (string, error) {
-	postStructCode, err := getHandlerStructCode(data, handlerCreateStructTmpl)
+	postStructCode, err := tmplExecuteWithFilter(data, handlerCreateStructTmpl)
 	if err != nil {
 		return "", fmt.Errorf("handlerCreateStructTmpl error: %v", err)
 	}
 
-	putStructCode, err := getHandlerStructCode(data, handlerUpdateStructTmpl, columnID)
+	putStructCode, err := tmplExecuteWithFilter(data, handlerUpdateStructTmpl, columnID)
 	if err != nil {
 		return "", fmt.Errorf("handlerUpdateStructTmpl error: %v", err)
 	}
 
-	getStructCode, err := getHandlerStructCode(data, handlerDetailStructTmpl, columnID, columnCreatedAt, columnUpdatedAt)
+	getStructCode, err := tmplExecuteWithFilter(data, handlerDetailStructTmpl, columnID, columnCreatedAt, columnUpdatedAt)
 	if err != nil {
 		return "", fmt.Errorf("handlerDetailStructTmpl error: %v", err)
 	}
@@ -471,8 +527,8 @@ func getHandlerStructCodes(data tmplData) (string, error) {
 	return postStructCode + putStructCode + getStructCode, nil
 }
 
-func getHandlerStructCode(data tmplData, tmpl *template.Template, reservedColumns ...string) (string, error) {
-	// post过滤字段
+// 自定义过滤字段
+func tmplExecuteWithFilter(data tmplData, tmpl *template.Template, reservedColumns ...string) (string, error) {
 	var newFields = []tmplField{}
 	for _, field := range data.Fields {
 		if isIgnoreFields(field.ColName, reservedColumns...) {
@@ -487,12 +543,7 @@ func getHandlerStructCode(data tmplData, tmpl *template.Template, reservedColumn
 	if err != nil {
 		return "", fmt.Errorf("tmpl.Execute error: %v", err)
 	}
-	code, err := format.Source([]byte(builder.String()))
-	if err != nil {
-		return "", fmt.Errorf("format.Source error: %v", err)
-	}
-
-	return string(code), nil
+	return builder.String(), nil
 }
 
 func getModelJSONCode(data tmplData) (string, error) {
@@ -511,6 +562,66 @@ func getModelJSONCode(data tmplData) (string, error) {
 	modelJSONCode = addCommaToJSON(modelJSONCode)
 
 	return modelJSONCode, nil
+}
+
+func getProtoFileCode(data tmplData) (string, error) {
+	data.Fields = goTypeToProto(data.Fields)
+
+	builder := strings.Builder{}
+	err := protoFileTmpl.Execute(&builder, data)
+	if err != nil {
+		return "", err
+	}
+	code := builder.String()
+
+	protoMessageCreateCode, err := tmplExecuteWithFilter(data, protoMessageCreateTmpl)
+	if err != nil {
+		return "", fmt.Errorf("handlerCreateStructTmpl error: %v", err)
+	}
+
+	protoMessageUpdateCode, err := tmplExecuteWithFilter(data, protoMessageUpdateTmpl, columnID)
+	if err != nil {
+		return "", fmt.Errorf("handlerCreateStructTmpl error: %v", err)
+	}
+
+	protoMessageDetailCode, err := tmplExecuteWithFilter(data, protoMessageDetailTmpl, columnID, columnCreatedAt, columnUpdatedAt)
+	if err != nil {
+		return "", fmt.Errorf("handlerCreateStructTmpl error: %v", err)
+	}
+
+	code = strings.ReplaceAll(code, "// protoMessageCreateCode", protoMessageCreateCode)
+	code = strings.ReplaceAll(code, "// protoMessageUpdateCode", protoMessageUpdateCode)
+	code = strings.ReplaceAll(code, "// protoMessageDetailCode", protoMessageDetailCode)
+	code = strings.ReplaceAll(code, "*time.Time", "int64")
+	code = strings.ReplaceAll(code, "time.Time", "int64")
+
+	return code, nil
+}
+
+func getServiceStructCode(data tmplData) (string, error) {
+	builder := strings.Builder{}
+	err := serviceStructTmpl.Execute(&builder, data)
+	if err != nil {
+		return "", err
+	}
+	code := builder.String()
+
+	serviceCreateStructCode, err := tmplExecuteWithFilter(data, serviceCreateStructTmpl)
+	if err != nil {
+		return "", fmt.Errorf("handlerCreateStructTmpl error: %v", err)
+	}
+	serviceCreateStructCode = strings.ReplaceAll(serviceCreateStructCode, "ID:", "Id:")
+
+	serviceUpdateStructCode, err := tmplExecuteWithFilter(data, serviceUpdateStructTmpl, columnID)
+	if err != nil {
+		return "", fmt.Errorf("handlerCreateStructTmpl error: %v", err)
+	}
+	serviceUpdateStructCode = strings.ReplaceAll(serviceUpdateStructCode, "ID:", "Id:")
+
+	code = strings.ReplaceAll(code, "// serviceCreateStructCode", serviceCreateStructCode)
+	code = strings.ReplaceAll(code, "// serviceUpdateStructCode", serviceUpdateStructCode)
+
+	return code, nil
 }
 
 func addCommaToJSON(modelJSONCode string) string {
@@ -605,6 +716,22 @@ func mysqlToGoType(colTp *types.FieldType, style NullStyle) (name string, path s
 	return
 }
 
+func goTypeToProto(fields []tmplField) []tmplField {
+	var newFields []tmplField
+	for _, field := range fields {
+		switch field.GoType {
+		case "int":
+			field.GoType = "int32"
+		case "uint":
+			field.GoType = "uint32"
+		case "time.Time":
+			field.GoType = "int64"
+		}
+		newFields = append(newFields, field)
+	}
+	return newFields
+}
+
 func makeTagStr(tags []string) string {
 	builder := strings.Builder{}
 	for i := 0; i < len(tags)/2; i++ {
@@ -679,4 +806,16 @@ func toCamel(s string) string {
 		}
 	}
 	return n.String()
+}
+
+func firstLetterToLow(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+
+	if (str[0] >= 'A' && str[0] <= 'Z') || (str[0] >= 'a' && str[0] <= 'z') {
+		return strings.ToLower(str[:1]) + str[1:]
+	}
+
+	return str
 }

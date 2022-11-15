@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/zhufuyi/goctl/pkg/sql2code/parser"
+	"github.com/zhufuyi/pkg/sql2code/parser"
 )
 
 // Args 参数
@@ -55,9 +55,9 @@ func getSQL(args *Args) (string, error) {
 		if args.DBTable == "" {
 			return sql, errors.New("miss mysql table")
 		}
-		sqlStr, err := parser.GetCreateTableFromDB(args.DBDsn, args.DBTable)
+		sqlStr, err := parser.GetTableInfo(args.DBDsn, args.DBTable)
 		if err != nil {
-			return sql, fmt.Errorf("get create table error: %s", err)
+			return sql, err
 		}
 		return sqlStr, nil
 	}
@@ -75,7 +75,7 @@ func getOptions(args *Args) []parser.Option {
 		opts = append(opts, parser.WithCollation(args.Collation))
 	}
 	if args.JSONTag {
-		opts = append(opts, parser.WithJsonTag(args.JSONNamedType))
+		opts = append(opts, parser.WithJSONTag(args.JSONNamedType))
 	}
 	if args.TablePrefix != "" {
 		opts = append(opts, parser.WithTablePrefix(args.TablePrefix))
@@ -147,5 +147,5 @@ func Generate(args *Args) (map[string]string, error) {
 
 	opt := getOptions(args)
 
-	return parser.ParseSql(sql, opt...)
+	return parser.ParseSQL(sql, opt...)
 }

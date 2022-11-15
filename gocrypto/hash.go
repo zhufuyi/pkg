@@ -75,8 +75,6 @@ func Hash(hashType crypto.Hash, rawData []byte) (string, error) { //nolint
 	)
 
 	switch hashType {
-	//case crypto.MD4:
-	//	hasher = md4.New()
 	case crypto.MD5:
 		hasher = md5.New()
 	case crypto.SHA1:
@@ -91,8 +89,6 @@ func Hash(hashType crypto.Hash, rawData []byte) (string, error) { //nolint
 		hasher = sha512.New()
 	case crypto.MD5SHA1:
 		return md5Sha1([][]byte{rawData}), nil
-	//case crypto.RIPEMD160:
-	//	hasher = ripemd160.New()
 	case crypto.SHA3_224:
 		hasher = sha3.New224()
 	case crypto.SHA3_256:

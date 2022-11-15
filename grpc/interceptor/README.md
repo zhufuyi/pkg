@@ -28,7 +28,7 @@ func getServerOptions() []grpc.ServerOption {
 }
 
 // 生成鉴权信息authorization
-func (a *Account) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterReply, error) {
+func (a *Account) Register(ctx context.Context, req *serverNameV1.RegisterRequest) (*serverNameV1.RegisterReply, error) {
     // ......
 	token, err := jwt.GenerateToken(uid)
 	// handle err
@@ -37,11 +37,11 @@ func (a *Account) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Re
 }
 
 // 客户端调用方法时必须把鉴权信息通过context传递进来，key名称必须是authorization
-func getUser(client pb.AccountClient, req *pb.RegisterReply) error {
+func getUser(client serverNameV1.AccountClient, req *serverNameV1.RegisterReply) error {
 	md := metadata.Pairs("authorization", req.Authorization)
 	ctx := metadata.NewOutgoingContext(context.Background(), md)
 
-	resp, err := client.GetUser(ctx, &pb.GetUserRequest{Id: req.Id})
+	resp, err := client.GetUser(ctx, &serverNameV1.GetUserRequest{Id: req.Id})
 	if err != nil {
 		return err
 	}
@@ -111,6 +111,53 @@ func getDialOptions() []grpc.DialOption {
                 //middleware.WithRetryInterval(100*time.Millisecond), // 修改默认重试时间间隔，默认50毫秒
                 //middleware.WithRetryErrCodes(), // 添加触发重试错误码，默认codes.Internal, codes.DeadlineExceeded, codes.Unavailable
 			),
+		),
+	)
+	options = append(options, option)
+
+	return options
+}
+```
+
+<br>
+
+#### 限流
+
+```go
+func getDialOptions() []grpc.DialOption {
+	var options []grpc.DialOption
+
+	// 禁用tls
+	options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	// circuit breaker
+	option := grpc.WithUnaryInterceptor(
+		grpc_middleware.ChainUnaryClient(
+			interceptor.UnaryRateLimit(),
+		),
+	)
+	options = append(options, option)
+
+	return options
+}
+```
+
+<br>
+
+
+#### 熔断器
+
+```go
+func getDialOptions() []grpc.DialOption {
+	var options []grpc.DialOption
+
+	// 禁用tls
+	options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	// circuit breaker
+	option := grpc.WithUnaryInterceptor(
+		grpc_middleware.ChainUnaryClient(
+			interceptor.UnaryClientCircuitBreaker(),
 		),
 	)
 	options = append(options, option)
@@ -209,8 +256,3 @@ func SpanDemo(serviceName string, spanName string, ctx context.Context) {
 使用示例 [metrics](../metrics/README.md)。
 
 <br>
-
-#### hystrix
-
-使用示例 [hystrix](../hystrix/README.md)。
-

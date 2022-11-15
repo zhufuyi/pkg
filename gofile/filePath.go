@@ -1,8 +1,8 @@
 package gofile
 
 import (
-	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -11,14 +11,16 @@ import (
 // IsExists 判断文件或文件夹是否存在
 func IsExists(path string) bool {
 	_, err := os.Stat(path)
-	return err == nil
+	if err != nil {
+		return !os.IsNotExist(err)
+	}
+	return true
 }
 
 // GetRunPath 获取程序执行的绝对路径
 func GetRunPath() string {
 	dir, err := os.Executable()
 	if err != nil {
-		fmt.Println("os.Executable error.", err.Error())
 		return ""
 	}
 
@@ -31,10 +33,15 @@ func GetFilename(filePath string) string {
 	return name
 }
 
+// IsWindows 判断是否window环境
+func IsWindows() bool {
+	return runtime.GOOS == "windows"
+}
+
 // GetPathDelimiter 根据系统类型获取分隔符
 func GetPathDelimiter() string {
 	delimiter := "/"
-	if runtime.GOOS == "windows" {
+	if IsWindows() {
 		delimiter = "\\"
 	}
 
@@ -86,6 +93,30 @@ func ListDirsAndFiles(dirPath string) (map[string][]string, error) {
 	df["files"] = files
 
 	return df, nil
+}
+
+// FuzzyMatchFiles 模糊匹配文件，只匹配*号
+func FuzzyMatchFiles(f string) []string {
+	var files []string
+	dir, filenameReg := filepath.Split(f)
+	if !strings.Contains(filenameReg, "*") {
+		files = append(files, f)
+		return files
+	}
+
+	lFiles, err := ListFiles(dir)
+	if err != nil {
+		return files
+	}
+	for _, file := range lFiles {
+		_, filename := filepath.Split(file)
+		isMatch, _ := path.Match(filenameReg, filename)
+		if isMatch {
+			files = append(files, file)
+		}
+	}
+
+	return files
 }
 
 // 带过滤条件通过迭代方式遍历文件

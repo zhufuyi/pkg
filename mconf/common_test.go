@@ -3,8 +3,6 @@ package mconf
 import (
 	"fmt"
 	"testing"
-
-	"github.com/k0kubun/pp"
 )
 
 func TestTrimKey(t *testing.T) {
@@ -20,7 +18,7 @@ func TestGetMatchArgs(t *testing.T) {
 	}
 
 	records, newKV := getMatchArgs(s, argsMap)
-	pp.Println(newKV, records)
+	fmt.Println(newKV, records)
 }
 
 func TestAddOrReplaceArgs(t *testing.T) {
@@ -43,8 +41,8 @@ func TestAddOrReplaceArgs(t *testing.T) {
 
 	records := addOrReplaceArgs(args, argsMap)
 
-	pp.Println(records)
-	pp.Println(args)
+	fmt.Println(records)
+	fmt.Println(args)
 }
 
 func TestStr2Map(t *testing.T) {

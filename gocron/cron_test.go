@@ -12,7 +12,7 @@ func TestInitAndRun(t *testing.T) {
 		fmt.Println("running task list:", GetRunningTasks()) // 当前运行的任务
 	}
 	task2 := func() { // 如果执行时间超过定时时间，不会影响下一个新定时任务的执行
-		time.Sleep(time.Second * 12)
+		time.Sleep(time.Second)
 	}
 	task3 := func() {
 		count++
@@ -24,17 +24,17 @@ func TestInitAndRun(t *testing.T) {
 	tasks := []*Task{
 		{
 			Name:     "task1",
-			TimeSpec: "@every 5s",
+			TimeSpec: "@every 1s",
 			Fn:       task1,
 		},
 		{
 			Name:     "task2",
-			TimeSpec: "@every 10s",
+			TimeSpec: "@every 2s",
 			Fn:       task2,
 		},
 		{
 			Name:     "task3",
-			TimeSpec: "@every 15s",
+			TimeSpec: "@every 3s",
 			Fn:       task3,
 		},
 	}
@@ -48,7 +48,7 @@ func TestInitAndRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Minute)
+	time.Sleep(time.Second * 7)
 }
 
 func TestRunOnce(t *testing.T) {
@@ -77,36 +77,36 @@ func TestRunOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 5)
 }
 
 func TestEvery(t *testing.T) {
-	task1 := func() {
-		fmt.Println("this is task1")
+	task_1 := func() {
+		fmt.Println("this is task_1")
 		fmt.Println("running task list:", GetRunningTasks()) // 当前运行的任务
 	}
-	task2 := func() { // 如果执行时间超过定时时间，不会影响下一个新定时任务的执行
-		fmt.Println("this is task2")
+	task_2 := func() { // 如果执行时间超过定时时间，不会影响下一个新定时任务的执行
+		fmt.Println("this is task_2")
 	}
-	task3 := func() {
-		fmt.Println("this is task3")
+	task_3 := func() {
+		fmt.Println("this is task_3")
 	}
 
 	tasks := []*Task{
 		{
 			TimeSpec: EverySecond(5),
-			Name:     "task1",
-			Fn:       task1,
+			Name:     "task_1",
+			Fn:       task_1,
 		},
 		{
 			TimeSpec: EveryMinute(1),
-			Name:     "task2",
-			Fn:       task2,
+			Name:     "task_2",
+			Fn:       task_2,
 		},
 		{
 			TimeSpec: EveryHour(1),
-			Name:     "task3",
-			Fn:       task3,
+			Name:     "task_3",
+			Fn:       task_3,
 		},
 	}
 
@@ -119,5 +119,5 @@ func TestEvery(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Minute)
+	time.Sleep(time.Second * 7)
 }

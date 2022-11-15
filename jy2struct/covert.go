@@ -68,7 +68,7 @@ func Covert(args *Args) (string, error) {
 
 	input := bytes.NewReader(data)
 
-	output, err := Generate(input, args.parser, args.Name, "main", args.tags, args.SubStruct, args.convertFloats)
+	output, err := jyParse(input, args.parser, args.Name, "main", args.tags, args.SubStruct, args.convertFloats)
 	if err != nil {
 		return "", err
 	}

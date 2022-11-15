@@ -16,11 +16,7 @@ var (
 	defaultMaxLength = 300
 
 	// default zap log
-	defaultLogger, _ = zap.NewDevelopment()
-
-	// Default request id name
-	defaultRequestIDNameInHeader  = "X-Request-Id"
-	defaultRequestIDNameInContext = "request_id"
+	defaultLogger, _ = zap.NewProduction()
 
 	// Ignore route list
 	defaultIgnoreRoutes = map[string]struct{}{
@@ -88,7 +84,7 @@ func WithRequestIDFromHeader(name ...string) Option {
 	if len(name) > 0 && name[0] != "" {
 		requestIDName = name[0]
 	} else {
-		requestIDName = defaultRequestIDNameInHeader
+		requestIDName = HeaderXRequestIDKey
 	}
 	return func(o *options) {
 		o.requestIDFrom = 1
@@ -102,7 +98,7 @@ func WithRequestIDFromContext(name ...string) Option {
 	if len(name) > 0 && name[0] != "" {
 		requestIDName = name[0]
 	} else {
-		requestIDName = defaultRequestIDNameInContext
+		requestIDName = ContextRequestIDKey
 	}
 	return func(o *options) {
 		o.requestIDFrom = 2

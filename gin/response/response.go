@@ -47,7 +47,7 @@ func writeJSON(c *gin.Context, code int, res interface{}) {
 	writeContentType(c.Writer, jsonContentType)
 	err := json.NewEncoder(c.Writer).Encode(res)
 	if err != nil {
-		fmt.Printf("json encode error, err = %s", err.Error())
+		fmt.Printf("json encode error, err = %s\n", err.Error())
 	}
 }
 
@@ -80,6 +80,10 @@ func Output(c *gin.Context, code int, msg ...interface{}) {
 		respJSONWithStatusCode(c, http.StatusConflict, errcode.AlreadyExists.Msg(), msg...)
 	case http.StatusInternalServerError:
 		respJSONWithStatusCode(c, http.StatusInternalServerError, errcode.InternalServerError.Msg(), msg...)
+	case http.StatusTooManyRequests:
+		respJSONWithStatusCode(c, http.StatusTooManyRequests, errcode.LimitExceed.Msg(), msg...)
+	case http.StatusServiceUnavailable:
+		respJSONWithStatusCode(c, http.StatusServiceUnavailable, errcode.ServiceUnavailable.Msg(), msg...)
 
 	default:
 		respJSONWithStatusCode(c, code, http.StatusText(code), msg...)

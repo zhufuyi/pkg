@@ -2,35 +2,35 @@ package parser
 
 import (
 	"database/sql"
+	"fmt"
 
 	_ "github.com/go-sql-driver/mysql" //nolint
-	"github.com/pkg/errors"
 )
 
-// GetCreateTableFromDB get create table info from mysql
-func GetCreateTableFromDB(dsn, tableName string) (string, error) {
+// GetTableInfo get table info from mysql
+func GetTableInfo(dsn, tableName string) (string, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return "", errors.WithMessage(err, "open db error")
+		return "", fmt.Errorf("connect mysql error, %v", err)
 	}
 	defer db.Close() //nolint
 
 	rows, err := db.Query("SHOW CREATE TABLE " + tableName)
 	if err != nil {
-		return "", errors.WithMessage(err, "query show create table error")
+		return "", fmt.Errorf("query show create table error, %v", err)
 	}
 
 	defer rows.Close() //nolint
 	if !rows.Next() {
-		return "", errors.Errorf("table(%s) not found", tableName)
+		return "", fmt.Errorf("not found found table '%s'", tableName)
 	}
 
 	var table string
-	var createSQL string
-	err = rows.Scan(&table, &createSQL)
+	var info string
+	err = rows.Scan(&table, &info)
 	if err != nil {
 		return "", err
 	}
 
-	return createSQL, nil
+	return info, nil
 }

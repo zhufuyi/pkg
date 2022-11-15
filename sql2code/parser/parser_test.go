@@ -2,6 +2,8 @@ package parser
 
 import (
 	"fmt"
+	"github.com/blastrain/vitess-sqlparser/tidbparser/dependency/mysql"
+	"github.com/blastrain/vitess-sqlparser/tidbparser/dependency/types"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,14 +15,24 @@ func TestParseSql(t *testing.T) {
   id BIGINT(11) PRIMARY KEY AUTO_INCREMENT NOT NULL COMMENT '这是id',
   name VARCHAR(30) NOT NULL DEFAULT 'default_name' COMMENT '这是名字',
   created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  login_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   sex VARCHAR(2) NULL,
   num INT(11) DEFAULT 3 NULL,
   comment TEXT
   ) COMMENT="person info";`
+
 	codes, err := ParseSQL(sql, WithTablePrefix("t_"), WithJSONTag(0))
 	assert.Nil(t, err)
 	for k, v := range codes {
-		t.Log(k, v)
+		assert.NotEmpty(t, k)
+		assert.NotEmpty(t, v)
+	}
+
+	codes, err = ParseSQL(sql, WithTablePrefix("t_"), WithJSONTag(0), WithEmbed())
+	assert.Nil(t, err)
+	for k, v := range codes {
+		assert.NotEmpty(t, k)
+		assert.NotEmpty(t, v)
 	}
 }
 
@@ -67,7 +79,7 @@ var testData = [][]string{
 	},
 }
 
-func TestParseSqls(t *testing.T) {
+func TestParseSQLs(t *testing.T) {
 	for i, test := range testData {
 		msg := fmt.Sprintf("sql-%d", i)
 		codes, err := ParseSQL(test[0], WithNoNullType())
@@ -75,6 +87,9 @@ func TestParseSqls(t *testing.T) {
 			continue
 		}
 		for k, v := range codes {
+			if len(v) > 100 {
+				v = v[:100]
+			}
 			t.Log(i+1, k, v)
 		}
 	}
@@ -83,4 +98,61 @@ func TestParseSqls(t *testing.T) {
 func Test_toCamel(t *testing.T) {
 	str := "user_example"
 	t.Log(toCamel(str))
+}
+
+func Test_parseOption(t *testing.T) {
+	opts := []Option{
+		WithCharset("foo"),
+		WithCollation("foo"),
+		WithTablePrefix("foo"),
+		WithColumnPrefix("foo"),
+		WithJSONTag(1),
+		WithNoNullType(),
+		WithNullStyle(1),
+		WithPackage("model"),
+		WithGormType(),
+		WithForceTableName(),
+		WithEmbed(),
+	}
+	o := parseOption(opts)
+	assert.NotNil(t, o)
+}
+
+func Test_mysqlToGoType(t *testing.T) {
+	testData := []*types.FieldType{
+		{Tp: uint8('n')},
+		{Tp: mysql.TypeTiny},
+		{Tp: mysql.TypeLonglong},
+		{Tp: mysql.TypeFloat},
+		{Tp: mysql.TypeString},
+		{Tp: mysql.TypeTimestamp},
+		{Tp: mysql.TypeDecimal},
+		{Tp: mysql.TypeJSON},
+	}
+	var names []string
+	for _, d := range testData {
+		name1, _ := mysqlToGoType(d, NullInSql)
+		name2, _ := mysqlToGoType(d, NullInPointer)
+		names = append(names, name1, name2)
+	}
+	t.Log(names)
+}
+
+func Test_goTypeToProto(t *testing.T) {
+	testData := []tmplField{
+		{GoType: "int"},
+		{GoType: "uint"},
+		{GoType: "time.Time"},
+	}
+	v := goTypeToProto(testData)
+	assert.NotNil(t, v)
+}
+
+func TestGetTableInfo(t *testing.T) {
+	info, err := GetTableInfo("root:123456@(192.168.3.37:3306)/test", "user")
+	t.Log(err, info)
+}
+
+func Test_templateNew(t *testing.T) {
+
 }

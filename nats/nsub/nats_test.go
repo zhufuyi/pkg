@@ -7,27 +7,33 @@ import (
 	"time"
 
 	"github.com/zhufuyi/pkg/nats/npub"
+	"github.com/zhufuyi/pkg/utils"
 )
 
 var natsAddr = []string{"nats://192.168.101.88:4222"}
 
 func init() {
-	if err := npub.Init(natsAddr); err != nil {
-		panic(err)
-	}
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		if err := npub.Init(natsAddr); err != nil {
+			panic(err)
+		}
+	})
 
-	if err := Init(natsAddr); err != nil {
-		panic(err)
-	}
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		if err := Init(natsAddr); err != nil {
+			panic(err)
+		}
+	})
 }
 
 func TestClient_SubscribeSync(t *testing.T) {
 	topic := "foo.json"
 	pushData := make(chan []byte, 100)
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
 
 	// 推送
 	go func() {
+		defer func() { recover() }()
 		for {
 			select {
 			case <-time.After(time.Second):
@@ -50,6 +56,7 @@ func TestClient_SubscribeSync(t *testing.T) {
 
 	// 订阅
 	go func() {
+		defer func() { recover() }()
 		GetClient().SubscribeSync(ctx, topic, pushData)
 	}()
 

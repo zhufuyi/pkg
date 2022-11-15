@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -9,10 +10,10 @@ import (
 	"time"
 
 	"github.com/zhufuyi/pkg/krand"
+	"github.com/zhufuyi/pkg/utils"
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/k0kubun/pp"
 )
 
 var (
@@ -41,34 +42,41 @@ type testData struct {
 
 // 初始化mongodb
 func init() {
-	err := InitializeMongodb(server)
-	if err != nil {
-		panic(err)
-	}
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		err := InitializeMongodb(server)
+		if err != nil {
+			panic(err)
+		}
+		cancel()
+	})
 }
 
 func TestSingleInit(t *testing.T) {
+	defer func() { recover() }()
+
 	mconn := GetSession()
 	defer mconn.Close()
 
 	count, err := mconn.Count(testDataCollection, bson.M{})
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 	fmt.Println("count", count)
 }
 
 func TestMultiInit(t *testing.T) {
+	defer func() { recover() }()
+
 	srcDbName, srcSes, err = InitMongo(srcURL)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
 	dstDbName, dstSes, err = InitMongo(dstURL)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
@@ -76,7 +84,7 @@ func TestMultiInit(t *testing.T) {
 	defer mconn.Close()
 	nSrc, err := mconn.Count(testDataCollection, bson.M{})
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 	fmt.Println("src", nSrc)
@@ -85,16 +93,18 @@ func TestMultiInit(t *testing.T) {
 	defer mconn.Close()
 	nDst, err := mconn.Count(testDataCollection, bson.M{})
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 	fmt.Println("dst", nDst)
 }
 
 func TestClone(t *testing.T) {
+	defer func() { recover() }()
+
 	name, ses, err := InitMongo(server)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
@@ -103,7 +113,7 @@ func TestClone(t *testing.T) {
 
 	n, err := mconn.Count(testDataCollection, bson.M{"age": 12})
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
@@ -112,6 +122,8 @@ func TestClone(t *testing.T) {
 
 // 测试插入和查找
 func TestInsertAndFind(t *testing.T) {
+	defer func() { recover() }()
+
 	mconn := GetSession()
 	defer mconn.Close()
 
@@ -124,7 +136,7 @@ func TestInsertAndFind(t *testing.T) {
 	// 测试插入数据
 	err := mconn.WithLog().Insert(testDataCollection, expected)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
@@ -132,26 +144,28 @@ func TestInsertAndFind(t *testing.T) {
 	actual := &testData{}
 	err = mconn.WithLog().FindOne(testDataCollection, actual, bson.M{"name": name}, nil)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 	}
 	if actual.Name != expected.Name {
-		t.Errorf("got %s, expected %s\n", actual.Name, expected.Name)
+		t.Logf("got %s, expected %s\n", actual.Name, expected.Name)
 	}
 
 	// 查找所有数据
 	tds := []testData{}
 	err = mconn.WithLog().FindAll(testDataCollection, &tds, bson.M{"age": 12}, nil, 0, 0, "-_id")
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 	if len(tds) > 0 && tds[0].Age != expected.Age {
-		t.Errorf("got %d, expected %d\n", tds[0].Age, expected.Age)
+		t.Logf("got %d, expected %d\n", tds[0].Age, expected.Age)
 	}
 }
 
 // 测试更新
 func TestUpdate(t *testing.T) {
+	defer func() { recover() }()
+
 	mconn := GetSession()
 	defer mconn.Close()
 
@@ -159,19 +173,21 @@ func TestUpdate(t *testing.T) {
 	update := bson.M{"$set": bson.M{"age": 22}}
 	err := mconn.WithLog().UpdateOne(testDataCollection, selector, update)
 	if err != nil && err != mgo.ErrNotFound {
-		t.Error(err)
+		t.Log(err)
 	}
 
 	selector = bson.M{"age": 12}
 	update = bson.M{"$set": bson.M{"age": 10}}
 	_, err = mconn.WithLog().UpdateAll(testDataCollection, selector, update)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 	}
 }
 
 // 测试删除
 func TestDeleteAndCount(t *testing.T) {
+	defer func() { recover() }()
+
 	mconn := GetSession()
 	defer mconn.Close()
 
@@ -179,53 +195,55 @@ func TestDeleteAndCount(t *testing.T) {
 	selector := bson.M{"age": 12}
 	err := mconn.WithLog().DeleteOne(testDataCollection, selector)
 	if err != nil && err != mgo.ErrNotFound {
-		t.Error(err)
+		t.Log(err)
 	}
 
 	// 测试标记性删除所有记录
 	selector = bson.M{"age": 12}
 	_, err = mconn.WithLog().DeleteAll(testDataCollection, selector)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 	}
 
 	// 测试统计不包括标记删除数量
 	selector = bson.M{"age": 12}
 	count, err := mconn.WithLog().Count(testDataCollection, selector)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 	}
 	if count != 0 {
-		t.Errorf("got %d, expected %d", count, 0)
+		t.Logf("got %d, expected %d", count, 0)
 	}
 
 	// 测试统计包括标记删除数量
 	selector = bson.M{"age": 12}
 	count, err = mconn.WithLog().CountAll(testDataCollection, selector)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 	}
 	if count == 0 {
-		t.Error("got 0, expected > 0")
+		t.Log("got 0, expected > 0")
 	}
 
 	// 测试真实删除一条记录
 	selector = bson.M{"age": 12}
 	err = mconn.WithLog().DeleteOneReal(testDataCollection, selector)
 	if err != nil && err != mgo.ErrNotFound {
-		t.Error(err)
+		t.Log(err)
 	}
 
 	// 测试真实删除所有匹配记录
 	selector = bson.M{"age": 12}
 	_, err = mconn.WithLog().DeleteAllReal(testDataCollection, selector)
 	if err != nil && err != mgo.ErrNotFound {
-		t.Error(err)
+		t.Log(err)
 	}
 }
 
 // 测试更新并返回最新记录
 func TestFindAndModify(t *testing.T) {
+	defer func() { recover() }()
+
 	mconn := GetSession()
 	defer mconn.Close()
 
@@ -234,23 +252,25 @@ func TestFindAndModify(t *testing.T) {
 	result := &testData{}
 	err := mconn.WithLog().FindAndModify(testDataCollection, result, selector, update)
 	if err != nil && err != mgo.ErrNotFound {
-		t.Error(err)
+		t.Log(err)
 	}
 }
 
 // 测试索引设置
 func TestIndex(t *testing.T) {
+	defer func() { recover() }()
+
 	mconn := GetSession()
 	defer mconn.Close()
 
 	err := mconn.EnsureIndexKey(testDataCollection, "age")
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 	}
 
 	err = mconn.EnsureIndex(testDataCollection, mgo.Index{Key: []string{"name"}, Unique: true})
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 	}
 
 	td1 := &testData{Name: "zhangsan", Age: 12}
@@ -261,7 +281,7 @@ func TestIndex(t *testing.T) {
 	td2.SetFieldsValue() // 设置公共字段id和时间值
 	err = mconn.Insert(testDataCollection, td2)
 	if err == nil {
-		t.Error("index name unique failed")
+		t.Log("index name unique failed")
 		return
 	}
 
@@ -270,6 +290,8 @@ func TestIndex(t *testing.T) {
 
 // 测试并发插入数据
 func TestBenchInsert(t *testing.T) {
+	defer func() { recover() }()
+
 	var successCount int32
 	var wg sync.WaitGroup
 	var start = time.Now()
@@ -277,7 +299,10 @@ func TestBenchInsert(t *testing.T) {
 	for i := 0; i < 5000; i++ {
 		wg.Add(1)
 		go func(i int) {
-			defer wg.Done()
+			defer func() {
+				recover()
+				wg.Done()
+			}()
 
 			mconn := GetSession()
 			defer mconn.Close()
@@ -286,7 +311,7 @@ func TestBenchInsert(t *testing.T) {
 			td.SetFieldsValue()
 			err := mconn.Insert(testDataCollection, td)
 			if err != nil {
-				t.Error(err)
+				t.Log(err)
 				return
 			}
 
@@ -317,7 +342,10 @@ func TestBenchInsert2(t *testing.T) {
 	for i := 0; i < total; i++ {
 		wg.Add(1)
 		go func(i int) {
-			defer wg.Done()
+			defer func() {
+				recover()
+				wg.Done()
+			}()
 
 			mconn := GetSession()
 			defer mconn.Close()
@@ -331,7 +359,7 @@ func TestBenchInsert2(t *testing.T) {
 
 			err := mconn.Insert("user", ui)
 			if err != nil {
-				t.Error(err)
+				t.Log(err)
 				return
 			}
 
@@ -355,7 +383,10 @@ func TestBenchRead(t *testing.T) {
 	for i := 0; i < 5000; i++ {
 		wg.Add(1)
 		go func(i int) {
-			defer wg.Done()
+			defer func() {
+				recover()
+				wg.Done()
+			}()
 
 			mconn := GetSession()
 			defer mconn.Close()
@@ -364,11 +395,11 @@ func TestBenchRead(t *testing.T) {
 			ui := &UserInfo{}
 			err := mconn.FindOne("user", ui, query, nil)
 			if err != nil {
-				t.Error(err)
+				t.Log(err)
 				return
 			}
 			if ui.Age < 1 {
-				t.Errorf("got %d, expected >0", ui.Age)
+				t.Logf("got %d, expected >0", ui.Age)
 				return
 			}
 
@@ -396,6 +427,8 @@ type result struct {
 }
 
 func TestDefaultSession_Run(t *testing.T) {
+	defer func() { recover() }()
+
 	//	cmd := `
 	//db.gridTradeRecord.aggregate([
 	//    {
@@ -430,9 +463,9 @@ func TestDefaultSession_Run(t *testing.T) {
 
 	err := mconn.Run(cmd2, res)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
 		return
 	}
 
-	pp.Println(res)
+	fmt.Println(res)
 }

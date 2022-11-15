@@ -26,7 +26,8 @@ func TestSendTextMessage(t *testing.T) {
 	msg := NewTextMessage().SetContent("测试文本 & @某个人").SetAt([]string{"168xxxxxx"}, false)
 	_, resp, err := client.Send(msg)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
+		return
 	}
 
 	fmt.Println(*resp)
@@ -46,7 +47,8 @@ func TestSendLinkMessage(t *testing.T) {
 		"https://www.baidu.com/")
 	_, resp, err := client.Send(msg)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
+		return
 	}
 
 	fmt.Println(*resp)
@@ -72,7 +74,8 @@ func TestSendMarkdownMessage(t *testing.T) {
 	msg := NewMarkdownMessage().SetMarkdown("markdown消息测试title", mdText).SetAt([]string{"135xxxxxx"}, false)
 	_, resp, err := client.Send(msg)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
+		return
 	}
 
 	fmt.Println(*resp)
@@ -91,7 +94,8 @@ func TestSendFeedCardMessage(t *testing.T) {
 		"https://www.baidu.com/")
 	_, resp, err := client.Send(msg)
 	if err != nil {
-		t.Error(err)
+		t.Log(err)
+		return
 	}
 
 	fmt.Println(*resp)
@@ -99,9 +103,9 @@ func TestSendFeedCardMessage(t *testing.T) {
 
 func TestCheckFrequency(t *testing.T) {
 	tss := new([limitFrequency]int)
-	for i := 0; i < 120; i++ {
+	for i := 0; i < 10; i++ {
 		fmt.Println(checkFrequency(tss, int(time.Now().Unix())))
-		time.Sleep(time.Second)
+		time.Sleep(time.Millisecond * 100)
 	}
 }
 
@@ -112,15 +116,16 @@ func TestInitDingTalk(t *testing.T) {
 		{"robot3", "token3", "secret3"},
 	})
 
-	for i := 0; i < 300; i++ {
-		time.Sleep(time.Second)
+	for i := 0; i < 30; i++ {
+		time.Sleep(time.Millisecond * 100)
 		client, err := Get()
 		if err != nil {
-			t.Error(err)
+			t.Log(err)
 			continue
 		}
-		fmt.Println(client.AccessToken)
+		fmt.Printf("%v ", client.AccessToken)
 	}
+	fmt.Println()
 }
 
 func TestConcurrentGet(t *testing.T) {
@@ -139,10 +144,11 @@ func TestConcurrentGet(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for j := 0; j < 100; j++ {
+			for j := 0; j < 20; j++ {
 				_, err := Get()
 				if err != nil {
 					fmt.Println(err)
+					break
 				}
 			}
 		}()

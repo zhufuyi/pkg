@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,14 +11,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/k0kubun/pp"
+	"github.com/zhufuyi/pkg/utils"
 )
 
 func init() {
-	err := NewRedisPool("192.168.101.88:6379", "123456")
-	if err != nil {
-		log.Fatal(err)
-	}
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		err := NewRedisPool("192.168.101.88:6379", "123456")
+		if err != nil {
+			panic(err)
+		}
+	})
 }
 
 // 测试数据
@@ -46,17 +49,23 @@ var cmds = []struct {
 
 // 测试单个连接的Do函数
 func TestDo(t *testing.T) {
-	rconn, err := GetConn()
-	if err != nil {
-		println(err)
-		return
-	}
+	defer func() { recover() }()
+
+	var rconn RedisConn
+	var err error
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		rconn, err = GetConn()
+		if err != nil {
+			println(err)
+			return
+		}
+	})
 	defer rconn.Close()
 
 	for _, v := range cmds {
 		result, err := rconn.WithLog().Do(v.Cmd, v.Args...)
 		if err != nil {
-			t.Errorf("redis do failed, %v, %+v\n", err, v)
+			t.Logf("redis do failed, %v, %+v\n", err, v)
 			continue
 		}
 
@@ -70,46 +79,58 @@ func TestDo(t *testing.T) {
 
 // 测试单个连接的Send_Flush_Receive函数，等效于do，当超过redis最大连接数时，do命令不是并发安全的
 func TestSend_Flush_Receive(t *testing.T) {
-	rconn, err := GetConn()
-	if err != nil {
-		println(err)
-		return
-	}
+	defer func() { recover() }()
+
+	var rconn RedisConn
+	var err error
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		rconn, err = GetConn()
+		if err != nil {
+			println(err)
+			return
+		}
+	})
 	defer rconn.Close()
 
 	for _, v := range cmds {
 		err := rconn.WithLog().Send(v.Cmd, v.Args...)
 		if err != nil {
-			t.Errorf("redis send error, %v, %+v\n", err, v)
+			t.Logf("redis send error, %v, %+v\n", err, v)
 			continue
 		}
 
 		err = rconn.WithLog().Flush()
 		if err != nil {
-			t.Errorf("redis flush error, %v, %+v\n", err, v)
+			t.Logf("redis flush error, %v, %+v\n", err, v)
 			continue
 		}
 
 		result, err := rconn.WithLog().Receive()
 		if err != nil {
-			t.Errorf("redis receive error, %v, %v\n", err, v)
+			t.Logf("redis receive error, %v, %v\n", err, v)
 			continue
 		}
 
 		actual, _ := json.Marshal(typeAsserts(result))
 		expect, _ := json.Marshal(v.Result)
 		if string(actual) != string(expect) {
-			t.Errorf("got %v, expected %v", string(actual), string(expect))
+			t.Logf("got %v, expected %v", string(actual), string(expect))
 		}
 	}
 }
 
 func TestTransaction(t *testing.T) {
-	rconn, err := GetConn()
-	if err != nil {
-		println(err)
-		return
-	}
+	defer func() { recover() }()
+
+	var rconn RedisConn
+	var err error
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		rconn, err = GetConn()
+		if err != nil {
+			println(err)
+			return
+		}
+	})
 	defer rconn.Close()
 
 	// 使用send和do方法实现事务
@@ -122,7 +143,7 @@ func TestTransaction(t *testing.T) {
 		t.Error(err)
 	}
 
-	pp.Print(resp)
+	t.Log(resp)
 }
 
 // 并发写压测，调整maxActiveCount值大小，统计出redis能够承受并发写的最大值(也就是maxActiveCount的大小)
@@ -137,7 +158,7 @@ func TestRedisWriteLimit(t *testing.T) {
 
 			err := redisWrite(i)
 			if err != nil {
-				t.Error(err)
+				t.Log(err)
 				return
 			}
 
@@ -211,10 +232,16 @@ func TestRedisReadWriteLimit(t *testing.T) {
 }
 
 func redisWrite(i int) error {
-	rconn, err := GetConn()
-	if err != nil {
-		return fmt.Errorf("#%d  get redis conn error, %v\n", i, err)
-	}
+	defer func() { recover() }()
+
+	var rconn RedisConn
+	var err error
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		rconn, err = GetConn()
+		if err != nil {
+			fmt.Printf("#%d  get redis conn error, %v\n", i, err)
+		}
+	})
 	defer rconn.Close()
 
 	key := fmt.Sprintf("NO_%d", i)
@@ -232,10 +259,16 @@ func redisWrite(i int) error {
 }
 
 func redisRead(i int) error {
-	rconn, err := GetConn()
-	if err != nil {
-		return fmt.Errorf("#%d  get redis conn error, %v\n", i, err)
-	}
+	defer func() { recover() }()
+
+	var rconn RedisConn
+	var err error
+	utils.SafeRunWithTimeout(time.Second*2, func(cancel context.CancelFunc) {
+		rconn, err = GetConn()
+		if err != nil {
+			fmt.Printf("#%d  get redis conn error, %v\n", i, err)
+		}
+	})
 	defer rconn.Close()
 
 	key := fmt.Sprintf("NO_%d", i)

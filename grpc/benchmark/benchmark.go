@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/zhufuyi/pkg/gofile"
+
 	"github.com/bojand/ghz/printer"
 	"github.com/bojand/ghz/runner"
-	"github.com/golang/protobuf/proto"
-	"github.com/zhufuyi/pkg/gofile"
+	"google.golang.org/protobuf/proto"
 )
 
+// Runner 接口
 type Runner interface {
 	Run() error
 }
 
-// params 压测参数
-type params struct {
+// bench 压测参数
+type bench struct {
 	rpcServerHost string // rpc server端地址
 
 	protoFile     string        // proto file
@@ -28,7 +30,7 @@ type params struct {
 	importPaths []string // 依赖第三方protobuf文件位置
 }
 
-// New 创建一个压测示例
+// New 创建一个压测实例
 func New(host string, protoFile string, methodName string, req proto.Message, total uint, importPaths ...string) (Runner, error) {
 	data, err := os.ReadFile(protoFile)
 	if err != nil {
@@ -51,7 +53,7 @@ func New(host string, protoFile string, methodName string, req proto.Message, to
 		return nil, fmt.Errorf("not found name %s in protobuf file %s", methodName, protoFile)
 	}
 
-	return &params{
+	return &bench{
 		protoFile:     protoFile,
 		packageName:   packageName,
 		serviceName:   serviceName,
@@ -63,12 +65,11 @@ func New(host string, protoFile string, methodName string, req proto.Message, to
 	}, nil
 }
 
-func (b *params) Run() error {
+func (b *bench) Run() error {
 	callMethod := fmt.Sprintf("%s.%s/%s", b.packageName, b.serviceName, b.methodName)
 	fmt.Printf("benchmark '%s', total %d requests\n", callMethod, b.total)
 
-	buf := proto.Buffer{}
-	err := buf.EncodeMessage(b.methodRequest)
+	data, err := proto.Marshal(b.methodRequest)
 	if err != nil {
 		return err
 	}
@@ -77,7 +78,7 @@ func (b *params) Run() error {
 		callMethod, //  'package.Service/method' or 'package.Service.Method'
 		b.rpcServerHost,
 		runner.WithProtoFile(b.protoFile, b.importPaths),
-		runner.WithBinaryData(buf.Bytes()),
+		runner.WithBinaryData(data),
 		runner.WithInsecure(true),
 		runner.WithTotalRequests(b.total),
 		// 并发参数
@@ -91,12 +92,14 @@ func (b *params) Run() error {
 	}
 
 	// 指定输出路径
-	outputFile := fmt.Sprintf("%sreport_%s.html", gofile.GetRunPath()+gofile.GetPathDelimiter(), b.methodName)
+	outputFile := fmt.Sprintf("%sreport_%s.html", os.TempDir()+gofile.GetPathDelimiter(), b.methodName)
 	file, err := os.Create(outputFile)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	rp := printer.ReportPrinter{
 		Out:    file,

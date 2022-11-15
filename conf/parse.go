@@ -21,9 +21,6 @@ func Parse(configFile string, obj interface{}, fs ...func()) error {
 	}
 
 	filePathStr, filename := filepath.Split(confFileAbs)
-	if filePathStr == "" {
-		filePathStr = "."
-	}
 	ext := strings.TrimLeft(path.Ext(filename), ".")
 	filename = strings.ReplaceAll(filename, "."+ext, "") // 不包括后缀名
 
@@ -55,7 +52,6 @@ func watchConfig(obj interface{}, fs ...func()) {
 		if err != nil {
 			fmt.Println("viper.Unmarshal error: ", err)
 		} else {
-			// 更新初始化
 			for _, f := range fs {
 				f()
 			}
@@ -64,11 +60,13 @@ func watchConfig(obj interface{}, fs ...func()) {
 }
 
 // Show 打印配置信息(去掉敏感信息)
-func Show(obj interface{}, keywords ...string) {
+func Show(obj interface{}, keywords ...string) string {
+	var out string
+
 	data, err := json.MarshalIndent(obj, "", "    ")
 	if err != nil {
 		fmt.Println("json.MarshalIndent error: ", err)
-		return
+		return ""
 	}
 
 	buf := bufio.NewReader(bytes.NewReader(data))
@@ -79,8 +77,10 @@ func Show(obj interface{}, keywords ...string) {
 		}
 		keywords = append(keywords, `"dsn"`, `"password"`)
 
-		fmt.Printf(replacePWD(line, keywords...))
+		out += replacePWD(line, keywords...)
 	}
+
+	return out
 }
 
 // 替换密码
@@ -90,9 +90,8 @@ func replacePWD(line string, keywords ...string) string {
 			index := strings.Index(line, keyword)
 			if strings.Contains(line, "@") && strings.Contains(line, ":") {
 				return replaceDSN(line)
-			} else {
-				return fmt.Sprintf("%s: \"******\",\n", line[:index+len(keyword)])
 			}
+			return fmt.Sprintf("%s: \"******\",\n", line[:index+len(keyword)])
 		}
 	}
 

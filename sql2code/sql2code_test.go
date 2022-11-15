@@ -1,6 +1,7 @@
 package sql2code
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -102,4 +103,51 @@ func TestGenerate(t *testing.T) {
 			t.Log(got)
 		})
 	}
+}
+
+func TestGenerateError(t *testing.T) {
+	a := &Args{}
+	_, err := Generate(a)
+	assert.Error(t, err)
+	_, err = GenerateOne(a)
+	assert.Error(t, err)
+
+	a = &Args{DDLFile: "notfound.sql"}
+	_, err = Generate(a)
+	assert.Error(t, err)
+
+	a = &Args{DBDsn: "root:123456@(127.0.0.1:3306)/test"}
+	_, err = Generate(a)
+	assert.Error(t, err)
+
+	a = &Args{DBDsn: "root:123456@(127.0.0.1:3306)/test", DBTable: "user"}
+	_, err = Generate(a)
+	assert.Error(t, err)
+
+	a = &Args{DDLFile: "test.sql", CodeType: "unknown"}
+	_, err = GenerateOne(a)
+	t.Log(err)
+	assert.Error(t, err)
+}
+
+func Test_getOptions(t *testing.T) {
+	a := &Args{
+		Package:        "Package",
+		GormType:       true,
+		JSONTag:        true,
+		ForceTableName: true,
+		Charset:        "Charset",
+		Collation:      "Collation",
+		TablePrefix:    "TablePrefix",
+		ColumnPrefix:   "ColumnPrefix",
+		NoNullType:     true,
+		NullStyle:      "sql",
+	}
+
+	o := getOptions(a)
+	assert.NotNil(t, o)
+	a.NullStyle = "ptr"
+	assert.NotNil(t, o)
+	a.NullStyle = "default"
+	assert.NotNil(t, o)
 }
