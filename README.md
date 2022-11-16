@@ -51,7 +51,7 @@
   - [grpccli grpc 客户端](grpc/grpccli)
   - [gtls TLS加密传输](grpc/gtls)
   - [keepalive 保持连接](grpc/keepalive)
-  - [loadbalance 负载均衡](grpc/loadbalance)
+  - [loadbalance 负载均衡](grpc/resolve)
   - [metrics rpc指标](grpc/metrics)
   - [interceptor 客户端和服务端的拦截器](grpc/interceptor)
     - [breaker 熔断器](grpc/interceptor/breaker.go)

@@ -1,4 +1,4 @@
-## loadbalance
+## resolve
 
 ### 使用示例
 
@@ -18,10 +18,8 @@ func getDialOptions() []grpc.DialOption {
 }
 
 func main() {
-	target := loadbalance.Register("grpc", "hello.grpc.io", []string{"127.0.0.1:8080", "127.0.0.1:8081", "127.0.0.1:8082"})
-	fmt.Println(target)
-
-	roundRobinConn, err := grpc.Dial(target, getDialOptions()...)
+	endpoint := resolve.Register("grpc", "hello.grpc.io", []string{"127.0.0.1:8282", "127.0.0.1:8284", "127.0.0.1:8286"})
+	roundRobinConn, err := grpc.Dial(endpoint, getDialOptions()...)
 	if err != nil {
 		panic(err)
 	}
